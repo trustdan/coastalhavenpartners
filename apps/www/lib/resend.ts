@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/client' // Use client for typing, b
 import { createClient as createServerClient } from '@supabase/supabase-js'
 
 // Initialize Resend with API Key
-export const resend = new Resend(process.env.RESEND_API_KEY)
+// Note: We check for the key to prevent build errors if it's missing
+// In production, it must be present for emails to work.
+export const resend = new Resend(process.env.RESEND_API_KEY || 're_123')
 
 export const FROM_EMAIL = 'Coastal Haven <onboarding@resend.dev>'
 
