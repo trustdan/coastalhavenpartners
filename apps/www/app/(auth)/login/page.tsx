@@ -31,20 +31,35 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      // Get user role and redirect
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single()
+      // Get user role and redirect (prefer auth metadata to avoid blocking on DB)
+      let role = data.user.user_metadata?.role as string | undefined
 
-      if (profile?.role === 'candidate') {
+      if (!role) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profileError) {
+          console.error('Failed to fetch profile role:', profileError)
+        }
+
+        role = profile?.role ?? role
+      }
+
+      if (!role) {
+        setError('We could not load your profile. Please contact support.')
+        return
+      }
+
+      if (role === 'candidate') {
         router.push('/candidate')
         router.refresh()
-      } else if (profile?.role === 'recruiter') {
+      } else if (role === 'recruiter') {
         router.push('/recruiter')
         router.refresh()
-      } else if (profile?.role === 'admin') {
+      } else if (role === 'admin') {
         router.push('/admin')
         router.refresh()
       }
