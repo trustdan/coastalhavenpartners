@@ -3,18 +3,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types/database.types'
 
-// Server-side only - uses service role to bypass RLS
-const supabaseAdmin = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
-
 export async function createCandidateProfile(data: {
   userId: string
   email: string
@@ -25,6 +13,18 @@ export async function createCandidateProfile(data: {
   graduationYear: number
 }) {
   console.log('Creating candidate profile for:', data.userId)
+
+  // Server-side only - uses service role to bypass RLS
+  const supabaseAdmin = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
 
   // 1. Ensure Profile Exists (Retry Logic)
   let profileExists = false
