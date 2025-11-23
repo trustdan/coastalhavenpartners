@@ -5,10 +5,6 @@ import { useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { useDebouncedCallback } from 'use-debounce'
-
-// Note: You might need to install use-debounce: pnpm add use-debounce
-// If not available, we can implement a simple debounce or just use onBlur/Enter
 
 export function CandidateFilters() {
   const router = useRouter()
@@ -30,14 +26,6 @@ export function CandidateFilters() {
   const handleSearch = (name: string, value: string) => {
     router.push('?' + createQueryString(name, value))
   }
-
-  // Debounce the search to avoid too many URL updates
-  // If use-debounce is not installed, we'll fallback to onBlur/Enter behavior in the input
-  // For now, assuming we might not have it, let's use a simple approach without external deps if possible
-  // But to be "robust", let's implement a simple debounce wrapper or just use onChange for now if traffic is low.
-  // Actually, let's just use standard inputs with onChange and a small delay if possible, 
-  // or simpler: "Apply" button? No, instant is better.
-  // I'll use a local state and timeout for debounce.
 
   const updateFilter = (name: string, value: string) => {
      handleSearch(name, value)
@@ -113,4 +101,3 @@ export function CandidateFilters() {
     </div>
   )
 }
-

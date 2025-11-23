@@ -46,8 +46,8 @@ export default function EditProfilePage() {
     try {
       const formData = new FormData(e.currentTarget)
       const updates = {
-        school_name: formData.get('schoolName'),
-        major: formData.get('major'),
+        school_name: formData.get('schoolName') as string,
+        major: formData.get('major') as string,
         graduation_year: parseInt(formData.get('graduationYear') as string),
         gpa: parseFloat(formData.get('gpa') as string),
         target_roles: (formData.get('targetRoles') as string).split(',').map(s => s.trim()).filter(Boolean),
@@ -201,4 +201,3 @@ export default function EditProfilePage() {
     </div>
   )
 }
-

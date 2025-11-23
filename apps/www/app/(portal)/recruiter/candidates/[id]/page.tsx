@@ -21,7 +21,7 @@ export default async function CandidateDetailsPage({
   // Verify recruiter access
   const { data: recruiterProfile } = await supabase
     .from('recruiter_profiles')
-    .select('is_approved')
+    .select('is_approved, firm_name')
     .eq('user_id', user.id)
     .single()
 
@@ -37,7 +37,8 @@ export default async function CandidateDetailsPage({
       profiles:user_id (
         full_name,
         email,
-        linkedin_url
+        linkedin_url,
+        phone
       )
     `)
     .eq('id', id)
@@ -63,7 +64,7 @@ export default async function CandidateDetailsPage({
   const { trackEventServer } = await import('@/lib/analytics')
   await trackEventServer('profile_view', {
     recruiter_firm: recruiterProfile.firm_name
-  }, candidate.user_id)
+  }, candidate.user_id || undefined)
 
   return (
     <div className="space-y-8">
@@ -142,7 +143,7 @@ export default async function CandidateDetailsPage({
                     </div>
                     <div>
                       <p className="font-medium">Resume</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Uploaded on {new Date(candidate.updated_at).toLocaleDateString()}</p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Uploaded on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" asChild>
@@ -161,7 +162,7 @@ export default async function CandidateDetailsPage({
                     </div>
                     <div>
                       <p className="font-medium">Transcript</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Uploaded on {new Date(candidate.updated_at).toLocaleDateString()}</p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Uploaded on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" asChild>
@@ -229,4 +230,3 @@ export default async function CandidateDetailsPage({
     </div>
   )
 }
-

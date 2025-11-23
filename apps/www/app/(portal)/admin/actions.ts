@@ -19,11 +19,12 @@ export async function approveRecruiter(recruiterId: string) {
   if (adminProfile?.role !== 'admin') throw new Error('Unauthorized')
 
   // Get recruiter profile for email
+  // Using explicit hint !user_id to avoid ambiguity with approved_by column
   const { data: recruiterProfile } = await supabase
     .from('recruiter_profiles')
     .select(`
       user_id,
-      profiles:user_id (
+      profiles!user_id (
         email,
         full_name
       )

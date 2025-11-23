@@ -9,44 +9,37 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      candidate_interactions: {
+      analytics_events: {
         Row: {
-          candidate_id: string | null
           created_at: string | null
+          event_type: string
           id: string
-          interaction_type: string
-          notes: string | null
-          recruiter_id: string | null
+          metadata: Json | null
+          target_id: string | null
+          user_id: string | null
         }
         Insert: {
-          candidate_id?: string | null
           created_at?: string | null
+          event_type: string
           id?: string
-          interaction_type: string
-          notes?: string | null
-          recruiter_id?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          user_id?: string | null
         }
         Update: {
-          candidate_id?: string | null
           created_at?: string | null
+          event_type?: string
           id?: string
-          interaction_type?: string
-          notes?: string | null
-          recruiter_id?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "candidate_interactions_candidate_id_fkey"
-            columns: ["candidate_id"]
+            foreignKeyName: "analytics_events_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "candidate_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "candidate_interactions_recruiter_id_fkey"
-            columns: ["recruiter_id"]
-            isOneToOne: false
-            referencedRelation: "recruiter_profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -320,17 +313,3 @@ export type Enums<
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never

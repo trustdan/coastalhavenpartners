@@ -60,7 +60,7 @@ export default async function AdminCandidatesPage() {
                       ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200'
                       : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200'}
                   `}>
-                    {candidate.status.replace('_', ' ').toUpperCase()}
+                    {(candidate.status || 'pending_verification').replace('_', ' ').toUpperCase()}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">

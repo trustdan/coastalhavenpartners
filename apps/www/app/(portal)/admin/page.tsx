@@ -11,7 +11,7 @@ export default async function AdminDashboard() {
     .from('recruiter_profiles')
     .select(`
       *,
-      profiles:user_id (
+      profiles!user_id (
         full_name,
         email,
         created_at
@@ -65,7 +65,7 @@ export default async function AdminDashboard() {
                   </td>
                   <td className="px-6 py-4 text-sm">{recruiter.job_title}</td>
                   <td className="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">
-                    {new Date(recruiter.created_at).toLocaleDateString()}
+                    {recruiter.created_at ? new Date(recruiter.created_at).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
