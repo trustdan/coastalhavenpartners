@@ -11,12 +11,12 @@ import { createRecruiterProfile } from './actions'
 
 export default function RecruiterSignupPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const supabase = createClient()
     setLoading(true)
     setError(null)
 
