@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server'
 import { resend, getAdminEmails, FROM_EMAIL } from '@/lib/resend'
 import { createClient } from '@supabase/supabase-js'
 
-// Initialize Supabase Admin
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function GET() {
   try {
+    // Initialize Supabase Admin inside the handler to avoid build-time errors
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     // 1. Check for pending recruiters created in the last 24 hours
     // Note: For a robust system, you'd track 'notification_sent' status. 
     // For this MVP, we'll just check 'is_approved = false' and 'created_at > 24h ago' to avoid spamming old ones?
@@ -76,4 +76,3 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
-
