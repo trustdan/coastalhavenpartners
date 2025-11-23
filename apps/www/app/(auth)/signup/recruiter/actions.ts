@@ -82,5 +82,8 @@ export async function createRecruiterProfile(data: {
     throw new Error(`Failed to create profile: ${error.message}`)
   }
 
+  // 3. Admin Notification REMOVED - Replaced by Daily Digest Cron Job
+  // See apps/www/app/api/cron/daily-digest/route.ts
+
   return { success: true }
 }

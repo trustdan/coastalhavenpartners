@@ -56,9 +56,10 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /candidate and /recruiter routes
+  // Protect /candidate, /recruiter, and /admin routes
   if (request.nextUrl.pathname.startsWith('/candidate') ||
-      request.nextUrl.pathname.startsWith('/recruiter')) {
+      request.nextUrl.pathname.startsWith('/recruiter') ||
+      request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -79,6 +80,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/candidate', request.url))
       } else if (profile?.role === 'recruiter') {
         return NextResponse.redirect(new URL('/recruiter', request.url))
+      } else if (profile?.role === 'admin') {
+        return NextResponse.redirect(new URL('/admin', request.url))
       }
     }
   }
@@ -90,6 +93,7 @@ export const config = {
   matcher: [
     '/candidate/:path*',
     '/recruiter/:path*',
+    '/admin/:path*',
     '/login',
     '/signup/:path*',
   ],

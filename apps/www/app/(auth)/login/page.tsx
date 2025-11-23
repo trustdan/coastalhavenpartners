@@ -44,6 +44,9 @@ export default function LoginPage() {
       } else if (profile?.role === 'recruiter') {
         router.push('/recruiter')
         router.refresh()
+      } else if (profile?.role === 'admin') {
+        router.push('/admin')
+        router.refresh()
       }
     } catch (err: any) {
       setError(err.message)

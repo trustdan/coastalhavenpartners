@@ -1,9 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { CandidateFilters } from './candidate-filters'
 
-export default async function RecruiterDashboard() {
+export default async function RecruiterDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const supabase = await createClient()
+  const params = await searchParams
+
+  const gpa = typeof params.gpa === 'string' ? params.gpa : undefined
+  const major = typeof params.major === 'string' ? params.major : undefined
+  const school = typeof params.school === 'string' ? params.school : undefined
+  const gradYear = typeof params.gradYear === 'string' ? params.gradYear : undefined
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -62,8 +73,8 @@ export default async function RecruiterDashboard() {
     )
   }
 
-  // Fetch verified candidates (RLS policy ensures only approved recruiters can see this)
-  const { data: candidates } = await supabase
+  // Fetch verified candidates with filters
+  let query = supabase
     .from('candidate_profiles')
     .select(`
       id,
@@ -80,7 +91,22 @@ export default async function RecruiterDashboard() {
       )
     `)
     .eq('status', 'verified')
-    .order('gpa', { ascending: false })
+
+  if (gpa) {
+    query = query.gte('gpa', parseFloat(gpa))
+  }
+  if (major) {
+    query = query.ilike('major', `%${major}%`)
+  }
+  if (school) {
+    query = query.ilike('school_name', `%${school}%`)
+  }
+  if (gradYear) {
+    query = query.eq('graduation_year', parseInt(gradYear))
+  }
+
+  // Execute query with ordering
+  const { data: candidates } = await query.order('gpa', { ascending: false })
 
   return (
     <div className="space-y-8">
@@ -91,12 +117,7 @@ export default async function RecruiterDashboard() {
         </p>
       </div>
 
-      {/* Filters placeholder */}
-      <div className="rounded-xl border bg-white p-4 dark:bg-neutral-900">
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Filters coming soon (GPA, School, Major, Grad Year)
-        </p>
-      </div>
+      <CandidateFilters />
 
       {/* Candidate Table */}
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm dark:bg-neutral-900">
@@ -167,7 +188,7 @@ export default async function RecruiterDashboard() {
               ) : (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-neutral-600 dark:text-neutral-400">
-                    No verified candidates found
+                    No verified candidates found matching your criteria
                   </td>
                 </tr>
               )}

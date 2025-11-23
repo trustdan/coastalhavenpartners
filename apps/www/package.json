@@ -30,6 +30,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.51.3",
+    "resend": "^6.5.2",
     "sonner": "^1.4.41",
     "tailwind-merge": "^2.2.2",
     "tailwindcss": "^4.1.11",

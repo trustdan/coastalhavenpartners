@@ -6,6 +6,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- RLS Policies for Resumes
+DROP POLICY IF EXISTS "Candidates can upload their own resume" ON storage.objects;
 CREATE POLICY "Candidates can upload their own resume"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -14,6 +15,7 @@ WITH CHECK (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
+DROP POLICY IF EXISTS "Candidates can update their own resume" ON storage.objects;
 CREATE POLICY "Candidates can update their own resume"
 ON storage.objects FOR UPDATE
 TO authenticated
@@ -22,6 +24,7 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
+DROP POLICY IF EXISTS "Candidates can read their own resume" ON storage.objects;
 CREATE POLICY "Candidates can read their own resume"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -30,6 +33,7 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
+DROP POLICY IF EXISTS "Recruiters can view resumes" ON storage.objects;
 CREATE POLICY "Recruiters can view resumes"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -42,6 +46,7 @@ USING (
 );
 
 -- RLS Policies for Transcripts
+DROP POLICY IF EXISTS "Candidates can upload their own transcript" ON storage.objects;
 CREATE POLICY "Candidates can upload their own transcript"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -50,6 +55,7 @@ WITH CHECK (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
+DROP POLICY IF EXISTS "Candidates can update their own transcript" ON storage.objects;
 CREATE POLICY "Candidates can update their own transcript"
 ON storage.objects FOR UPDATE
 TO authenticated
@@ -58,6 +64,7 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
+DROP POLICY IF EXISTS "Candidates can read their own transcript" ON storage.objects;
 CREATE POLICY "Candidates can read their own transcript"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -66,6 +73,7 @@ USING (
   (storage.foldername(name))[1] = auth.uid()::text
 );
 
+DROP POLICY IF EXISTS "Recruiters can view transcripts" ON storage.objects;
 CREATE POLICY "Recruiters can view transcripts"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -76,4 +84,3 @@ USING (
     WHERE user_id = auth.uid() AND is_approved = TRUE
   )
 );
-

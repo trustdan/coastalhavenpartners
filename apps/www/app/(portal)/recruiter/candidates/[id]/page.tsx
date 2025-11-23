@@ -59,6 +59,12 @@ export default async function CandidateDetailsPage({
     )
   }
 
+  // Track Profile View
+  const { trackEventServer } = await import('@/lib/analytics')
+  await trackEventServer('profile_view', {
+    recruiter_firm: recruiterProfile.firm_name
+  }, candidate.user_id)
+
   return (
     <div className="space-y-8">
       {/* Back Button */}
