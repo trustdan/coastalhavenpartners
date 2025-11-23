@@ -10,12 +10,12 @@ import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const supabase = createClient()
     setLoading(true)
     setError(null)
 
