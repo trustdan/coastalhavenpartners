@@ -58,10 +58,12 @@ export default function CandidateSignupPage() {
 
       if (authError) throw authError
 
-      // Step 2: Create candidate profile using server action (bypasses RLS)
+      // Step 2: Create candidate profile
       if (authData.user) {
         await createCandidateProfile({
           userId: authData.user.id,
+          email,
+          fullName,
           schoolName,
           major,
           gpa,

@@ -17,11 +17,51 @@ const supabaseAdmin = createClient<Database>(
 
 export async function createCandidateProfile(data: {
   userId: string
+  email: string
+  fullName: string
   schoolName: string
   major: string
   gpa: number
   graduationYear: number
 }) {
+  console.log('Creating candidate profile for:', data.userId)
+
+  // 1. Ensure Profile Exists (Retry Logic)
+  let profileExists = false
+  
+  // Try to find it first
+  for (let i = 0; i < 3; i++) {
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('id', data.userId)
+      .single()
+    
+    if (profile) {
+      profileExists = true
+      break
+    }
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  // If not found, FORCE create it
+  if (!profileExists) {
+    console.log('Force creating candidate base profile...')
+    const { error: insertError } = await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        id: data.userId,
+        email: data.email,
+        full_name: data.fullName,
+        role: 'candidate'
+      }, { onConflict: 'id' })
+      
+    if (insertError) {
+      console.error('Error creating base profile:', insertError)
+    }
+  }
+
+  // 2. Insert Candidate Profile
   const { error } = await supabaseAdmin
     .from('candidate_profiles')
     .insert({

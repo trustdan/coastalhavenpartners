@@ -95,12 +95,18 @@ export default function LoginPage() {
             {loading ? 'Logging in...' : 'Log In'}
           </Button>
 
-          <p className="text-center text-sm text-neutral-600 dark:text-neutral-400">
-            Don't have an account?{' '}
-            <Link href="/signup/candidate" className="text-blue-600 hover:underline">
-              Sign up
-            </Link>
-          </p>
+          <div className="text-center text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="mb-2">Don't have an account?</p>
+            <div className="flex justify-center gap-4">
+              <Link href="/signup/candidate" className="text-blue-600 hover:underline">
+                Candidate Sign up
+              </Link>
+              <span className="text-neutral-300 dark:text-neutral-700">|</span>
+              <Link href="/signup/recruiter" className="text-purple-600 hover:underline">
+                Recruiter Sign up
+              </Link>
+            </div>
+          </div>
         </form>
       </div>
     </div>

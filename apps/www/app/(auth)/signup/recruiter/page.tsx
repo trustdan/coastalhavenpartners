@@ -48,6 +48,8 @@ export default function RecruiterSignupPage() {
       if (authData.user) {
         await createRecruiterProfile({
           userId: authData.user.id,
+          email,
+          fullName,
           firmName,
           firmType,
           jobTitle,
