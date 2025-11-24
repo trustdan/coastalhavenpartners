@@ -223,7 +223,7 @@ export type Database = {
         | "placed"
         | "rejected"
       education_level: "bachelors" | "masters" | "mba" | "phd"
-      user_role: "candidate" | "recruiter" | "admin"
+      user_role: "candidate" | "recruiter" | "admin" | "school_admin"
     }
     CompositeTypes: {
       [_ in never]: never
