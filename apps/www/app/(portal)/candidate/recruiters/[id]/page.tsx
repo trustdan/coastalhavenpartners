@@ -44,7 +44,7 @@ export default async function RecruiterProfilePage({
     .from('recruiter_profiles')
     .select(`
       *,
-      profiles:user_id (
+      profiles:user_id!recruiter_profiles_user_id_fkey (
         full_name,
         email,
         phone,
