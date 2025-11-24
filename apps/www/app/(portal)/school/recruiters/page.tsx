@@ -294,7 +294,7 @@ export default async function SchoolRecruitersPage({
                       <div className="flex items-center gap-2 text-sm">
                         <Linkedin className="h-4 w-4 text-neutral-400" />
                         <a
-                          href={recruiter.linkedin_url || recruiter.profiles?.linkedin_url}
+                          href={recruiter.linkedin_url ?? recruiter.profiles?.linkedin_url ?? undefined}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline"
