@@ -62,7 +62,8 @@ export default async function RecruiterProfilePage({
 
   // Helper function to check if a field is visible
   const isFieldVisible = (field: string) => {
-    return recruiter.visible_fields_to_candidates?.[field] === true
+    const visibleFields = recruiter.visible_fields_to_candidates as Record<string, boolean> | null
+    return visibleFields?.[field] === true
   }
 
   // Track profile view
