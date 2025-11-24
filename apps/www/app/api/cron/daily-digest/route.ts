@@ -21,7 +21,7 @@ export async function GET() {
       .from('recruiter_profiles')
       .select(`
         *,
-        profiles:user_id (
+        profiles!recruiter_profiles_user_id_fkey (
           full_name,
           email
         )

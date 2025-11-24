@@ -58,7 +58,7 @@ export default async function SchoolRecruitersPage({
       company_website,
       linkedin_url,
       visible_fields_to_schools,
-      profiles:user_id (
+      profiles!recruiter_profiles_user_id_fkey (
         full_name,
         email,
         phone,

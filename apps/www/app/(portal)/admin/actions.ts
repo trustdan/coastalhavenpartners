@@ -24,7 +24,7 @@ export async function approveRecruiter(recruiterId: string) {
     .from('recruiter_profiles')
     .select(`
       user_id,
-      profiles!user_id (
+      profiles!recruiter_profiles_user_id_fkey (
         email,
         full_name
       )
