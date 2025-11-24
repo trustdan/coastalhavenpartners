@@ -34,24 +34,24 @@ export function CTASection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <Link href="/signup/candidate">
               <ShimmerButton
-                className="px-8 py-4 text-lg font-semibold"
-                shimmerColor="#ffffff"
+                className="px-8 py-4 text-lg font-semibold border-2"
+                shimmerColor="#10b981"
                 shimmerSize="0.1em"
                 shimmerDuration="2s"
                 borderRadius="12px"
-                background="linear-gradient(135deg, #14b8a6 0%, #059669 50%, #047857 100%)"
+                background="rgba(0, 0, 0, 0.95)"
               >
                 Join as Student
               </ShimmerButton>
             </Link>
             <Link href="/signup/recruiter">
               <ShimmerButton
-                className="px-8 py-4 text-lg font-semibold"
+                className="px-8 py-4 text-lg font-semibold border-2"
                 shimmerColor="#14b8a6"
                 shimmerSize="0.1em"
                 shimmerDuration="2s"
                 borderRadius="12px"
-                background="rgba(0, 0, 0, 0.8)"
+                background="rgba(0, 0, 0, 0.95)"
               >
                 I&apos;m Recruiting
               </ShimmerButton>

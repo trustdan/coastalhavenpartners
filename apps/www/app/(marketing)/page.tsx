@@ -1,5 +1,6 @@
 import { HeroSection } from "@/components/sections/hero-section"
 import { HowItWorksSection } from "@/components/sections/how-it-works-section"
+import { AudienceSections } from "@/components/sections/audience-sections"
 import { BeforeAfterSection } from "@/components/sections/before-after-section"
 import { FeaturesSection } from "@/components/sections/features-section"
 import { StatsSection } from "@/components/sections/stats-section"
@@ -14,6 +15,9 @@ export default function Page() {
 
       {/* How It Works Section */}
       <HowItWorksSection className="bg-muted/30" />
+
+      {/* Audience-Specific Sections */}
+      <AudienceSections />
 
       {/* Before/After Comparison Section */}
       <BeforeAfterSection />
