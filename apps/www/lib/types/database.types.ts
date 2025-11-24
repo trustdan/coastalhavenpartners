@@ -158,44 +158,77 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          bio: string | null
+          company_website: string | null
           created_at: string | null
           firm_name: string
           firm_type: string | null
           id: string
           is_approved: boolean | null
+          is_visible_to_candidates: boolean | null
+          is_visible_to_recruiters: boolean | null
           is_visible_to_schools: boolean | null
           job_title: string
+          linkedin_url: string | null
+          locations: string[] | null
+          profile_photo_url: string | null
+          specialties: string[] | null
           updated_at: string | null
           user_id: string | null
+          visible_fields_to_candidates: Json | null
+          visible_fields_to_recruiters: Json | null
           visible_fields_to_schools: Json | null
+          years_experience: number | null
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          bio?: string | null
+          company_website?: string | null
           created_at?: string | null
           firm_name: string
           firm_type?: string | null
           id?: string
           is_approved?: boolean | null
+          is_visible_to_candidates?: boolean | null
+          is_visible_to_recruiters?: boolean | null
           is_visible_to_schools?: boolean | null
           job_title: string
+          linkedin_url?: string | null
+          locations?: string[] | null
+          profile_photo_url?: string | null
+          specialties?: string[] | null
           updated_at?: string | null
           user_id?: string | null
+          visible_fields_to_candidates?: Json | null
+          visible_fields_to_recruiters?: Json | null
           visible_fields_to_schools?: Json | null
+          years_experience?: number | null
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          bio?: string | null
+          company_website?: string | null
           created_at?: string | null
           firm_name?: string
           firm_type?: string | null
           id?: string
           is_approved?: boolean | null
+          is_visible_to_candidates?: boolean | null
+          is_visible_to_recruiters?: boolean | null
           is_visible_to_schools?: boolean | null
           job_title?: string
+          linkedin_url?: string | null
+          locations?: string[] | null
+          profile_photo_url?: string | null
+          specialties?: string[] | null
           updated_at?: string | null
           user_id?: string | null
+          visible_fields_to_candidates?: Json | null
+          visible_fields_to_recruiters?: Json | null
           visible_fields_to_schools?: Json | null
+          years_experience?: number | null
         }
         Relationships: [
           {

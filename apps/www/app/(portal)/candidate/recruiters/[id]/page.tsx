@@ -68,7 +68,7 @@ export default async function RecruiterProfilePage({
   // Track profile view
   await supabase.from('analytics_events').insert({
     event_type: 'profile_view',
-    actor_id: user.id,
+    user_id: user.id,
     target_id: recruiter.user_id,
     metadata: {
       viewer_role: 'candidate',
