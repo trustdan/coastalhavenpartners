@@ -1,32 +1,37 @@
 "use client"
 
+import { IconCloud } from "@/components/magicui/icon-cloud"
 import { TextAnimate } from "@/components/magicui/text-animate"
 
 const eliteFirms = [
-  "Goldman Sachs",
-  "Morgan Stanley",
-  "JPMorgan",
-  "Citi",
-  "Bank of America",
-  "Barclays",
-  "UBS",
-  "Credit Suisse",
-  "Deutsche Bank",
-  "Wells Fargo",
-  "Blackstone",
-  "KKR",
-  "Apollo",
-  "Carlyle",
-  "TPG",
-  "Sequoia",
-  "a16z",
-  "Benchmark",
-  "Citadel",
-  "Bridgewater",
-  "Two Sigma",
-  "McKinsey",
-  "BCG",
-  "Bain",
+  // Investment Banks - using local paths (will need to download)
+  "/icons/firms/goldmansachs.svg",
+  "/icons/firms/morganstanley.svg",
+  "/icons/firms/jpmorgan.svg",
+  "/icons/firms/citi.svg",
+  "/icons/firms/bankofamerica.svg",
+  "/icons/firms/barclays.svg",
+  "/icons/firms/ubs.svg",
+  "/icons/firms/creditsuisse.svg",
+  "/icons/firms/deutschebank.svg",
+  "/icons/firms/wellsfargo.svg",
+  // Private Equity
+  "/icons/firms/blackstone.svg",
+  "/icons/firms/kkr.svg",
+  "/icons/firms/apollo.svg",
+  "/icons/firms/carlyle.svg",
+  "/icons/firms/tpg.svg",
+  // Venture Capital & Hedge Funds
+  "/icons/firms/sequoia.svg",
+  "/icons/firms/a16z.svg",
+  "/icons/firms/benchmark.svg",
+  "/icons/firms/citadel.svg",
+  "/icons/firms/bridgewater.svg",
+  "/icons/firms/twosigma.svg",
+  // Consulting
+  "/icons/firms/mckinsey.svg",
+  "/icons/firms/bcg.svg",
+  "/icons/firms/bain.svg",
 ]
 
 export function TechStackSection() {
@@ -42,27 +47,20 @@ export function TechStackSection() {
             animation="slideUp"
             className="text-4xl md:text-5xl font-bold mb-4"
           >
-            Where Our Students Are Placed
+            Types of Firms in Our Network
           </TextAnimate>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join a network that connects you with the most prestigious firms in finance
+            We're building connections to help you reach the most prestigious firms in finance
           </p>
         </div>
 
-        {/* Firms Grid */}
+        {/* Icon Cloud Container */}
         <div className="flex items-center justify-center px-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 w-full max-w-6xl">
-            {eliteFirms.map((firm, index) => (
-              <div
-                key={index}
-                className="group relative flex items-center justify-center p-4 md:p-6 rounded-xl border border-white/10 bg-background/50 backdrop-blur-sm hover:border-purple-500/50 transition-all duration-300 hover:scale-105"
-              >
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="relative text-sm md:text-base font-semibold text-center text-foreground/90 group-hover:text-foreground transition-colors duration-300">
-                  {firm}
-                </span>
-              </div>
-            ))}
+          <div className="relative w-full max-w-xl aspect-square rounded-[32px] border border-white/10 bg-gradient-to-br from-background via-background/80 to-background/60 shadow-[0_25px_120px_rgba(0,0,0,0.35)]">
+            <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 blur-2xl" />
+            <div className="relative flex h-full items-center justify-center p-6 md:p-10">
+              <IconCloud images={eliteFirms} />
+            </div>
           </div>
         </div>
 
@@ -88,8 +86,8 @@ export function TechStackSection() {
         {/* Bottom Note */}
         <div className="mt-12 text-center">
           <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
-            Logos represent firms where our verified students have successfully secured internships and full-time positions.
-            Company logos are used for illustrative purposes and do not constitute endorsements.
+            These represent the types of firms our platform is designed to help you connect with.
+            Company names are used for illustrative purposes and do not constitute endorsements or partnerships.
           </p>
         </div>
       </div>

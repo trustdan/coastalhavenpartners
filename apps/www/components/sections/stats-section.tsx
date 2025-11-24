@@ -1,24 +1,17 @@
 "use client"
 
-import { NumberTicker } from "@/components/magicui/number-ticker"
 import { TextAnimate } from "@/components/magicui/text-animate"
 
-interface StatCardProps {
-  value: number
-  suffix?: string
+interface FeatureCardProps {
+  icon: string
   label: string
   description: string
 }
 
-function StatCard({ value, suffix = "", label, description }: StatCardProps) {
+function FeatureCard({ icon, label, description }: FeatureCardProps) {
   return (
     <div className="flex flex-col items-center text-center p-6">
-      <div className="mb-2">
-        <span className="text-5xl md:text-6xl font-bold bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
-          <NumberTicker value={value} />
-          {suffix}
-        </span>
-      </div>
+      <div className="mb-4 text-5xl">{icon}</div>
       <h3 className="text-xl md:text-2xl font-semibold mb-2">{label}</h3>
       <p className="text-sm md:text-base text-muted-foreground max-w-xs">
         {description}
@@ -28,30 +21,26 @@ function StatCard({ value, suffix = "", label, description }: StatCardProps) {
 }
 
 export function StatsSection() {
-  const stats = [
+  const features = [
     {
-      value: 2500,
-      suffix: "+",
-      label: "Verified Students",
-      description: "Top performers from target schools with GPA verification",
+      icon: "🎓",
+      label: "Student Verification",
+      description: "Secure transcript verification system to showcase your academic excellence",
     },
     {
-      value: 150,
-      suffix: "+",
-      label: "Elite Firms",
-      description: "Investment banks, PE firms, hedge funds, and VC partners",
+      icon: "🔍",
+      label: "Firm Discovery",
+      description: "Browse and connect with investment banks, PE firms, and hedge funds",
     },
     {
-      value: 30,
-      suffix: "+",
-      label: "Target Schools",
-      description: "Ivy League and top business schools represented",
+      icon: "🔒",
+      label: "Privacy Controls",
+      description: "You control what information is visible and who can contact you",
     },
     {
-      value: 92,
-      suffix: "%",
-      label: "Placement Rate",
-      description: "Students successfully placed at their target firms",
+      icon: "📊",
+      label: "Profile Analytics",
+      description: "Track who views your profile and measure your networking impact",
     },
   ]
 
@@ -64,22 +53,21 @@ export function StatsSection() {
             animation="slideUp"
             className="text-4xl md:text-5xl font-bold mb-4"
           >
-            The Numbers Speak for Themselves
+            How It Works
           </TextAnimate>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join a thriving community of finance professionals and aspiring talent
+            A streamlined platform designed for elite finance recruiting
           </p>
         </div>
 
-        {/* Stats Grid */}
+        {/* Features Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
-          {stats.map((stat, index) => (
-            <StatCard
+          {features.map((feature, index) => (
+            <FeatureCard
               key={index}
-              value={stat.value}
-              suffix={stat.suffix}
-              label={stat.label}
-              description={stat.description}
+              icon={feature.icon}
+              label={feature.label}
+              description={feature.description}
             />
           ))}
         </div>
@@ -87,12 +75,12 @@ export function StatsSection() {
         {/* Bottom CTA */}
         <div className="mt-12 md:mt-16 text-center">
           <p className="text-sm md:text-base text-muted-foreground">
-            Ready to join the network?{" "}
+            Ready to get started?{" "}
             <a
               href="/signup/candidate"
               className="text-purple-500 hover:text-purple-400 font-semibold underline underline-offset-4 transition-colors"
             >
-              Create your profile
+              Create your profile today
             </a>
           </p>
         </div>
