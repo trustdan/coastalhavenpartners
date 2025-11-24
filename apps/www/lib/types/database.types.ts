@@ -163,9 +163,11 @@ export type Database = {
           firm_type: string | null
           id: string
           is_approved: boolean | null
+          is_visible_to_schools: boolean | null
           job_title: string
           updated_at: string | null
           user_id: string | null
+          visible_fields_to_schools: Json | null
         }
         Insert: {
           approved_at?: string | null
@@ -175,9 +177,11 @@ export type Database = {
           firm_type?: string | null
           id?: string
           is_approved?: boolean | null
+          is_visible_to_schools?: boolean | null
           job_title: string
           updated_at?: string | null
           user_id?: string | null
+          visible_fields_to_schools?: Json | null
         }
         Update: {
           approved_at?: string | null
@@ -187,9 +191,11 @@ export type Database = {
           firm_type?: string | null
           id?: string
           is_approved?: boolean | null
+          is_visible_to_schools?: boolean | null
           job_title?: string
           updated_at?: string | null
           user_id?: string | null
+          visible_fields_to_schools?: Json | null
         }
         Relationships: [
           {
@@ -201,6 +207,69 @@ export type Database = {
           },
           {
             foreignKeyName: "recruiter_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_profiles: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          department_name: string | null
+          id: string
+          is_approved: boolean | null
+          school_domain: string | null
+          school_name: string
+          updated_at: string | null
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          department_name?: string | null
+          id?: string
+          is_approved?: boolean | null
+          school_domain?: string | null
+          school_name: string
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          department_name?: string | null
+          id?: string
+          is_approved?: boolean | null
+          school_domain?: string | null
+          school_name?: string
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_profiles_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
