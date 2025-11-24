@@ -40,40 +40,28 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 export function FeaturesSection() {
   const features = [
     {
-      icon: "🤖",
-      title: "AI-Powered Research",
+      icon: "🛡️",
+      title: "GPA-Verified Talent",
       description:
-        "Cutting-edge AI tools analyze online presence, recent activity, and industry insights to find genuine conversation starters.",
+        "Every student profile is verified with transcripts, ensuring you're connecting with top performers from target schools.",
     },
     {
-      icon: "🔍",
-      title: "Every Contact Vetted",
+      icon: "🔗",
+      title: "Students, Recruiters, Career Services",
       description:
-        "Quality over quantity approach ensures every recipient is relevant, qualified, and likely to engage with your message.",
+        "A balanced ecosystem where candidates showcase skills, recruiters discover talent, and schools track placements.",
     },
     {
-      icon: "📊",
-      title: "Full Analytics",
+      icon: "🔒",
+      title: "Control Your Visibility",
       description:
-        "Track opens, clicks, and responses in real-time with comprehensive dashboards and detailed engagement metrics.",
+        "Granular privacy controls let you decide who sees what - from contact info to GPA to preferred locations.",
     },
     {
-      icon: "📬",
-      title: "Technical Deliverability",
+      icon: "📈",
+      title: "Track Your Impact",
       description:
-        "Properly configured SPF, DKIM, and DMARC records ensure your emails land in the inbox, not the spam folder.",
-    },
-    {
-      icon: "🎯",
-      title: "Quality Over Quantity",
-      description:
-        "No spray-and-pray tactics. Each email is crafted with care, research, and genuine relevance to the recipient.",
-    },
-    {
-      icon: "💬",
-      title: "Complete Transparency",
-      description:
-        "See exactly what we send on your behalf. Full visibility into every email, every metric, every result.",
+        "Students see who viewed their profile. Recruiters track outreach. Schools monitor placement rates.",
     },
   ]
 
@@ -86,16 +74,16 @@ export function FeaturesSection() {
             animation="slideUp"
             className="text-4xl md:text-5xl font-bold mb-4"
           >
-            Why Choose Us
+            Built for Elite Finance Careers
           </TextAnimate>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            We combine cutting-edge AI technology with human expertise to
-            deliver outreach that actually works
+            A verified network designed to connect top talent with exceptional opportunities
+            in investment banking, private equity, and hedge funds
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {features.map((feature, index) => (
             <FeatureCard
               key={index}
@@ -109,8 +97,8 @@ export function FeaturesSection() {
         {/* Bottom Note */}
         <div className="mt-12 text-center">
           <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
-            Every aspect of our service is designed to maximize engagement while
-            maintaining authenticity and respect for your recipients.
+            Every feature is designed to create meaningful connections between verified talent
+            and top-tier firms while respecting privacy and professionalism.
           </p>
         </div>
       </div>

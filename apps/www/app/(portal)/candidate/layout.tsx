@@ -47,7 +47,25 @@ export default async function CandidateLayout({
           <Link href="/candidate" className="text-xl font-bold">
             Coastal Haven Partners
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
+            <Link
+              href="/candidate"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/candidate/recruiters"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Browse Recruiters
+            </Link>
+            <Link
+              href="/candidate/edit-profile"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Edit Profile
+            </Link>
             <span className="text-sm text-neutral-600 dark:text-neutral-400">
               {profile?.full_name}
             </span>

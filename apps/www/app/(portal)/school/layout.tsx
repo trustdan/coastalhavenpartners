@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-export default async function RecruiterLayout({
+export default async function SchoolLayout({
   children,
 }: {
   children: React.ReactNode
@@ -16,22 +16,30 @@ export default async function RecruiterLayout({
     redirect('/login')
   }
 
-  // Verify user is a recruiter
+  // Verify user is a school admin
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name')
     .eq('id', user.id)
     .single()
 
-  // Redirect candidates to candidate dashboard
+  // Redirect non-school-admins
   if (profile?.role === 'candidate') {
     redirect('/candidate')
   }
-
-  // If not recruiter or candidate, redirect to login
-  if (profile?.role !== 'recruiter') {
+  if (profile?.role === 'recruiter') {
+    redirect('/recruiter')
+  }
+  if (profile?.role !== 'school_admin') {
     redirect('/login')
   }
+
+  // Get school profile
+  const { data: schoolProfile } = await supabase
+    .from('school_profiles')
+    .select('school_name, is_approved')
+    .eq('user_id', user.id)
+    .single()
 
   async function handleLogout() {
     'use server'
@@ -44,24 +52,31 @@ export default async function RecruiterLayout({
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <nav className="border-b bg-white dark:bg-neutral-900">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <Link href="/recruiter" className="text-xl font-bold">
-            Coastal Haven Partners - Recruiter Portal
-          </Link>
+          <div>
+            <Link href="/school" className="text-xl font-bold">
+              Coastal Haven Partners - Career Services
+            </Link>
+            {schoolProfile?.school_name && (
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                {schoolProfile.school_name}
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-6">
             <Link
-              href="/recruiter"
+              href="/school"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
-              Candidates
+              Students
             </Link>
             <Link
-              href="/recruiter/network"
+              href="/school/recruiters"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
-              Network
+              Recruiters
             </Link>
             <Link
-              href="/recruiter/settings"
+              href="/school/settings"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
               Settings

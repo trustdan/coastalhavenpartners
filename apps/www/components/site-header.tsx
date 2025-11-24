@@ -11,23 +11,18 @@ import { AnimatedThemeToggler } from "@/components/magicui/animated-theme-toggle
 const menuItem = [
   {
     id: 1,
-    label: "Features",
-    href: "/features",
+    label: "For Students",
+    href: "#students",
   },
   {
     id: 2,
-    label: "Pricing",
-    href: "https://www.upwork.com/services/product/marketing-personalized-emails-delivered-to-the-types-of-people-you-want-1990863338668663734",
+    label: "For Recruiters",
+    href: "#recruiters",
   },
   {
     id: 3,
-    label: "Careers",
-    href: "#",
-  },
-  {
-    id: 4,
-    label: "Contact Us",
-    href: "#",
+    label: "For Schools",
+    href: "#schools",
   },
 ];
 
@@ -109,15 +104,40 @@ export function SiteHeader() {
           >
             <Image
               src="/icon.svg"
-              alt="Full Send Emails logo"
+              alt="Coastal Haven Partners logo"
               width={32}
               height={32}
               className="rounded-full shadow-lg shadow-primary/30"
             />
-            <span>Full Send Emails</span>
+            <span>Coastal Haven Partners</span>
           </Link>
 
-          <div className="ml-auto flex h-full items-center gap-4">
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex ml-auto items-center gap-6">
+            {menuItem.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="ml-auto md:ml-6 flex h-full items-center gap-3">
+            <Link
+              href="/login"
+              className="hidden md:inline-flex text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/signup"
+              className="hidden md:inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+            >
+              Get Started
+            </Link>
             <AnimatedThemeToggler />
           </div>
           <button
@@ -152,12 +172,12 @@ export function SiteHeader() {
             >
               <Image
                 src="/icon.svg"
-                alt="Full Send Emails logo"
+                alt="Coastal Haven Partners logo"
                 width={32}
                 height={32}
                 className="rounded-full shadow-lg shadow-primary/30"
               />
-              <span>Full Send Emails</span>
+              <span>Coastal Haven Partners</span>
             </Link>
 
             <button
@@ -191,6 +211,30 @@ export function SiteHeader() {
                 </Link>
               </motion.li>
             ))}
+            {/* Mobile Auth Buttons */}
+            <motion.li
+              variants={mobileLinkVar}
+              className="border-grey-dark pl-6 py-0.5 border-b md:hidden"
+            >
+              <Link
+                className="hover:text-grey flex w-full items-center text-xl transition-[color,transform] duration-300"
+                style={{ height: "var(--navigation-height)" }}
+                href="/login"
+              >
+                Sign In
+              </Link>
+            </motion.li>
+            <motion.li
+              variants={mobileLinkVar}
+              className="pl-6 py-4 md:hidden"
+            >
+              <Link
+                className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-lg font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+                href="/signup"
+              >
+                Get Started
+              </Link>
+            </motion.li>
           </motion.ul>
         </motion.nav>
       </AnimatePresence>

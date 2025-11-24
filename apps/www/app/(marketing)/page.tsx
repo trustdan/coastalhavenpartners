@@ -3,6 +3,8 @@ import { HowItWorksSection } from "@/components/sections/how-it-works-section"
 import { ResultsSection } from "@/components/sections/results-section"
 import { BeforeAfterSection } from "@/components/sections/before-after-section"
 import { FeaturesSection } from "@/components/sections/features-section"
+import { StatsSection } from "@/components/sections/stats-section"
+import { TestimonialsSection } from "@/components/sections/testimonials-section"
 import { TechStackSection } from "@/components/sections/tech-stack-section"
 import { CTASection } from "@/components/sections/cta-section"
 
@@ -23,6 +25,12 @@ export default function Page() {
 
       {/* Features Section */}
       <FeaturesSection />
+
+      {/* Stats Section */}
+      <StatsSection />
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
 
       {/* Tech Stack Section */}
       <TechStackSection />

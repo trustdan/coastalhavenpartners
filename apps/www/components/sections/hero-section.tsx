@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Link from "next/link"
 import { Meteors } from "@/components/magicui/meteors"
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text"
 import { AuroraText } from "@/components/magicui/aurora-text"
@@ -12,13 +13,6 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ className }: HeroSectionProps) {
-  const scrollToHowItWorks = () => {
-    const howItWorksSection = document.getElementById("how-it-works")
-    if (howItWorksSection) {
-      howItWorksSection.scrollIntoView({ behavior: "smooth" })
-    }
-  }
-
   return (
     <section
       className={cn(
@@ -39,24 +33,35 @@ export function HeroSection({ className }: HeroSectionProps) {
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-center space-y-8 text-center">
           {/* Main Headline - Animated Shiny Text */}
           <AnimatedShinyText className="text-5xl font-bold leading-tight tracking-tight md:text-7xl lg:text-8xl">
-            Outbound that reads like a warm personal intro
+            Where Elite Talent Meets Boutique Opportunity
           </AnimatedShinyText>
 
           {/* Subtitle - Aurora Text */}
           <AuroraText className="max-w-3xl text-lg text-muted-foreground md:text-xl lg:text-2xl">
-            AI-powered email research that lands in the inbox and gets read
+            The verified network connecting top finance students with investment banks, PE firms, and hedge funds
           </AuroraText>
 
-          {/* CTA Button */}
-          <div className="pt-4">
-            <ShimmerButton
-              onClick={scrollToHowItWorks}
-              className="px-8 py-4 text-base font-semibold md:px-10 md:py-5 md:text-lg"
-              shimmerColor="#8b5cf6"
-              shimmerDuration="2.5s"
-            >
-              See How It Works
-            </ShimmerButton>
+          {/* CTA Buttons */}
+          <div className="flex flex-col items-center gap-4 pt-4 sm:flex-row sm:gap-6">
+            <Link href="/signup/candidate">
+              <ShimmerButton
+                className="px-8 py-4 text-base font-semibold md:px-10 md:py-5 md:text-lg"
+                shimmerColor="#8b5cf6"
+                shimmerDuration="2.5s"
+              >
+                Join as Student
+              </ShimmerButton>
+            </Link>
+            <Link href="/signup/recruiter">
+              <ShimmerButton
+                className="px-8 py-4 text-base font-semibold md:px-10 md:py-5 md:text-lg border-2"
+                shimmerColor="#8b5cf6"
+                shimmerDuration="2.5s"
+                background="rgba(0, 0, 0, 0.95)"
+              >
+                I&apos;m Recruiting
+              </ShimmerButton>
+            </Link>
           </div>
         </div>
       </div>
