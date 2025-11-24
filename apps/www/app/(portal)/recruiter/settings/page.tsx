@@ -122,13 +122,13 @@ export default function RecruiterSettingsPage() {
         setVisibleToSchools(recruiterData.is_visible_to_schools || false)
 
         if (recruiterData.visible_fields_to_candidates) {
-          setCandidateVisibility(recruiterData.visible_fields_to_candidates)
+          setCandidateVisibility(recruiterData.visible_fields_to_candidates as VisibilityFields)
         }
         if (recruiterData.visible_fields_to_recruiters) {
-          setRecruiterVisibility(recruiterData.visible_fields_to_recruiters)
+          setRecruiterVisibility(recruiterData.visible_fields_to_recruiters as VisibilityFields)
         }
         if (recruiterData.visible_fields_to_schools) {
-          setSchoolVisibility(recruiterData.visible_fields_to_schools)
+          setSchoolVisibility(recruiterData.visible_fields_to_schools as VisibilityFields)
         }
       }
 
