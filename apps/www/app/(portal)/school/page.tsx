@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Linkedin, GraduationCap, TrendingUp } from 'lucide-react'
 
+type CandidateStatus = 'pending_verification' | 'verified' | 'active' | 'placed' | 'rejected'
+const validStatuses: CandidateStatus[] = ['pending_verification', 'verified', 'active', 'placed', 'rejected']
+
 export default async function SchoolDashboardPage({
   searchParams,
 }: {
@@ -11,7 +14,10 @@ export default async function SchoolDashboardPage({
   const supabase = await createClient()
   const params = await searchParams
 
-  const status = typeof params.status === 'string' ? params.status : undefined
+  const statusParam = typeof params.status === 'string' ? params.status : undefined
+  const status = statusParam && validStatuses.includes(statusParam as CandidateStatus) 
+    ? (statusParam as CandidateStatus) 
+    : undefined
   const major = typeof params.major === 'string' ? params.major : undefined
 
   const { data: { user } } = await supabase.auth.getUser()
