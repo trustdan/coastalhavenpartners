@@ -11,6 +11,7 @@ export async function createCandidateProfile(data: {
   major: string
   gpa: number
   graduationYear: number
+  linkedinUrl?: string
 }) {
   console.log('Creating candidate profile for:', data.userId)
 
@@ -53,12 +54,19 @@ export async function createCandidateProfile(data: {
         id: data.userId,
         email: data.email,
         full_name: data.fullName,
-        role: 'candidate'
+        role: 'candidate',
+        linkedin_url: data.linkedinUrl || null
       }, { onConflict: 'id' })
-      
+
     if (insertError) {
       console.error('Error creating base profile:', insertError)
     }
+  } else if (data.linkedinUrl) {
+    // Update LinkedIn URL if profile already exists
+    await supabaseAdmin
+      .from('profiles')
+      .update({ linkedin_url: data.linkedinUrl })
+      .eq('id', data.userId)
   }
 
   // 2. Insert Candidate Profile

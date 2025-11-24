@@ -28,6 +28,7 @@ export default function CandidateSignupPage() {
     const major = formData.get('major') as string
     const gpa = parseFloat(formData.get('gpa') as string)
     const graduationYear = parseInt(formData.get('graduationYear') as string)
+    const linkedinUrl = formData.get('linkedinUrl') as string
 
     // Validate GPA
     if (gpa < 2.5) {
@@ -68,6 +69,7 @@ export default function CandidateSignupPage() {
           major,
           gpa,
           graduationYear,
+          linkedinUrl,
         })
 
         // Redirect to email verification page
@@ -178,6 +180,16 @@ export default function CandidateSignupPage() {
               max="4.0"
               required
               placeholder="3.85"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="linkedinUrl">LinkedIn Profile (Optional)</Label>
+            <Input
+              id="linkedinUrl"
+              name="linkedinUrl"
+              type="url"
+              placeholder="https://www.linkedin.com/in/yourprofile"
             />
           </div>
 

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { verifyCandidate, revokeCandidate } from '../actions'
 import Link from 'next/link'
-import { Mail } from 'lucide-react'
+import { Mail, Linkedin } from 'lucide-react'
 
 export default async function AdminCandidatesPage() {
   const supabase = await createClient()
@@ -14,7 +14,8 @@ export default async function AdminCandidatesPage() {
       *,
       profiles:user_id (
         full_name,
-        email
+        email,
+        linkedin_url
       )
     `)
     .order('created_at', { ascending: false })
@@ -65,6 +66,14 @@ export default async function AdminCandidatesPage() {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
+                    {candidate.profiles?.linkedin_url && (
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href={candidate.profiles.linkedin_url} target="_blank" rel="noopener noreferrer" title="View LinkedIn">
+                          <Linkedin className="h-4 w-4" />
+                          <span className="sr-only">LinkedIn</span>
+                        </a>
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" asChild>
                       <a href={`mailto:${candidate.profiles?.email}`} title="Contact Candidate">
                         <Mail className="h-4 w-4" />

@@ -27,6 +27,7 @@ export default function RecruiterSignupPage() {
     const firmName = formData.get('firmName') as string
     const firmType = formData.get('firmType') as string
     const jobTitle = formData.get('jobTitle') as string
+    const linkedinUrl = formData.get('linkedinUrl') as string
 
     try {
       // Step 1: Sign up user
@@ -53,6 +54,7 @@ export default function RecruiterSignupPage() {
           firmName,
           firmType,
           jobTitle,
+          linkedinUrl,
         })
 
         // Redirect to email verification page
@@ -146,6 +148,16 @@ export default function RecruiterSignupPage() {
               type="text"
               required
               placeholder="Managing Director, Campus Recruiting"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="linkedinUrl">LinkedIn Profile (Optional)</Label>
+            <Input
+              id="linkedinUrl"
+              name="linkedinUrl"
+              type="url"
+              placeholder="https://www.linkedin.com/in/yourprofile"
             />
           </div>
 

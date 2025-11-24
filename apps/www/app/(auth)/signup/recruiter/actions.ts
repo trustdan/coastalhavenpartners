@@ -10,6 +10,7 @@ export async function createRecruiterProfile(data: {
   firmName: string
   firmType: string
   jobTitle: string
+  linkedinUrl?: string
 }) {
   console.log('Creating recruiter profile for:', data.userId)
 
@@ -48,21 +49,28 @@ export async function createRecruiterProfile(data: {
   // If not found, FORCE create it using provided data
   if (!profileExists) {
     console.log('Force creating profile...')
-    
+
     const { error: insertError } = await supabaseAdmin
       .from('profiles')
       .upsert({
         id: data.userId,
         email: data.email,
         full_name: data.fullName,
-        role: 'recruiter'
+        role: 'recruiter',
+        linkedin_url: data.linkedinUrl || null
       }, { onConflict: 'id' })
-    
+
     if (insertError) {
       console.error('Error creating profile:', insertError)
     } else {
       console.log('Profile created successfully')
     }
+  } else if (data.linkedinUrl) {
+    // Update LinkedIn URL if profile already exists
+    await supabaseAdmin
+      .from('profiles')
+      .update({ linkedin_url: data.linkedinUrl })
+      .eq('id', data.userId)
   }
 
   // 2. Insert Recruiter Profile

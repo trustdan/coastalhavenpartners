@@ -17,6 +17,7 @@ export default function EditProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<any>(null)
+  const [linkedinUrl, setLinkedinUrl] = useState<string>('')
 
   useEffect(() => {
     async function loadProfile() {
@@ -32,7 +33,15 @@ export default function EditProfilePage() {
         .eq('user_id', user.id)
         .single()
 
+      // Load LinkedIn URL from profiles table
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('linkedin_url')
+        .eq('id', user.id)
+        .single()
+
       setProfile(data)
+      setLinkedinUrl(profileData?.linkedin_url || '')
       setLoading(false)
     }
 
@@ -45,6 +54,8 @@ export default function EditProfilePage() {
 
     try {
       const formData = new FormData(e.currentTarget)
+      const linkedinUrl = formData.get('linkedinUrl') as string
+
       const updates = {
         school_name: formData.get('schoolName') as string,
         major: formData.get('major') as string,
@@ -54,12 +65,23 @@ export default function EditProfilePage() {
         preferred_locations: (formData.get('preferredLocations') as string).split(',').map(s => s.trim()).filter(Boolean),
       }
 
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('candidate_profiles')
         .update(updates)
         .eq('id', profile.id)
 
-      if (error) throw error
+      if (profileError) throw profileError
+
+      // Update LinkedIn URL in profiles table
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && linkedinUrl) {
+        const { error: linkedinError } = await supabase
+          .from('profiles')
+          .update({ linkedin_url: linkedinUrl })
+          .eq('id', user.id)
+
+        if (linkedinError) throw linkedinError
+      }
 
       toast.success('Profile updated successfully')
       router.refresh()
@@ -124,6 +146,16 @@ export default function EditProfilePage() {
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
           <h2 className="text-lg font-semibold mb-6">Academic & Professional</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="linkedinUrl">LinkedIn Profile URL</Label>
+              <Input
+                id="linkedinUrl"
+                name="linkedinUrl"
+                type="url"
+                defaultValue={linkedinUrl}
+                placeholder="https://www.linkedin.com/in/yourprofile"
+              />
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="schoolName">School</Label>
