@@ -25,17 +25,17 @@ export function SiteFooter() {
           <div className="mb-12 flex-col flex gap-4">
             <Link href="/" className="flex items-center gap-2">
               <Image
-                src="/icon.svg"
-                width={40}
-                height={40}
-                alt="Full Send Emails logo"
-                className="rounded-full shadow-lg shadow-primary/30"
+                src="/logo.svg"
+                width={50}
+                height={38}
+                alt="Coastal Haven Partners logo"
+                className="shadow-lg shadow-primary/20"
               />
               <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-                Full Send Emails
+                Coastal Haven Partners
               </span>
             </Link>
-            <p className="max-w-xs">AI-Powered Email Outreach Services</p>
+            <p className="max-w-xs">Elite Finance Talent Network</p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-10">
             {footerNavs.map((nav) => (
@@ -64,7 +64,7 @@ export function SiteFooter() {
           <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">
             Copyright © {new Date().getFullYear()}{" "}
             <Link href="/" className="cursor-pointer">
-              Full Send Emails
+              Coastal Haven Partners
             </Link>
             . All Rights Reserved.
           </span>

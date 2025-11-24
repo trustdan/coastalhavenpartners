@@ -14,13 +14,13 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
     <div className="relative group">
       <ShineBorder
         borderWidth={2}
-        shineColor={["#6366f1", "#8b5cf6", "#06b6d4"]}
+        shineColor={["#14b8a6", "#10b981", "#047857"]}
         className="p-6 bg-background/50 backdrop-blur-sm rounded-2xl h-full transition-all duration-300"
         duration={14}
       >
         <div className="flex flex-col items-center text-center h-full">
           {/* Icon Circle */}
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-cyan-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500/10 via-emerald-500/10 to-green-600/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
             <span className="text-4xl">{icon}</span>
           </div>
 

@@ -103,11 +103,11 @@ export function SiteHeader() {
             href="/"
           >
             <Image
-              src="/icon.svg"
+              src="/logo.svg"
               alt="Coastal Haven Partners logo"
-              width={32}
-              height={32}
-              className="rounded-full shadow-lg shadow-primary/30"
+              width={40}
+              height={30}
+              className="shadow-lg shadow-primary/20"
             />
             <span>Coastal Haven Partners</span>
           </Link>
@@ -171,11 +171,11 @@ export function SiteHeader() {
               href="/"
             >
               <Image
-                src="/icon.svg"
+                src="/logo.svg"
                 alt="Coastal Haven Partners logo"
-                width={32}
-                height={32}
-                className="rounded-full shadow-lg shadow-primary/30"
+                width={40}
+                height={30}
+                className="shadow-lg shadow-primary/20"
               />
               <span>Coastal Haven Partners</span>
             </Link>

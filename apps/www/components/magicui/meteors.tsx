@@ -60,14 +60,14 @@ export const Meteors = ({
           style={style}
           className={cn(
             "animate-meteor pointer-events-none absolute size-[0.125rem] rounded-full",
-            "bg-indigo-500 dark:bg-purple-400",
+            "bg-emerald-500 dark:bg-teal-400",
             "opacity-100",
-            "shadow-[0_0_8px_2px_rgba(99,102,241,0.75)] dark:shadow-[0_0_8px_2px_rgba(168,85,247,0.7)]",
+            "shadow-[0_0_8px_2px_rgba(16,185,129,0.75)] dark:shadow-[0_0_8px_2px_rgba(45,212,191,0.7)]",
             className
           )}
         >
           {/* Meteor Tail */}
-          <div className="pointer-events-none absolute top-1/2 -z-10 h-px w-[24px] -translate-y-1/2 opacity-100 bg-linear-to-r from-indigo-500/80 to-transparent dark:from-purple-400/70 dark:to-transparent" />
+          <div className="pointer-events-none absolute top-1/2 -z-10 h-px w-[24px] -translate-y-1/2 opacity-100 bg-linear-to-r from-emerald-500/80 to-transparent dark:from-teal-400/70 dark:to-transparent" />
         </span>
       ))}
     </>

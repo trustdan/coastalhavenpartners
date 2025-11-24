@@ -14,11 +14,10 @@ export function BeforeAfterSection() {
             animation="slideUp"
             className="text-4xl md:text-5xl font-bold mb-4"
           >
-            The Difference is in the Details
+            Stand Out From the Crowd
           </TextAnimate>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            See how AI-powered research transforms generic templates into
-            genuine conversations
+            See how research-backed outreach transforms forgettable emails into memorable conversations
           </p>
         </div>
 
@@ -38,25 +37,19 @@ export function BeforeAfterSection() {
               <h3 className="text-xl md:text-2xl font-bold mb-4 text-red-900 dark:text-red-100">
                 Generic Template
               </h3>
-              <div className="text-base md:text-lg leading-relaxed text-foreground/80">
+              <div className="text-base md:text-lg leading-relaxed text-foreground/80 font-mono bg-muted/30 rounded-lg p-4">
                 <p className="mb-3">Hi,</p>
                 <p className="mb-3">
-                  I'd like to discuss our product with you. We offer great
-                  solutions for businesses like yours.
+                  I'm a junior at State University studying finance. I'm very interested in investment banking and would love to learn more about opportunities at your firm.
                 </p>
                 <p className="mb-3">
-                  Our platform can help you increase efficiency and reduce
-                  costs. Many companies have seen amazing results.
+                  I'm a hard worker and passionate about finance. Please let me know if there are any openings.
                 </p>
-                <p className="mb-3">
-                  Would you be interested in a quick call to learn more?
-                </p>
-                <p>Best regards</p>
+                <p>Thanks</p>
               </div>
               <div className="mt-6 pt-6 border-t border-red-500/20">
                 <p className="text-sm text-muted-foreground">
-                  ⚠️ <span className="font-semibold">Issues:</span> No
-                  personalization, vague claims, obvious template
+                  ⚠️ <span className="font-semibold">Issues:</span> No personalization, no value proposition, forgettable
                 </p>
               </div>
             </div>
@@ -79,32 +72,32 @@ export function BeforeAfterSection() {
                 </span>
               </div>
               <h3 className="text-xl md:text-2xl font-bold mb-4 text-green-900 dark:text-green-100">
-                AI-Researched Personalization
+                Coastal Haven-Powered Outreach
               </h3>
-              <div className="text-base md:text-lg leading-relaxed">
+              <div className="text-base md:text-lg leading-relaxed font-mono bg-muted/30 rounded-lg p-4">
                 <TypingAnimation
-                  duration={30}
+                  duration={20}
                   delay={500}
                   startOnView={true}
                   showCursor={true}
                   loop={false}
                   className="block leading-relaxed whitespace-pre-line"
                 >
-                  {`Hi Sarah — saw your recent LinkedIn post on warehouse automation ROI. Your point about lean manufacturing really resonated.
+                  {`Hi Ms. Chen — I noticed you're leading Goldman's TMT coverage recruiting this cycle. Your panel at the Women in Finance Summit on sponsor-backed tech exits was excellent.
 
-I work with mid-market logistics companies implementing AI for order routing. One of our clients cut their fulfillment time by 40% last quarter.
+I'm currently a junior at Michigan completing my third semester as a portfolio manager in our student fund, where I led our thesis on vertical SaaS consolidation. I saw Goldman's recent role advising on the Procore transaction — that deal structure aligns closely with a case I presented last month.
 
-Given your focus on operational efficiency, I thought this might be relevant. Would you be open to a brief conversation about what we're seeing work in the industry?
+I'd welcome 15 minutes to learn how your team evaluates candidates with sector-specific experience. Would next week work?
 
 Best,
-Alex`}
+Jordan`}
                 </TypingAnimation>
               </div>
               <div className="mt-6 pt-6 border-t border-green-500/20">
                 <p className="text-sm text-muted-foreground">
                   ✨ <span className="font-semibold">Personalization:</span>{" "}
                   <span className="text-green-600 dark:text-green-400 font-medium">
-                    Name
+                    Recruiter Name
                   </span>
                   ,{" "}
                   <span className="text-green-600 dark:text-green-400 font-medium">
@@ -112,7 +105,11 @@ Alex`}
                   </span>
                   ,{" "}
                   <span className="text-green-600 dark:text-green-400 font-medium">
-                    Relevant Case Study
+                    Relevant Deal
+                  </span>
+                  ,{" "}
+                  <span className="text-green-600 dark:text-green-400 font-medium">
+                    Specific Ask
                   </span>
                 </p>
               </div>
@@ -123,9 +120,8 @@ Alex`}
         {/* Bottom Note */}
         <div className="mt-12 text-center">
           <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
-            Every email is crafted with genuine research and context. No
-            templates, no spray-and-pray — just personalized outreach that
-            respects the recipients' time.
+            Stand out with personalized outreach that shows you've done your homework. 
+            Connect with recruiters who appreciate candidates who go the extra mile.
           </p>
         </div>
       </div>

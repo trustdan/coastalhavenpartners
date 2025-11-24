@@ -4,34 +4,30 @@ import { IconCloud } from "@/components/magicui/icon-cloud"
 import { TextAnimate } from "@/components/magicui/text-animate"
 
 const eliteFirms = [
-  // Investment Banks - using local paths (will need to download)
+  // Investment Banks
   "/icons/firms/goldmansachs.svg",
-  "/icons/firms/morganstanley.svg",
-  "/icons/firms/jpmorgan.svg",
+  "/icons/firms/ms.svg",
+  "/icons/firms/jpm.svg",
   "/icons/firms/citi.svg",
-  "/icons/firms/bankofamerica.svg",
+  "/icons/firms/bofa.svg",
   "/icons/firms/barclays.svg",
   "/icons/firms/ubs.svg",
   "/icons/firms/creditsuisse.svg",
-  "/icons/firms/deutschebank.svg",
-  "/icons/firms/wellsfargo.svg",
+  "/icons/firms/db.svg",
+  "/icons/firms/wf.svg",
   // Private Equity
-  "/icons/firms/blackstone.svg",
+  "/icons/firms/bs.svg",
   "/icons/firms/kkr.svg",
   "/icons/firms/apollo.svg",
   "/icons/firms/carlyle.svg",
   "/icons/firms/tpg.svg",
   // Venture Capital & Hedge Funds
-  "/icons/firms/sequoia.svg",
-  "/icons/firms/a16z.svg",
+  "/icons/firms/seqoia.svg",
+  "/icons/firms/andreeson.svg",
   "/icons/firms/benchmark.svg",
   "/icons/firms/citadel.svg",
   "/icons/firms/bridgewater.svg",
   "/icons/firms/twosigma.svg",
-  // Consulting
-  "/icons/firms/mckinsey.svg",
-  "/icons/firms/bcg.svg",
-  "/icons/firms/bain.svg",
 ]
 
 export function TechStackSection() {
@@ -57,7 +53,7 @@ export function TechStackSection() {
         {/* Icon Cloud Container */}
         <div className="flex items-center justify-center px-4">
           <div className="relative w-full max-w-xl aspect-square rounded-[32px] border border-white/10 bg-gradient-to-br from-background via-background/80 to-background/60 shadow-[0_25px_120px_rgba(0,0,0,0.35)]">
-            <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 blur-2xl" />
+            <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-teal-500/10 via-transparent to-emerald-500/10 blur-2xl" />
             <div className="relative flex h-full items-center justify-center p-6 md:p-10">
               <IconCloud images={eliteFirms} />
             </div>
@@ -77,9 +73,6 @@ export function TechStackSection() {
           </span>
           <span className="rounded-full border bg-background/50 px-3 py-1">
             Hedge Funds
-          </span>
-          <span className="rounded-full border bg-background/50 px-3 py-1">
-            Management Consulting
           </span>
         </div>
 

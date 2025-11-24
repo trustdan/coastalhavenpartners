@@ -70,9 +70,9 @@ export function absoluteUrl(path: string) {
 }
 
 export function constructMetadata({
-  title = "AI-Powered Email Outreach | Personalized at Scale",
-  description = "Transform cold outreach into warm intros. AI research + personalization = 85% open rates.",
-  image = absoluteUrl("/hero-light.png"),
+  title = "Coastal Haven Partners | Elite Finance Talent Network",
+  description = "The network connecting top finance students with investment banks, PE firms, and hedge funds. Create your profile and get discovered by elite recruiters.",
+  image = absoluteUrl("/logo.svg"),
   ...props
 }: {
   title?: string
@@ -84,14 +84,16 @@ export function constructMetadata({
     title,
     description,
     keywords: [
-      "AI email outreach",
-      "personalized emails",
-      "email deliverability",
-      "cold outreach",
-      "email automation",
-      "AI research",
-      "B2B sales automation",
-      "sales prospecting",
+      "finance internships",
+      "investment banking jobs",
+      "private equity recruiting",
+      "hedge fund careers",
+      "finance students",
+      "Wall Street jobs",
+      "Goldman Sachs internship",
+      "Blackstone careers",
+      "target school recruiting",
+      "finance talent network",
     ],
     openGraph: {
       title,
@@ -112,7 +114,7 @@ export function constructMetadata({
       images: [image],
     },
     icons: "/favicon.ico",
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://fullsendemails.com"),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://coastalhavenpartners.com"),
     ...props,
   }
 }

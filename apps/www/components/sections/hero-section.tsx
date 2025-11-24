@@ -33,7 +33,7 @@ export function HeroSection({ className }: HeroSectionProps) {
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-center space-y-8 text-center">
           {/* Main Headline - Animated Shiny Text */}
           <AnimatedShinyText className="text-5xl font-bold leading-tight tracking-tight md:text-7xl lg:text-8xl">
-            Where Elite Talent Meets Boutique Opportunity
+            Where Elite Talent Meets Opportunity
           </AnimatedShinyText>
 
           {/* Subtitle - Aurora Text */}
@@ -46,8 +46,9 @@ export function HeroSection({ className }: HeroSectionProps) {
             <Link href="/signup/candidate">
               <ShimmerButton
                 className="px-8 py-4 text-base font-semibold md:px-10 md:py-5 md:text-lg"
-                shimmerColor="#8b5cf6"
+                shimmerColor="#10b981"
                 shimmerDuration="2.5s"
+                background="linear-gradient(135deg, #14b8a6 0%, #059669 50%, #047857 100%)"
               >
                 Join as Student
               </ShimmerButton>
@@ -55,7 +56,7 @@ export function HeroSection({ className }: HeroSectionProps) {
             <Link href="/signup/recruiter">
               <ShimmerButton
                 className="px-8 py-4 text-base font-semibold md:px-10 md:py-5 md:text-lg border-2"
-                shimmerColor="#8b5cf6"
+                shimmerColor="#14b8a6"
                 shimmerDuration="2.5s"
                 background="rgba(0, 0, 0, 0.95)"
               >

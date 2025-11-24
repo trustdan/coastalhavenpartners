@@ -11,9 +11,9 @@ const fontSans = FontSans({
 });
 
 export const metadata = constructMetadata({
-  title: "Full Send Emails | AI-Accelerated Personalized Outreach",
+  title: "Coastal Haven Partners | Elite Finance Talent Network",
   description:
-    "Transform cold outreach into warm intros. AI research + personalization = 85% open rates. Every email crafted with genuine insights.",
+    "The network connecting top finance students with investment banks, PE firms, and hedge funds. Create your profile and get discovered by elite recruiters.",
 });
 
 export default function RootLayout({

@@ -78,7 +78,7 @@ export function StatsSection() {
             Ready to get started?{" "}
             <a
               href="/signup/candidate"
-              className="text-purple-500 hover:text-purple-400 font-semibold underline underline-offset-4 transition-colors"
+              className="text-emerald-500 hover:text-emerald-400 font-semibold underline underline-offset-4 transition-colors"
             >
               Create your profile today
             </a>
