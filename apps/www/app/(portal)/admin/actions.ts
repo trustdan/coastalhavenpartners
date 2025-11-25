@@ -162,3 +162,105 @@ export async function revokeCandidate(candidateId: string) {
 
   revalidatePath('/admin/candidates')
 }
+
+// =============================================
+// SCHOOL ADMIN ACTIONS
+// =============================================
+
+export async function approveSchool(schoolId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  // Get school profile for email
+  const { data: schoolProfile } = await supabaseAdmin
+    .from('school_profiles')
+    .select('user_id')
+    .eq('id', schoolId)
+    .single()
+
+  // Get the user's profile for email
+  let userProfile = null
+  if (schoolProfile?.user_id) {
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', schoolProfile.user_id)
+      .single()
+    userProfile = profile
+  }
+
+  // Approve school
+  const { error } = await supabaseAdmin
+    .from('school_profiles')
+    .update({ 
+      is_approved: true,
+      approved_at: new Date().toISOString(),
+      approved_by: user.id
+    })
+    .eq('id', schoolId)
+
+  if (error) throw new Error(error.message)
+
+  // Send Email Notification
+  if (userProfile?.email) {
+    try {
+      const { resend, FROM_EMAIL } = await import('@/lib/resend')
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: userProfile.email,
+        subject: 'Your School Account is Approved - Coastal Haven Partners',
+        html: `
+          <h1>Welcome to Coastal Haven Partners!</h1>
+          <p>Hi ${userProfile.full_name},</p>
+          <p>Your school career services account has been approved.</p>
+          <p>You can now log in and view your students' profiles and connect them with recruiters:</p>
+          <p>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/school">
+              Go to Dashboard
+            </a>
+          </p>
+        `
+      })
+    } catch (emailError) {
+      console.error('Failed to send approval email:', emailError)
+    }
+  }
+
+  revalidatePath('/admin/schools')
+}
+
+export async function rejectSchool(schoolId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  // Reject/revoke school access
+  const { error } = await supabaseAdmin
+    .from('school_profiles')
+    .update({ 
+      is_approved: false,
+      is_rejected: true,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id
+    })
+    .eq('id', schoolId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/schools')
+}
+
+export async function reinstateSchool(schoolId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  // Reinstate a rejected school (moves them back to pending)
+  const { error } = await supabaseAdmin
+    .from('school_profiles')
+    .update({ 
+      is_rejected: false,
+      rejected_at: null,
+      rejected_by: null
+    })
+    .eq('id', schoolId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/schools')
+}

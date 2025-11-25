@@ -29,6 +29,10 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/candidate`)
         } else if (profile?.role === 'recruiter') {
           return NextResponse.redirect(`${origin}/recruiter`)
+        } else if (profile?.role === 'school_admin') {
+          return NextResponse.redirect(`${origin}/school`)
+        } else if (profile?.role === 'admin') {
+          return NextResponse.redirect(`${origin}/admin`)
         }
       }
 

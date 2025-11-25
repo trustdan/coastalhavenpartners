@@ -43,11 +43,14 @@ export default async function AdminLayout({
               Coastal Haven Admin
             </Link>
             <div className="flex gap-4 text-sm font-medium">
-              <Link href="/admin" className="text-neutral-900 hover:text-purple-600 dark:text-neutral-100">
+              <Link href="/admin" className="text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
                 Recruiters
               </Link>
-              <Link href="/admin/candidates" className="text-neutral-500 hover:text-purple-600 dark:text-neutral-400">
+              <Link href="/admin/candidates" className="text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
                 Candidates
+              </Link>
+              <Link href="/admin/schools" className="text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
+                Schools
               </Link>
             </div>
           </div>
