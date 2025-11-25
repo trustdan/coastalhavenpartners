@@ -85,7 +85,7 @@ export default async function RecruiterDashboard({
       target_roles,
       preferred_locations,
       status,
-      profiles:user_id (
+      profiles!user_id (
         full_name,
         email
       )

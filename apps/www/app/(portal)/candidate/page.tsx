@@ -29,7 +29,7 @@ export default async function CandidateDashboard() {
     .from('candidate_profiles')
     .select(`
       *,
-      profiles:user_id (
+      profiles!user_id (
         full_name,
         email
       )
@@ -40,10 +40,36 @@ export default async function CandidateDashboard() {
   if (!candidateProfile) {
     return (
       <div className="rounded-xl border bg-white p-8 text-center shadow-sm dark:bg-neutral-900">
-        <h1 className="text-2xl font-bold">Profile Not Found</h1>
-        <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          We couldn't find your candidate profile. Please contact support.
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20 mb-4">
+          <svg className="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold">Profile Setup Incomplete</h1>
+        <p className="mt-2 text-neutral-600 dark:text-neutral-400 max-w-md mx-auto">
+          Your candidate profile wasn't created during signup. This might be due to a temporary issue.
         </p>
+        <div className="mt-6 space-y-3">
+          <p className="text-sm font-medium">What to do next:</p>
+          <ol className="text-sm text-left max-w-sm mx-auto space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="font-semibold">1.</span>
+              <span>Try logging out and logging back in</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="font-semibold">2.</span>
+              <span>If the issue persists, contact support at support@coastalhavenpartners.com</span>
+            </li>
+          </ol>
+        </div>
+        <div className="mt-6 flex justify-center gap-4">
+          <Button variant="outline" asChild>
+            <Link href="/login">Log Out</Link>
+          </Button>
+          <Button asChild>
+            <a href="mailto:support@coastalhavenpartners.com">Contact Support</a>
+          </Button>
+        </div>
       </div>
     )
   }

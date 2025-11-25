@@ -77,7 +77,7 @@ export default async function SchoolDashboardPage({
       preferred_locations,
       status,
       education_level,
-      profiles:user_id (
+      profiles!user_id (
         full_name,
         email,
         linkedin_url

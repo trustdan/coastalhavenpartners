@@ -70,7 +70,7 @@ export async function createCandidateProfile(data: {
   }
 
   // 2. Insert Candidate Profile
-  const { error } = await supabaseAdmin
+  const { data: candidateProfile, error } = await supabaseAdmin
     .from('candidate_profiles')
     .insert({
       user_id: data.userId,
@@ -80,10 +80,18 @@ export async function createCandidateProfile(data: {
       graduation_year: data.graduationYear,
       status: 'pending_verification',
     })
+    .select()
+    .single()
 
   if (error) {
-    throw new Error(error.message)
+    console.error('Error creating candidate profile:', error)
+    throw new Error(`Failed to create candidate profile: ${error.message}`)
   }
 
+  if (!candidateProfile) {
+    throw new Error('Candidate profile was not created')
+  }
+
+  console.log('Candidate profile created successfully:', candidateProfile.id)
   return { success: true }
 }

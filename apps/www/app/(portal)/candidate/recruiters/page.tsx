@@ -47,7 +47,7 @@ export default async function CandidateRecruitersPage({
       years_experience,
       company_website,
       visible_fields_to_candidates,
-      profiles!recruiter_profiles_user_id_fkey (
+      profiles!user_id (
         full_name,
         email,
         linkedin_url

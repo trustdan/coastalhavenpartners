@@ -34,7 +34,7 @@ export default async function CandidateDetailsPage({
     .from('candidate_profiles')
     .select(`
       *,
-      profiles:user_id (
+      profiles!user_id (
         full_name,
         email,
         linkedin_url,
