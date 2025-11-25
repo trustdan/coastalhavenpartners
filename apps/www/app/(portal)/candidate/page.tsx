@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { CompleteProfileForm } from './complete-profile-form'
+import type { Database } from '@/lib/types/database.types'
 
 export default async function CandidateDashboard() {
   const supabase = await createClient()
@@ -12,10 +15,23 @@ export default async function CandidateDashboard() {
     redirect('/login')
   }
 
+  // Use admin client to bypass RLS for profile checks
+  // This fixes issues where RLS policies prevent users from seeing their own profiles
+  const supabaseAdmin = createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
   // Check user role
-  const { data: profile } = await supabase
+  const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('role')
+    .select('role, full_name, email')
     .eq('id', user.id)
     .single()
 
@@ -24,54 +40,22 @@ export default async function CandidateDashboard() {
     redirect('/recruiter')
   }
 
-  // Fetch candidate profile
-  const { data: candidateProfile } = await supabase
+  // Fetch candidate profile (using admin client to bypass RLS issues)
+  const { data: candidateProfile } = await supabaseAdmin
     .from('candidate_profiles')
-    .select(`
-      *,
-      profiles!user_id (
-        full_name,
-        email
-      )
-    `)
+    .select('*')
     .eq('user_id', user.id)
     .single()
 
   if (!candidateProfile) {
-    return (
-      <div className="rounded-xl border bg-white p-8 text-center shadow-sm dark:bg-neutral-900">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20 mb-4">
-          <svg className="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h1 className="text-2xl font-bold">Profile Setup Incomplete</h1>
-        <p className="mt-2 text-neutral-600 dark:text-neutral-400 max-w-md mx-auto">
-          Your candidate profile wasn't created during signup. This might be due to a temporary issue.
-        </p>
-        <div className="mt-6 space-y-3">
-          <p className="text-sm font-medium">What to do next:</p>
-          <ol className="text-sm text-left max-w-sm mx-auto space-y-2">
-            <li className="flex items-start gap-2">
-              <span className="font-semibold">1.</span>
-              <span>Try logging out and logging back in</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-semibold">2.</span>
-              <span>If the issue persists, contact support at support@coastalhavenpartners.com</span>
-            </li>
-          </ol>
-        </div>
-        <div className="mt-6 flex justify-center gap-4">
-          <Button variant="outline" asChild>
-            <Link href="/login">Log Out</Link>
-          </Button>
-          <Button asChild>
-            <a href="mailto:support@coastalhavenpartners.com">Contact Support</a>
-          </Button>
-        </div>
-      </div>
-    )
+    // Show profile completion form instead of error
+    return <CompleteProfileForm />
+  }
+
+  // Combine profile data with candidate profile for display
+  const fullProfile = {
+    ...candidateProfile,
+    profiles: profile
   }
 
   // Fetch analytics stats
@@ -101,7 +85,7 @@ export default async function CandidateDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Welcome, {candidateProfile.profiles?.full_name}</h1>
+        <h1 className="text-3xl font-bold">Welcome, {fullProfile.profiles?.full_name}</h1>
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">
           Your candidate dashboard
         </p>
@@ -115,11 +99,11 @@ export default async function CandidateDashboard() {
             <div>
               <h2 className="text-lg font-semibold">Application Status</h2>
               <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                {statusMessages[candidateProfile.status || 'pending_verification']}
+                {statusMessages[fullProfile.status || 'pending_verification']}
               </p>
             </div>
-            <span className={`rounded-full px-4 py-2 text-sm font-medium ${statusColors[candidateProfile.status || 'pending_verification']}`}>
-              {(candidateProfile.status || 'pending_verification').replace(/_/g, ' ').toUpperCase()}
+            <span className={`rounded-full px-4 py-2 text-sm font-medium ${statusColors[fullProfile.status || 'pending_verification']}`}>
+              {(fullProfile.status || 'pending_verification').replace(/_/g, ' ').toUpperCase()}
             </span>
           </div>
 
@@ -153,37 +137,37 @@ export default async function CandidateDashboard() {
         <div className="mt-4 grid grid-cols-2 gap-6">
           <div>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Email</p>
-            <p className="mt-1 font-medium">{candidateProfile.profiles?.email}</p>
+            <p className="mt-1 font-medium">{fullProfile.profiles?.email}</p>
           </div>
           <div>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">School</p>
-            <p className="mt-1 font-medium">{candidateProfile.school_name}</p>
+            <p className="mt-1 font-medium">{fullProfile.school_name}</p>
           </div>
           <div>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Major</p>
-            <p className="mt-1 font-medium">{candidateProfile.major}</p>
+            <p className="mt-1 font-medium">{fullProfile.major}</p>
           </div>
           <div>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">GPA</p>
-            <p className="mt-1 font-medium">{candidateProfile.gpa.toFixed(2)}</p>
+            <p className="mt-1 font-medium">{fullProfile.gpa.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Graduation Year</p>
-            <p className="mt-1 font-medium">{candidateProfile.graduation_year}</p>
+            <p className="mt-1 font-medium">{fullProfile.graduation_year}</p>
           </div>
           <div>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Education Level</p>
             <p className="mt-1 font-medium capitalize">
-              {candidateProfile.education_level || 'Bachelors'}
+              {fullProfile.education_level || 'Bachelors'}
             </p>
           </div>
         </div>
 
-        {candidateProfile.target_roles && candidateProfile.target_roles.length > 0 && (
+        {fullProfile.target_roles && fullProfile.target_roles.length > 0 && (
           <div className="mt-6">
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Target Roles</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {candidateProfile.target_roles.map((role) => (
+              {fullProfile.target_roles.map((role) => (
                 <span
                   key={role}
                   className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
@@ -195,11 +179,11 @@ export default async function CandidateDashboard() {
           </div>
         )}
 
-        {candidateProfile.preferred_locations && candidateProfile.preferred_locations.length > 0 && (
+        {fullProfile.preferred_locations && fullProfile.preferred_locations.length > 0 && (
           <div className="mt-6">
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Preferred Locations</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {candidateProfile.preferred_locations.map((location) => (
+              {fullProfile.preferred_locations.map((location) => (
                 <span
                   key={location}
                   className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
@@ -219,7 +203,7 @@ export default async function CandidateDashboard() {
       </div>
 
       {/* Next Steps (only show for pending verification) */}
-      {candidateProfile.status === 'pending_verification' && (
+      {fullProfile.status === 'pending_verification' && (
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
           <h2 className="text-lg font-semibold">Next Steps</h2>
           <ul className="mt-4 space-y-3">
@@ -261,7 +245,7 @@ export default async function CandidateDashboard() {
       )}
 
       {/* Success message for verified candidates */}
-      {candidateProfile.status === 'verified' && (
+      {fullProfile.status === 'verified' && (
         <div className="rounded-xl border border-green-200 bg-green-50 p-6 dark:border-green-900/50 dark:bg-green-900/20">
           <h2 className="text-lg font-semibold text-green-800 dark:text-green-200">
             Your Profile is Live!

@@ -1,16 +1,33 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import type { Database } from '@/lib/types/database.types'
 
-export async function approveRecruiter(recruiterId: string) {
+// Helper to get admin client that bypasses RLS
+function getAdminClient() {
+  return createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
+// Helper to verify admin status
+async function verifyAdmin() {
   const supabase = await createClient()
-
-  // check if user is admin
   const { data: { user } } = await supabase.auth.getUser()
+  
   if (!user) throw new Error('Unauthorized')
 
-  const { data: adminProfile } = await supabase
+  const supabaseAdmin = getAdminClient()
+  const { data: adminProfile } = await supabaseAdmin
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -18,22 +35,32 @@ export async function approveRecruiter(recruiterId: string) {
 
   if (adminProfile?.role !== 'admin') throw new Error('Unauthorized')
 
+  return { user, supabaseAdmin }
+}
+
+export async function approveRecruiter(recruiterId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
   // Get recruiter profile for email
-  // Using explicit hint !user_id to avoid ambiguity with approved_by column
-  const { data: recruiterProfile } = await supabase
+  const { data: recruiterProfile } = await supabaseAdmin
     .from('recruiter_profiles')
-    .select(`
-      user_id,
-      profiles!user_id (
-        email,
-        full_name
-      )
-    `)
+    .select('user_id')
     .eq('id', recruiterId)
     .single()
 
+  // Get the user's profile for email
+  let userProfile = null
+  if (recruiterProfile?.user_id) {
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', recruiterProfile.user_id)
+      .single()
+    userProfile = profile
+  }
+
   // Approve recruiter
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('recruiter_profiles')
     .update({ 
       is_approved: true,
@@ -45,16 +72,16 @@ export async function approveRecruiter(recruiterId: string) {
   if (error) throw new Error(error.message)
 
   // Send Email Notification
-  if (recruiterProfile?.profiles?.email) {
+  if (userProfile?.email) {
     try {
       const { resend, FROM_EMAIL } = await import('@/lib/resend')
       await resend.emails.send({
         from: FROM_EMAIL,
-        to: recruiterProfile.profiles.email,
+        to: userProfile.email,
         subject: 'Welcome to Coastal Haven Partners',
         html: `
           <h1>You're Approved!</h1>
-          <p>Hi ${recruiterProfile.profiles.full_name},</p>
+          <p>Hi ${userProfile.full_name},</p>
           <p>Your recruiter account has been approved by our admin team.</p>
           <p>You can now log in and start searching for candidates:</p>
           <p>
@@ -73,24 +100,35 @@ export async function approveRecruiter(recruiterId: string) {
 }
 
 export async function rejectRecruiter(recruiterId: string) {
-  const supabase = await createClient()
+  const { user, supabaseAdmin } = await verifyAdmin()
 
-  // check if user is admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const { data: adminProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (adminProfile?.role !== 'admin') throw new Error('Unauthorized')
-
-  // Unapprove/Reject recruiter (set is_approved = false)
-  const { error } = await supabase
+  // Reject/revoke recruiter access
+  const { error } = await supabaseAdmin
     .from('recruiter_profiles')
-    .update({ is_approved: false })
+    .update({ 
+      is_approved: false,
+      is_rejected: true,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id
+    })
+    .eq('id', recruiterId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+}
+
+export async function reinstateRecruiter(recruiterId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  // Reinstate a rejected recruiter (moves them back to pending)
+  const { error } = await supabaseAdmin
+    .from('recruiter_profiles')
+    .update({ 
+      is_rejected: false,
+      rejected_at: null,
+      rejected_by: null
+    })
     .eq('id', recruiterId)
 
   if (error) throw new Error(error.message)
@@ -99,20 +137,9 @@ export async function rejectRecruiter(recruiterId: string) {
 }
 
 export async function verifyCandidate(candidateId: string) {
-  const supabase = await createClient()
+  const { supabaseAdmin } = await verifyAdmin()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const { data: adminProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (adminProfile?.role !== 'admin') throw new Error('Unauthorized')
-
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('candidate_profiles')
     .update({ status: 'verified' })
     .eq('id', candidateId)
@@ -123,22 +150,10 @@ export async function verifyCandidate(candidateId: string) {
 }
 
 export async function revokeCandidate(candidateId: string) {
-  const supabase = await createClient()
+  const { supabaseAdmin } = await verifyAdmin()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  const { data: adminProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (adminProfile?.role !== 'admin') throw new Error('Unauthorized')
-
-  // Revert status to 'pending_verification' (or just 'rejected' if preferred, but 'pending_verification' is safer for re-review)
-  // Let's use 'pending_verification' as "Revoke" usually means "needs review again"
-  const { error } = await supabase
+  // Revert status to 'pending_verification'
+  const { error } = await supabaseAdmin
     .from('candidate_profiles')
     .update({ status: 'pending_verification' })
     .eq('id', candidateId)

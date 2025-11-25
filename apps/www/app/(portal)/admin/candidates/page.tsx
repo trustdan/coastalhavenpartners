@@ -1,31 +1,69 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { verifyCandidate, revokeCandidate } from '../actions'
 import Link from 'next/link'
 import { Mail, Linkedin } from 'lucide-react'
+import type { Database } from '@/lib/types/database.types'
 
 export default async function AdminCandidatesPage() {
   const supabase = await createClient()
+  
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    redirect('/login')
+  }
 
-  // Fetch all candidates
-  const { data: candidates } = await supabase
+  // Use admin client to bypass RLS for admin operations
+  const supabaseAdmin = createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  // Verify user has admin role
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') {
+    redirect('/login')
+  }
+
+  // Fetch all candidates (using admin client to bypass RLS)
+  const { data: candidates } = await supabaseAdmin
     .from('candidate_profiles')
-    .select(`
-      *,
-      profiles!user_id (
-        full_name,
-        email,
-        linkedin_url
-      )
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
+
+  // Fetch profiles separately to avoid RLS join issues
+  const userIds = candidates?.map(c => c.user_id).filter(Boolean) || []
+  const { data: profiles } = await supabaseAdmin
+    .from('profiles')
+    .select('id, full_name, email, linkedin_url')
+    .in('id', userIds)
+
+  // Combine candidates with their profiles
+  const candidatesWithProfiles = candidates?.map(candidate => ({
+    ...candidate,
+    profiles: profiles?.find(p => p.id === candidate.user_id) || null
+  })) || []
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Candidate Management</h1>
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          {candidates?.length || 0} total candidates
+          {candidatesWithProfiles.length} total candidates
         </p>
       </div>
 
@@ -41,7 +79,7 @@ export default async function AdminCandidatesPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {candidates?.map((candidate) => (
+            {candidatesWithProfiles.map((candidate) => (
               <tr key={candidate.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800">
                 <td className="px-6 py-4">
                   <div>
@@ -100,7 +138,7 @@ export default async function AdminCandidatesPage() {
           </tbody>
         </table>
         
-        {!candidates || candidates.length === 0 && (
+        {candidatesWithProfiles.length === 0 && (
           <div className="p-12 text-center text-neutral-600 dark:text-neutral-400">
             No candidates found
           </div>

@@ -59,6 +59,9 @@ export default function LoginPage() {
       } else if (role === 'recruiter') {
         router.push('/recruiter')
         router.refresh()
+      } else if (role === 'school_admin') {
+        router.push('/school')
+        router.refresh()
       } else if (role === 'admin') {
         router.push('/admin')
         router.refresh()
@@ -115,13 +118,17 @@ export default function LoginPage() {
 
           <div className="text-center text-sm text-neutral-600 dark:text-neutral-400">
             <p className="mb-2">Don't have an account?</p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
               <Link href="/signup/candidate" className="text-blue-600 hover:underline">
-                Candidate Sign up
+                Candidate
               </Link>
               <span className="text-neutral-300 dark:text-neutral-700">|</span>
-              <Link href="/signup/recruiter" className="text-purple-600 hover:underline">
-                Recruiter Sign up
+              <Link href="/signup/recruiter" className="text-blue-600 hover:underline">
+                Recruiter
+              </Link>
+              <span className="text-neutral-300 dark:text-neutral-700">|</span>
+              <Link href="/signup/school" className="text-blue-600 hover:underline">
+                Career Services
               </Link>
             </div>
           </div>

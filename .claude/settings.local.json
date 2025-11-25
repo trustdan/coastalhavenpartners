@@ -3,7 +3,12 @@
     "allow": [
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(pnpm dev)"
+      "Bash(pnpm dev)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm build:*)",
+      "Bash(find:*)",
+      "Bash(xargs sed:*)",
+      "Bash(pnpm supabase db push:*)"
     ],
     "deny": [],
     "ask": []
