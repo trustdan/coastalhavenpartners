@@ -54,6 +54,7 @@ export default function SchoolSettingsPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const formData = new FormData(e.currentTarget)
     setSaving(true)
 
     try {
@@ -63,8 +64,6 @@ export default function SchoolSettingsPage() {
         router.push('/login')
         return
       }
-
-      const formData = new FormData(e.currentTarget)
 
       const updates = {
         school_name: formData.get('schoolName') as string,

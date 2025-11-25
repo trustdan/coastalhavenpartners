@@ -152,6 +152,7 @@ export default function RecruiterSettingsPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const formData = new FormData(e.currentTarget)
     setSaving(true)
 
     try {
@@ -161,8 +162,6 @@ export default function RecruiterSettingsPage() {
         router.push('/login')
         return
       }
-
-      const formData = new FormData(e.currentTarget)
 
       // Parse array fields
       const specialties = (formData.get('specialties') as string)

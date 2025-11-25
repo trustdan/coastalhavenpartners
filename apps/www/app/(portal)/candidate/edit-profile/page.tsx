@@ -50,6 +50,7 @@ export default function EditProfilePage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const formData = new FormData(e.currentTarget)
     setSaving(true)
 
     try {
@@ -60,7 +61,6 @@ export default function EditProfilePage() {
         return
       }
 
-      const formData = new FormData(e.currentTarget)
       const linkedinUrl = formData.get('linkedinUrl') as string
 
       const updates = {
