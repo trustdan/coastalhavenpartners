@@ -45,11 +45,13 @@ export default async function AdminDashboard() {
     .order('created_at', { ascending: false })
 
   // Fetch profiles separately to avoid RLS join issues
-  const userIds = recruiters?.map(r => r.user_id).filter(Boolean) || []
-  const { data: profiles } = await supabaseAdmin
-    .from('profiles')
-    .select('id, full_name, email, linkedin_url, created_at')
-    .in('id', userIds)
+  const userIds = (recruiters?.map(r => r.user_id).filter((id): id is string => id !== null) || [])
+  const { data: profiles } = userIds.length > 0
+    ? await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email, linkedin_url, created_at')
+        .in('id', userIds)
+    : { data: [] }
 
   // Combine recruiters with their profiles
   const recruitersWithProfiles = recruiters?.map(recruiter => ({

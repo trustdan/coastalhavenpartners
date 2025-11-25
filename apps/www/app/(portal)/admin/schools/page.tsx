@@ -60,11 +60,13 @@ export default async function AdminSchoolsPage() {
     .order('created_at', { ascending: false })
 
   // Fetch profiles separately to avoid RLS join issues
-  const userIds = schools?.map(s => s.user_id).filter(Boolean) || []
-  const { data: profiles } = await supabaseAdmin
-    .from('profiles')
-    .select('id, full_name, email')
-    .in('id', userIds)
+  const userIds = (schools?.map(s => s.user_id).filter((id): id is string => id !== null) || [])
+  const { data: profiles } = userIds.length > 0
+    ? await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds)
+    : { data: [] }
 
   // Combine schools with their profiles
   const schoolsWithProfiles = schools?.map(school => ({
