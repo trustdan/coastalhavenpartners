@@ -1,65 +1,96 @@
--- Add enhanced profile fields to recruiter_profiles
-ALTER TABLE public.recruiter_profiles
-ADD COLUMN bio TEXT,
-ADD COLUMN specialties TEXT[], -- ['Investment Banking', 'Private Equity', 'Venture Capital']
-ADD COLUMN locations TEXT[], -- ['New York', 'San Francisco', 'Chicago']
-ADD COLUMN profile_photo_url TEXT,
-ADD COLUMN years_experience INTEGER,
-ADD COLUMN linkedin_url TEXT,
-ADD COLUMN company_website TEXT;
+-- Add enhanced profile fields to recruiter_profiles (idempotent)
+DO $$
+BEGIN
+  -- Add columns only if they don't exist
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'bio') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN bio TEXT;
+  END IF;
 
--- Add master visibility toggles
-ALTER TABLE public.recruiter_profiles
-ADD COLUMN is_visible_to_candidates BOOLEAN DEFAULT FALSE,
-ADD COLUMN is_visible_to_recruiters BOOLEAN DEFAULT FALSE;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'specialties') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN specialties TEXT[];
+  END IF;
 
--- Add granular field-level visibility controls using JSONB
--- This allows fine-grained control over which fields are visible to each audience
-ALTER TABLE public.recruiter_profiles
-ADD COLUMN visible_fields_to_candidates JSONB DEFAULT '{
-  "full_name": true,
-  "email": false,
-  "phone": false,
-  "firm_name": true,
-  "firm_type": true,
-  "job_title": true,
-  "bio": true,
-  "specialties": true,
-  "locations": true,
-  "linkedin_url": false,
-  "years_experience": true,
-  "company_website": true,
-  "profile_photo_url": true
-}'::jsonb,
-ADD COLUMN visible_fields_to_recruiters JSONB DEFAULT '{
-  "full_name": true,
-  "email": true,
-  "phone": true,
-  "firm_name": true,
-  "firm_type": true,
-  "job_title": true,
-  "bio": true,
-  "specialties": true,
-  "locations": true,
-  "linkedin_url": true,
-  "years_experience": true,
-  "company_website": true,
-  "profile_photo_url": true
-}'::jsonb;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'locations') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN locations TEXT[];
+  END IF;
 
--- Create index on visibility flags for efficient queries
-CREATE INDEX idx_recruiter_visible_to_candidates ON public.recruiter_profiles(is_visible_to_candidates) WHERE is_visible_to_candidates = TRUE;
-CREATE INDEX idx_recruiter_visible_to_recruiters ON public.recruiter_profiles(is_visible_to_recruiters) WHERE is_visible_to_recruiters = TRUE;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'profile_photo_url') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN profile_photo_url TEXT;
+  END IF;
 
--- Add indexes for searching
-CREATE INDEX idx_recruiter_specialties ON public.recruiter_profiles USING GIN(specialties);
-CREATE INDEX idx_recruiter_locations ON public.recruiter_profiles USING GIN(locations);
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'years_experience') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN years_experience INTEGER;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'linkedin_url') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN linkedin_url TEXT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'company_website') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN company_website TEXT;
+  END IF;
+
+  -- Add master visibility toggles
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'is_visible_to_candidates') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN is_visible_to_candidates BOOLEAN DEFAULT FALSE;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'is_visible_to_recruiters') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN is_visible_to_recruiters BOOLEAN DEFAULT FALSE;
+  END IF;
+
+  -- Add granular field-level visibility controls
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'visible_fields_to_candidates') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN visible_fields_to_candidates JSONB DEFAULT '{
+      "full_name": true,
+      "email": false,
+      "phone": false,
+      "firm_name": true,
+      "firm_type": true,
+      "job_title": true,
+      "bio": true,
+      "specialties": true,
+      "locations": true,
+      "linkedin_url": false,
+      "years_experience": true,
+      "company_website": true,
+      "profile_photo_url": true
+    }'::jsonb;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'visible_fields_to_recruiters') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN visible_fields_to_recruiters JSONB DEFAULT '{
+      "full_name": true,
+      "email": true,
+      "phone": true,
+      "firm_name": true,
+      "firm_type": true,
+      "job_title": true,
+      "bio": true,
+      "specialties": true,
+      "locations": true,
+      "linkedin_url": true,
+      "years_experience": true,
+      "company_website": true,
+      "profile_photo_url": true
+    }'::jsonb;
+  END IF;
+END $$;
+
+-- Create index on visibility flags for efficient queries (idempotent)
+CREATE INDEX IF NOT EXISTS idx_recruiter_visible_to_candidates ON public.recruiter_profiles(is_visible_to_candidates) WHERE is_visible_to_candidates = TRUE;
+CREATE INDEX IF NOT EXISTS idx_recruiter_visible_to_recruiters ON public.recruiter_profiles(is_visible_to_recruiters) WHERE is_visible_to_recruiters = TRUE;
+
+-- Add indexes for searching (idempotent)
+CREATE INDEX IF NOT EXISTS idx_recruiter_specialties ON public.recruiter_profiles USING GIN(specialties);
+CREATE INDEX IF NOT EXISTS idx_recruiter_locations ON public.recruiter_profiles USING GIN(locations);
 
 -- =============================================
 -- RLS POLICIES FOR RECRUITER VISIBILITY
 -- =============================================
 
 -- Candidates can view recruiters who have made their profiles visible to candidates
+DROP POLICY IF EXISTS "Candidates can view public recruiter profiles" ON public.recruiter_profiles;
 CREATE POLICY "Candidates can view public recruiter profiles"
   ON public.recruiter_profiles FOR SELECT
   USING (
@@ -72,6 +103,7 @@ CREATE POLICY "Candidates can view public recruiter profiles"
   );
 
 -- Recruiters can view other recruiters who have made their profiles visible to recruiters
+DROP POLICY IF EXISTS "Recruiters can view other public recruiter profiles" ON public.recruiter_profiles;
 CREATE POLICY "Recruiters can view other public recruiter profiles"
   ON public.recruiter_profiles FOR SELECT
   USING (

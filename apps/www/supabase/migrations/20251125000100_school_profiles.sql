@@ -5,8 +5,8 @@ ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'school_admin';
 -- SCHOOL PROFILES TABLE
 -- =============================================
 
-CREATE TABLE public.school_profiles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS public.school_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
 
   -- School Details
@@ -27,38 +27,46 @@ CREATE TABLE public.school_profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add trigger for updated_at
+-- Add trigger for updated_at (idempotent)
+DROP TRIGGER IF EXISTS update_school_profiles_updated_at ON public.school_profiles;
 CREATE TRIGGER update_school_profiles_updated_at BEFORE UPDATE ON public.school_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Create index on school_name for lookups
-CREATE INDEX idx_school_profiles_school_name ON public.school_profiles(school_name);
-CREATE INDEX idx_school_profiles_approved ON public.school_profiles(is_approved) WHERE is_approved = TRUE;
+-- Create index on school_name for lookups (idempotent)
+CREATE INDEX IF NOT EXISTS idx_school_profiles_school_name ON public.school_profiles(school_name);
+CREATE INDEX IF NOT EXISTS idx_school_profiles_approved ON public.school_profiles(is_approved) WHERE is_approved = TRUE;
 
 -- =============================================
 -- ADD SCHOOL VISIBILITY TO RECRUITER PROFILES
 -- =============================================
 
-ALTER TABLE public.recruiter_profiles
-ADD COLUMN is_visible_to_schools BOOLEAN DEFAULT FALSE,
-ADD COLUMN visible_fields_to_schools JSONB DEFAULT '{
-  "full_name": true,
-  "email": true,
-  "phone": false,
-  "firm_name": true,
-  "firm_type": true,
-  "job_title": true,
-  "bio": true,
-  "specialties": true,
-  "locations": true,
-  "linkedin_url": true,
-  "years_experience": true,
-  "company_website": true,
-  "profile_photo_url": true
-}'::jsonb;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'is_visible_to_schools') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN is_visible_to_schools BOOLEAN DEFAULT FALSE;
+  END IF;
 
--- Create index for school visibility queries
-CREATE INDEX idx_recruiter_visible_to_schools ON public.recruiter_profiles(is_visible_to_schools) WHERE is_visible_to_schools = TRUE;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recruiter_profiles' AND column_name = 'visible_fields_to_schools') THEN
+    ALTER TABLE public.recruiter_profiles ADD COLUMN visible_fields_to_schools JSONB DEFAULT '{
+      "full_name": true,
+      "email": true,
+      "phone": false,
+      "firm_name": true,
+      "firm_type": true,
+      "job_title": true,
+      "bio": true,
+      "specialties": true,
+      "locations": true,
+      "linkedin_url": true,
+      "years_experience": true,
+      "company_website": true,
+      "profile_photo_url": true
+    }'::jsonb;
+  END IF;
+END $$;
+
+-- Create index for school visibility queries (idempotent)
+CREATE INDEX IF NOT EXISTS idx_recruiter_visible_to_schools ON public.recruiter_profiles(is_visible_to_schools) WHERE is_visible_to_schools = TRUE;
 
 -- =============================================
 -- RLS POLICIES FOR SCHOOL PROFILES
@@ -68,11 +76,13 @@ CREATE INDEX idx_recruiter_visible_to_schools ON public.recruiter_profiles(is_vi
 ALTER TABLE public.school_profiles ENABLE ROW LEVEL SECURITY;
 
 -- School admins can view their own profile
+DROP POLICY IF EXISTS "School admins can view their own profile" ON public.school_profiles;
 CREATE POLICY "School admins can view their own profile"
   ON public.school_profiles FOR SELECT
   USING (auth.uid() = user_id);
 
 -- School admins can update their own profile
+DROP POLICY IF EXISTS "School admins can update their own profile" ON public.school_profiles;
 CREATE POLICY "School admins can update their own profile"
   ON public.school_profiles FOR UPDATE
   USING (auth.uid() = user_id);
@@ -82,6 +92,7 @@ CREATE POLICY "School admins can update their own profile"
 -- =============================================
 
 -- School admins can view candidates from their school
+DROP POLICY IF EXISTS "School admins can view their school's candidates" ON public.candidate_profiles;
 CREATE POLICY "School admins can view their school's candidates"
   ON public.candidate_profiles FOR SELECT
   USING (
@@ -98,6 +109,7 @@ CREATE POLICY "School admins can view their school's candidates"
 -- =============================================
 
 -- School admins can view recruiters who have made their profiles visible to schools
+DROP POLICY IF EXISTS "School admins can view public recruiter profiles" ON public.recruiter_profiles;
 CREATE POLICY "School admins can view public recruiter profiles"
   ON public.recruiter_profiles FOR SELECT
   USING (
@@ -114,6 +126,7 @@ CREATE POLICY "School admins can view public recruiter profiles"
 -- =============================================
 
 -- School admins can view analytics events for their students
+DROP POLICY IF EXISTS "School admins can view their students' analytics" ON public.analytics_events;
 CREATE POLICY "School admins can view their students' analytics"
   ON public.analytics_events FOR SELECT
   USING (
@@ -186,6 +199,7 @@ COMMENT ON FUNCTION public.get_school_candidates IS
 -- =============================================
 
 -- Allow profile creation during signup (will be restricted by application logic)
+DROP POLICY IF EXISTS "Users can create their own school profile" ON public.school_profiles;
 CREATE POLICY "Users can create their own school profile"
   ON public.school_profiles FOR INSERT
   WITH CHECK (auth.uid() = user_id);
