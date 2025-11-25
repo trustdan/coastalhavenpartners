@@ -1,16 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AutocompleteInput } from '@/components/ui/autocomplete-input'
 import { completeCandidateProfile } from './actions'
 
 export function CompleteProfileForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [schoolName, setSchoolName] = useState('')
+  const [major, setMajor] = useState('')
+
+  const fetchSchoolSuggestions = useCallback(async (query: string) => {
+    const response = await fetch(`/api/autocomplete/schools?q=${encodeURIComponent(query)}`)
+    const data = await response.json()
+    return data.schools || []
+  }, [])
+
+  const fetchMajorSuggestions = useCallback(async (query: string) => {
+    const response = await fetch(`/api/autocomplete/majors?q=${encodeURIComponent(query)}`)
+    const data = await response.json()
+    return data.majors || []
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -18,10 +33,21 @@ export function CompleteProfileForm() {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const schoolName = formData.get('schoolName') as string
-    const major = formData.get('major') as string
     const gpa = parseFloat(formData.get('gpa') as string)
     const graduationYear = parseInt(formData.get('graduationYear') as string)
+
+    // Validate required fields
+    if (!schoolName.trim()) {
+      setError('Please enter your university')
+      setLoading(false)
+      return
+    }
+
+    if (!major.trim()) {
+      setError('Please enter your major')
+      setLoading(false)
+      return
+    }
 
     // Validate GPA
     if (gpa < 2.5) {
@@ -38,8 +64,8 @@ export function CompleteProfileForm() {
 
     try {
       await completeCandidateProfile({
-        schoolName,
-        major,
+        schoolName: schoolName.trim(),
+        major: major.trim(),
         gpa,
         graduationYear,
       })
@@ -77,23 +103,27 @@ export function CompleteProfileForm() {
 
           <div>
             <Label htmlFor="schoolName">University</Label>
-            <Input
+            <AutocompleteInput
               id="schoolName"
               name="schoolName"
-              type="text"
+              value={schoolName}
+              onChange={setSchoolName}
+              placeholder="Start typing your university..."
               required
-              placeholder="University of Pennsylvania"
+              fetchSuggestions={fetchSchoolSuggestions}
             />
           </div>
 
           <div>
             <Label htmlFor="major">Major</Label>
-            <Input
+            <AutocompleteInput
               id="major"
               name="major"
-              type="text"
+              value={major}
+              onChange={setMajor}
+              placeholder="e.g. Finance"
               required
-              placeholder="Finance"
+              fetchSuggestions={fetchMajorSuggestions}
             />
           </div>
 
@@ -133,4 +163,3 @@ export function CompleteProfileForm() {
     </div>
   )
 }
-

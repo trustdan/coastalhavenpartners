@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AutocompleteInput } from '@/components/ui/autocomplete-input'
 import Link from 'next/link'
 import { createCandidateProfile } from './actions'
 
@@ -13,6 +14,20 @@ export default function CandidateSignupPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [schoolName, setSchoolName] = useState('')
+  const [major, setMajor] = useState('')
+
+  const fetchSchoolSuggestions = useCallback(async (query: string) => {
+    const response = await fetch(`/api/autocomplete/schools?q=${encodeURIComponent(query)}`)
+    const data = await response.json()
+    return data.schools || []
+  }, [])
+
+  const fetchMajorSuggestions = useCallback(async (query: string) => {
+    const response = await fetch(`/api/autocomplete/majors?q=${encodeURIComponent(query)}`)
+    const data = await response.json()
+    return data.majors || []
+  }, [])
 
   async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -24,11 +39,22 @@ export default function CandidateSignupPage() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const fullName = formData.get('fullName') as string
-    const schoolName = formData.get('schoolName') as string
-    const major = formData.get('major') as string
     const gpa = parseFloat(formData.get('gpa') as string)
     const graduationYear = parseInt(formData.get('graduationYear') as string)
     const linkedinUrl = formData.get('linkedinUrl') as string
+
+    // Validate required fields
+    if (!schoolName.trim()) {
+      setError('Please enter your university')
+      setLoading(false)
+      return
+    }
+
+    if (!major.trim()) {
+      setError('Please enter your major')
+      setLoading(false)
+      return
+    }
 
     // Validate GPA
     if (gpa < 2.5) {
@@ -65,8 +91,8 @@ export default function CandidateSignupPage() {
           userId: authData.user.id,
           email,
           fullName,
-          schoolName,
-          major,
+          schoolName: schoolName.trim(),
+          major: major.trim(),
           gpa,
           graduationYear,
           linkedinUrl,
@@ -135,24 +161,28 @@ export default function CandidateSignupPage() {
 
           <div>
             <Label htmlFor="schoolName">University</Label>
-            <Input
+            <AutocompleteInput
               id="schoolName"
               name="schoolName"
-              type="text"
+              value={schoolName}
+              onChange={setSchoolName}
+              placeholder="Start typing your university..."
               required
-              placeholder="University of Pennsylvania"
+              fetchSuggestions={fetchSchoolSuggestions}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="major">Major</Label>
-              <Input
+              <AutocompleteInput
                 id="major"
                 name="major"
-                type="text"
+                value={major}
+                onChange={setMajor}
+                placeholder="e.g. Finance"
                 required
-                placeholder="Finance"
+                fetchSuggestions={fetchMajorSuggestions}
               />
             </div>
             <div>
