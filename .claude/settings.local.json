@@ -8,7 +8,10 @@
       "Bash(pnpm build:*)",
       "Bash(find:*)",
       "Bash(xargs sed:*)",
-      "Bash(pnpm supabase db push:*)"
+      "Bash(pnpm supabase db push:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm install)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
