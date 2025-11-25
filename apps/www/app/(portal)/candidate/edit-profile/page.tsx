@@ -53,6 +53,13 @@ export default function EditProfilePage() {
     setSaving(true)
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('You must be logged in to update your profile')
+        router.push('/login')
+        return
+      }
+
       const formData = new FormData(e.currentTarget)
       const linkedinUrl = formData.get('linkedinUrl') as string
 
@@ -68,13 +75,12 @@ export default function EditProfilePage() {
       const { error: profileError } = await supabase
         .from('candidate_profiles')
         .update(updates)
-        .eq('id', profile.id)
+        .eq('user_id', user.id)
 
       if (profileError) throw profileError
 
       // Update LinkedIn URL in profiles table
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user && linkedinUrl) {
+      if (linkedinUrl) {
         const { error: linkedinError } = await supabase
           .from('profiles')
           .update({ linkedin_url: linkedinUrl })

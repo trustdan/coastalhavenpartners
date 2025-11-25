@@ -57,6 +57,13 @@ export default function SchoolSettingsPage() {
     setSaving(true)
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('You must be logged in to update your profile')
+        router.push('/login')
+        return
+      }
+
       const formData = new FormData(e.currentTarget)
 
       const updates = {
@@ -71,7 +78,7 @@ export default function SchoolSettingsPage() {
       const { error } = await supabase
         .from('school_profiles')
         .update(updates)
-        .eq('id', schoolProfile.id)
+        .eq('user_id', user.id)
 
       if (error) throw error
 

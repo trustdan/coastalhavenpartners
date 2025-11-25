@@ -155,6 +155,13 @@ export default function RecruiterSettingsPage() {
     setSaving(true)
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('You must be logged in to update your profile')
+        router.push('/login')
+        return
+      }
+
       const formData = new FormData(e.currentTarget)
 
       // Parse array fields
@@ -191,7 +198,7 @@ export default function RecruiterSettingsPage() {
       const { error } = await supabase
         .from('recruiter_profiles')
         .update(updates)
-        .eq('id', recruiterProfile.id)
+        .eq('user_id', user.id)
 
       if (error) throw error
 
