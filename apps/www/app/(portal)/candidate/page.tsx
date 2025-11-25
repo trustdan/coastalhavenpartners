@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { CompleteProfileForm } from './complete-profile-form'
+import { AccessRevoked } from '@/components/access-revoked'
 import type { Database } from '@/lib/types/database.types'
 
 export default async function CandidateDashboard() {
@@ -50,6 +51,11 @@ export default async function CandidateDashboard() {
   if (!candidateProfile) {
     // Show profile completion form instead of error
     return <CompleteProfileForm />
+  }
+
+  // Check if user is rejected/revoked
+  if (candidateProfile.is_rejected) {
+    return <AccessRevoked userType="candidate" email={profile?.email} />
   }
 
   // Combine profile data with candidate profile for display

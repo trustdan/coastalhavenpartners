@@ -227,12 +227,12 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Rejected Section */}
+      {/* Revoked Section */}
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-red-600 dark:text-red-400">Rejected Recruiters</h2>
+          <h2 className="text-2xl font-bold text-red-600 dark:text-red-400">Access Revoked</h2>
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-            {rejectedRecruiters.length} rejected/revoked recruiters
+            {rejectedRecruiters.length} suspended recruiter accounts
           </p>
         </div>
 
@@ -243,7 +243,7 @@ export default async function AdminDashboard() {
                 <th className="px-6 py-3 text-left text-sm font-medium">Name</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">Firm</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">Title</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Rejected</th>
+                <th className="px-6 py-3 text-left text-sm font-medium">Suspended</th>
                 <th className="px-6 py-3 text-right text-sm font-medium">Actions</th>
               </tr>
             </thead>
@@ -300,7 +300,7 @@ export default async function AdminDashboard() {
 
           {rejectedRecruiters.length === 0 && (
             <div className="p-12 text-center text-neutral-600 dark:text-neutral-400">
-              No rejected recruiters
+              No suspended accounts
             </div>
           )}
         </div>

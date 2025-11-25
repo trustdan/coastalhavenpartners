@@ -1,9 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Linkedin, GraduationCap, TrendingUp } from 'lucide-react'
 
 import { StudentFilters } from './student-filters'
+import { AccessRevoked } from '@/components/access-revoked'
+import type { Database } from '@/lib/types/database.types'
 type CandidateStatus = 'pending_verification' | 'verified' | 'active' | 'placed' | 'rejected'
 const validStatuses: CandidateStatus[] = ['pending_verification', 'verified', 'active', 'placed', 'rejected']
 
@@ -27,10 +30,22 @@ export default async function SchoolDashboardPage({
     redirect('/login')
   }
 
+  // Use admin client to bypass RLS for profile checks
+  const supabaseAdmin = createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
   // Check user role
-  const { data: profile } = await supabase
+  const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('role')
+    .select('role, email')
     .eq('id', user.id)
     .single()
 
@@ -39,11 +54,16 @@ export default async function SchoolDashboardPage({
   }
 
   // Check if school admin is approved
-  const { data: schoolProfile } = await supabase
+  const { data: schoolProfile } = await supabaseAdmin
     .from('school_profiles')
-    .select('is_approved, school_name, department_name')
+    .select('is_approved, is_rejected, school_name, department_name')
     .eq('user_id', user.id)
     .single()
+
+  // Check if user is rejected/revoked
+  if (schoolProfile?.is_rejected) {
+    return <AccessRevoked userType="school" email={profile?.email} />
+  }
 
   if (!schoolProfile?.is_approved) {
     return (

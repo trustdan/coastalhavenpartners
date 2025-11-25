@@ -149,13 +149,56 @@ export async function verifyCandidate(candidateId: string) {
   revalidatePath('/admin/candidates')
 }
 
-export async function revokeCandidate(candidateId: string) {
-  const { supabaseAdmin } = await verifyAdmin()
+export async function rejectCandidate(candidateId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
 
-  // Revert status to 'pending_verification'
+  // Reject candidate
   const { error } = await supabaseAdmin
     .from('candidate_profiles')
-    .update({ status: 'pending_verification' })
+    .update({ 
+      status: 'rejected',
+      is_rejected: true,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/candidates')
+}
+
+export async function reinstateCandidate(candidateId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  // Reinstate a rejected candidate (moves them back to pending)
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({ 
+      status: 'pending_verification',
+      is_rejected: false,
+      rejected_at: null,
+      rejected_by: null
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/candidates')
+}
+
+export async function revokeCandidate(candidateId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  // Revoke a verified candidate (reject them)
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({ 
+      status: 'rejected',
+      is_rejected: true,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id
+    })
     .eq('id', candidateId)
 
   if (error) throw new Error(error.message)

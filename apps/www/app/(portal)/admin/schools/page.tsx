@@ -294,12 +294,12 @@ export default async function AdminSchoolsPage() {
         </div>
       </div>
 
-      {/* Rejected Section */}
+      {/* Revoked Section */}
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-red-600 dark:text-red-400">Rejected Schools</h2>
+          <h2 className="text-2xl font-bold text-red-600 dark:text-red-400">Access Revoked</h2>
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-            {rejectedSchools.length} rejected/revoked schools
+            {rejectedSchools.length} suspended school accounts
           </p>
         </div>
 
@@ -310,7 +310,7 @@ export default async function AdminSchoolsPage() {
                 <th className="px-6 py-3 text-left text-sm font-medium">Contact</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">School</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">Verification</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Rejected</th>
+                <th className="px-6 py-3 text-left text-sm font-medium">Suspended</th>
                 <th className="px-6 py-3 text-right text-sm font-medium">Actions</th>
               </tr>
             </thead>
@@ -383,7 +383,7 @@ export default async function AdminSchoolsPage() {
 
           {rejectedSchools.length === 0 && (
             <div className="p-12 text-center text-neutral-600 dark:text-neutral-400">
-              No rejected schools
+              No suspended accounts
             </div>
           )}
         </div>
