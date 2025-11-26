@@ -63,6 +63,16 @@ export function HeroSection({ className }: HeroSectionProps) {
                 I&apos;m Recruiting
               </ShimmerButton>
             </Link>
+            <Link href="#schools">
+              <ShimmerButton
+                className="px-8 py-4 text-base font-semibold md:px-10 md:py-5 md:text-lg border-2"
+                shimmerColor="#14b8a6"
+                shimmerDuration="2.5s"
+                background="rgba(0, 0, 0, 0.95)"
+              >
+                For Schools
+              </ShimmerButton>
+            </Link>
           </div>
         </div>
       </div>

@@ -168,8 +168,8 @@ export function AudienceSections() {
         <div id="schools" className="scroll-mt-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-                <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">For Career Services</span>
+              <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-500/20">
+                <span className="text-sm font-semibold text-teal-600 dark:text-teal-400">For Career Services</span>
               </div>
               <TextAnimate
                 animation="slideUp"
@@ -198,7 +198,7 @@ export function AudienceSections() {
               <Link href="/signup/school">
                 <ShimmerButton
                   className="px-8 py-4 text-base font-semibold border-2"
-                  shimmerColor="#a855f7"
+                  shimmerColor="#14b8a6"
                   shimmerDuration="2.5s"
                   background="rgba(0, 0, 0, 0.95)"
                 >
@@ -209,8 +209,8 @@ export function AudienceSections() {
             <div className="relative">
               <ShineBorder
                 borderWidth={2}
-                shineColor={["#a855f7", "#ec4899", "#f97316"]}
-                className="p-8 bg-gradient-to-br from-purple-500/5 to-pink-500/5 backdrop-blur-sm"
+                shineColor={["#14b8a6", "#10b981", "#047857"]}
+                className="p-8 bg-gradient-to-br from-teal-500/5 to-emerald-500/5 backdrop-blur-sm"
                 duration={14}
               >
                 <div className="space-y-6">
@@ -233,7 +233,7 @@ export function AudienceSections() {
                         <p className="text-xs text-muted-foreground">Verified</p>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-purple-600">34</p>
+                        <p className="text-2xl font-bold text-teal-600">34</p>
                         <p className="text-xs text-muted-foreground">Placed</p>
                       </div>
                     </div>
