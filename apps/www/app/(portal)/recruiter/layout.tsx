@@ -44,8 +44,8 @@ export default async function RecruiterLayout({
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <nav className="border-b bg-white dark:bg-neutral-900">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <Link href="/recruiter" className="text-xl font-bold">
-            Coastal Haven Partners - Recruiter Portal
+          <Link href="/" className="text-xl font-bold">
+            Coastal Haven Partners
           </Link>
           <div className="flex items-center gap-6">
             <Link

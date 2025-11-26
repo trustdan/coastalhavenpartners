@@ -53,8 +53,8 @@ export default async function SchoolLayout({
       <nav className="border-b bg-white dark:bg-neutral-900">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <div>
-            <Link href="/school" className="text-xl font-bold">
-              Coastal Haven Partners - Career Services
+            <Link href="/" className="text-xl font-bold">
+              Coastal Haven Partners
             </Link>
             {schoolProfile?.school_name && (
               <p className="text-sm text-neutral-600 dark:text-neutral-400">
