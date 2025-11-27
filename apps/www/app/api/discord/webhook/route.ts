@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Use service role client for webhook operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Create Supabase client lazily to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 /**
  * Discord Webhook Endpoint
@@ -75,6 +77,7 @@ async function handleReport(payload: {
   channel_id?: string
 }) {
   // Look up if users are linked to website accounts
+  const supabase = getSupabase()
   const { data: reporter } = await supabase
     .from('profiles')
     .select('id')
@@ -118,6 +121,7 @@ async function handleModAction(payload: {
   reason?: string
   duration_minutes?: number
 }) {
+  const supabase = getSupabase()
   // Look up linked accounts
   const { data: target } = await supabase
     .from('profiles')
@@ -200,6 +204,7 @@ async function handleModAction(payload: {
  * Handle user join event - check if they're banned on website
  */
 async function handleUserJoin(payload: { discord_id: string }) {
+  const supabase = getSupabase()
   // Check if user has linked account and is banned
   const { data: profile } = await supabase
     .from('profiles')
@@ -235,6 +240,7 @@ async function handleBanAdd(payload: {
   moderator_discord_id?: string
   reason?: string
 }) {
+  const supabase = getSupabase()
   // Look up linked account
   const { data: target } = await supabase
     .from('profiles')
@@ -299,6 +305,7 @@ async function handleBanRemove(payload: {
   discord_id: string
   moderator_discord_id?: string
 }) {
+  const supabase = getSupabase()
   // Look up linked account
   const { data: target } = await supabase
     .from('profiles')
