@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
+import { Loader2 } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect')
@@ -84,6 +85,80 @@ export default function LoginPage() {
   }
 
   return (
+    <div className="w-full max-w-md space-y-8 rounded-xl border bg-white p-8 shadow-lg dark:bg-neutral-950">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">Welcome Back</h1>
+        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+          Log in to your Coastal Haven account
+        </p>
+      </div>
+
+      <form onSubmit={handleLogin} className="space-y-4">
+        {error && (
+          <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder="john@upenn.edu"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            placeholder="••••••••"
+          />
+        </div>
+
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Logging in...' : 'Log In'}
+        </Button>
+
+        <div className="text-center text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="mb-2">Don't have an account?</p>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+            <Link href="/signup/candidate" className="text-blue-600 hover:underline">
+              Candidate
+            </Link>
+            <span className="text-neutral-300 dark:text-neutral-700">|</span>
+            <Link href="/signup/recruiter" className="text-blue-600 hover:underline">
+              Recruiter
+            </Link>
+            <span className="text-neutral-300 dark:text-neutral-700">|</span>
+            <Link href="/signup/school" className="text-blue-600 hover:underline">
+              Career Services
+            </Link>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function LoginFormFallback() {
+  return (
+    <div className="w-full max-w-md space-y-8 rounded-xl border bg-white p-8 shadow-lg dark:bg-neutral-950">
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
       <Link
         href="/"
@@ -95,65 +170,9 @@ export default function LoginPage() {
         </svg>
         Back to Home
       </Link>
-      <div className="w-full max-w-md space-y-8 rounded-xl border bg-white p-8 shadow-lg dark:bg-neutral-950">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Welcome Back</h1>
-          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Log in to your Coastal Haven account
-          </p>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20">
-              {error}
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="john@upenn.edu"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              placeholder="••••••••"
-            />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Logging in...' : 'Log In'}
-          </Button>
-
-          <div className="text-center text-sm text-neutral-600 dark:text-neutral-400">
-            <p className="mb-2">Don't have an account?</p>
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-              <Link href="/signup/candidate" className="text-blue-600 hover:underline">
-                Candidate
-              </Link>
-              <span className="text-neutral-300 dark:text-neutral-700">|</span>
-              <Link href="/signup/recruiter" className="text-blue-600 hover:underline">
-                Recruiter
-              </Link>
-              <span className="text-neutral-300 dark:text-neutral-700">|</span>
-              <Link href="/signup/school" className="text-blue-600 hover:underline">
-                Career Services
-              </Link>
-            </div>
-          </div>
-        </form>
-      </div>
+      <Suspense fallback={<LoginFormFallback />}>
+        <LoginForm />
+      </Suspense>
     </div>
   )
 }
