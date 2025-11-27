@@ -72,7 +72,7 @@ export function absoluteUrl(path: string) {
 export function constructMetadata({
   title = "Coastal Haven Partners | Elite Finance Talent Network",
   description = "The network connecting top finance students with investment banks, PE firms, and hedge funds. Create your profile and get discovered by elite recruiters.",
-  image = absoluteUrl("/logo.svg"),
+  image = absoluteUrl("/opengraph-image"),
   ...props
 }: {
   title?: string
