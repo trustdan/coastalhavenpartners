@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         </Link>
 
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Privacy Policy</h1>
-        <p className="text-muted-foreground mb-8">Last Updated: November 26, 2025</p>
+        <p className="text-muted-foreground mb-8">Last Updated: November 27, 2025</p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <section>
@@ -77,6 +77,21 @@ export default function PrivacyPage() {
               <li>Usage data (pages visited, features used, time spent)</li>
               <li>Login timestamps and session information</li>
             </ul>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">2.5 Discord Integration Information</h3>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              If you choose to link your Discord account, we collect:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li>Discord user ID (a unique numeric identifier)</li>
+              <li>Discord username</li>
+              <li>Timestamp of when you linked your account</li>
+            </ul>
+            <p className="text-muted-foreground leading-relaxed mt-4">
+              We do <strong>not</strong> collect your Discord password, private messages, friend lists, or activity
+              in other Discord servers. We only request the minimum permissions necessary to verify your identity
+              and assign your role in our community server.
+            </p>
           </section>
 
           <section>
@@ -133,12 +148,32 @@ export default function PrivacyPage() {
               <li>Email delivery services</li>
               <li>Analytics providers</li>
               <li>Payment processors (if applicable)</li>
+              <li>Discord (for community features - see section 4.4)</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
               These providers are contractually bound to use your information only for providing services to us.
             </p>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6">4.4 Legal Requirements</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6">4.4 Discord Integration</h3>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              When you link your Discord account and join our community server:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li>Your Discord user ID is stored in our database to link your website account to your Discord account</li>
+              <li>We assign you a role in our Discord server based on your account type (Candidate, Recruiter, or Career Services)</li>
+              <li>Your activity in our Discord server is subject to Discord&apos;s own{" "}
+                <a href="https://discord.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                  Privacy Policy
+                </a>
+              </li>
+              <li>Messages you send in our Discord server may be visible to other verified members and moderators</li>
+            </ul>
+            <p className="text-muted-foreground leading-relaxed mt-4">
+              You can unlink your Discord account at any time from your account settings. This will remove your
+              verified role from the Discord server but will not delete any messages you have sent.
+            </p>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">4.5 Legal Requirements</h3>
             <p className="text-muted-foreground leading-relaxed">
               We may disclose information if required by law, court order, or to protect our legal rights, safety,
               or the safety of others.

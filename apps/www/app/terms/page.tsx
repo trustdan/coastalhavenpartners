@@ -18,7 +18,7 @@ export default function TermsPage() {
         </Link>
 
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Terms of Service</h1>
-        <p className="text-muted-foreground mb-8">Last Updated: November 26, 2025</p>
+        <p className="text-muted-foreground mb-8">Last Updated: November 27, 2025</p>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <section>
@@ -139,7 +139,82 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">9. Intellectual Property</h2>
+            <h2 className="text-2xl font-semibold mb-4">9. Discord Community</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              We operate a Discord community server for verified members. By linking your Discord account and joining
+              our server, you agree to the following additional terms:
+            </p>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">9.1 Community Guidelines</h3>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              All members must:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li>Treat all members with respect and professionalism</li>
+              <li>Keep discussions relevant to finance careers, recruiting, and professional development</li>
+              <li>Respect the confidentiality of information shared by other members</li>
+              <li>Not share proprietary firm information, interview questions under NDA, or confidential materials</li>
+              <li>Not engage in discrimination, harassment, or hate speech of any kind</li>
+              <li>Not spam, self-promote excessively, or advertise without permission</li>
+              <li>Not share illegal content or discuss illegal activities</li>
+              <li>Report violations to moderators rather than engaging in public disputes</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">9.2 Role-Based Access</h3>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Your Discord role is based on your verified account type:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li><strong>Candidates</strong> have access to candidate-specific channels and general networking areas</li>
+              <li><strong>Recruiters</strong> have access to recruiter-specific channels and can engage with candidates professionally</li>
+              <li><strong>Career Services</strong> have access to school-specific channels and coordination areas</li>
+            </ul>
+            <p className="text-muted-foreground leading-relaxed mt-4">
+              Misrepresenting your role or attempting to access channels outside your permission level is prohibited.
+            </p>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">9.3 Recruiter Conduct in Discord</h3>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Recruiters participating in our Discord must:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li>Identify themselves and their firm when reaching out to candidates</li>
+              <li>Not send unsolicited mass messages to candidates</li>
+              <li>Respect candidates who indicate they are not interested</li>
+              <li>Post job opportunities only in designated channels</li>
+              <li>Comply with all applicable employment laws and anti-discrimination regulations</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">9.4 Moderation and Enforcement</h3>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              We reserve the right to:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
+              <li>Remove or edit content that violates these guidelines</li>
+              <li>Temporarily mute or restrict users who violate rules</li>
+              <li>Permanently ban users for serious or repeated violations</li>
+              <li>Revoke Discord access while maintaining website account access (or vice versa)</li>
+              <li>Report illegal activity to appropriate authorities</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3 mt-6">9.5 Third-Party Platform Disclaimer</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Discord is a third-party platform not operated by Coastal Haven Partners. Your use of Discord is also
+              subject to Discord&apos;s{" "}
+              <a href="https://discord.com/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="https://discord.com/guidelines" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                Community Guidelines
+              </a>
+              . We are not responsible for Discord&apos;s availability, features, or any actions taken by Discord.
+              We cannot recover deleted Discord messages or accounts banned by Discord itself.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">10. Intellectual Property</h2>
             <p className="text-muted-foreground leading-relaxed">
               The Coastal Haven Partners platform, including its design, features, and content, is protected by intellectual
               property laws. You retain ownership of the content you submit (profiles, resumes, etc.), but grant us a
@@ -148,7 +223,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">10. Service Availability</h2>
+            <h2 className="text-2xl font-semibold mb-4">11. Service Availability</h2>
             <p className="text-muted-foreground leading-relaxed">
               We strive to maintain platform availability but do not guarantee uninterrupted access. We may modify,
               suspend, or discontinue features with or without notice. We are not liable for any impact on your
@@ -157,7 +232,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">11. No Employment Guarantee</h2>
+            <h2 className="text-2xl font-semibold mb-4">12. No Employment Guarantee</h2>
             <p className="text-muted-foreground leading-relaxed">
               Coastal Haven Partners is a networking and discovery platform. We do not guarantee that candidates will
               receive job offers or that recruiters will find suitable candidates. Employment decisions are made solely
@@ -166,7 +241,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">12. Limitation of Liability</h2>
+            <h2 className="text-2xl font-semibold mb-4">13. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed">
               Coastal Haven Partners shall not be liable for any indirect, incidental, special, consequential, or
               punitive damages resulting from your use of our platform. This includes but is not limited to lost job
@@ -176,7 +251,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">13. Indemnification</h2>
+            <h2 className="text-2xl font-semibold mb-4">14. Indemnification</h2>
             <p className="text-muted-foreground leading-relaxed">
               You agree to indemnify and hold harmless Coastal Haven Partners, its officers, directors, employees, and
               agents from any claims, damages, losses, or expenses arising from your use of the platform, violation of
@@ -185,7 +260,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">14. Account Termination</h2>
+            <h2 className="text-2xl font-semibold mb-4">15. Account Termination</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               We may suspend or terminate your account for:
             </p>
@@ -203,7 +278,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">15. Governing Law</h2>
+            <h2 className="text-2xl font-semibold mb-4">16. Governing Law</h2>
             <p className="text-muted-foreground leading-relaxed">
               These Terms of Service shall be governed by and construed in accordance with the laws of the State of
               Delaware, without regard to its conflict of law provisions. Any disputes arising from these terms or
@@ -212,7 +287,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">16. Changes to Terms</h2>
+            <h2 className="text-2xl font-semibold mb-4">17. Changes to Terms</h2>
             <p className="text-muted-foreground leading-relaxed">
               We reserve the right to modify these terms at any time. Changes will be effective upon posting to our
               website. We will notify registered users of material changes via email. Continued use of the platform
@@ -221,7 +296,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">17. Contact Information</h2>
+            <h2 className="text-2xl font-semibold mb-4">18. Contact Information</h2>
             <p className="text-muted-foreground leading-relaxed">
               For questions about these Terms of Service, please contact us at{" "}
               <a

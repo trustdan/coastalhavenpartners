@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       analytics_events: {
@@ -216,8 +241,161 @@ export type Database = {
           },
         ]
       }
+      discord_reports: {
+        Row: {
+          action_id: string | null
+          channel_id: string | null
+          created_at: string | null
+          id: string
+          message_content: string | null
+          message_link: string | null
+          reason: string
+          reported_discord_id: string
+          reported_user_id: string | null
+          reporter_discord_id: string
+          reporter_user_id: string | null
+          resolution_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          action_id?: string | null
+          channel_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_content?: string | null
+          message_link?: string | null
+          reason: string
+          reported_discord_id: string
+          reported_user_id?: string | null
+          reporter_discord_id: string
+          reporter_user_id?: string | null
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          action_id?: string | null
+          channel_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_content?: string | null
+          message_link?: string | null
+          reason?: string
+          reported_discord_id?: string
+          reported_user_id?: string | null
+          reporter_discord_id?: string
+          reporter_user_id?: string | null
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discord_reports_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "moderation_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discord_reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discord_reports_reporter_user_id_fkey"
+            columns: ["reporter_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discord_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moderation_actions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          discord_channel_id: string | null
+          discord_message_id: string | null
+          evidence_urls: string[] | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          moderator_discord_id: string | null
+          moderator_id: string | null
+          platform: string
+          reason: string | null
+          target_discord_id: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
+          evidence_urls?: string[] | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          moderator_discord_id?: string | null
+          moderator_id?: string | null
+          platform?: string
+          reason?: string | null
+          target_discord_id?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
+          evidence_urls?: string[] | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          moderator_discord_id?: string | null
+          moderator_id?: string | null
+          platform?: string
+          reason?: string | null
+          target_discord_id?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_actions_moderator_id_fkey"
+            columns: ["moderator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moderation_actions_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          ban_expires_at: string | null
+          ban_reason: string | null
+          banned_at: string | null
+          banned_by: string | null
           created_at: string | null
           discord_id: string | null
           discord_username: string | null
@@ -225,12 +403,17 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_banned: boolean | null
           linkedin_url: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
         }
         Insert: {
+          ban_expires_at?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           created_at?: string | null
           discord_id?: string | null
           discord_username?: string | null
@@ -238,12 +421,17 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_banned?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
         Update: {
+          ban_expires_at?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           created_at?: string | null
           discord_id?: string | null
           discord_username?: string | null
@@ -251,12 +439,21 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_banned?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recruiter_profiles: {
         Row: {
@@ -646,6 +843,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       candidate_status: [
