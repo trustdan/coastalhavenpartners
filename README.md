@@ -40,6 +40,290 @@ The application serves four distinct user roles, each with a tailored portal:
 - **Recruiter Approval:** Workflow to vet and approve new recruiter accounts.
 - **User Management:** Global controls for all user types.
 
+---
+
+## 🤖 Discord Integration
+
+The platform integrates deeply with Discord to provide community features and synchronized moderation. This section documents the complete Discord architecture.
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              DISCORD SERVER                                  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────────────┐  │
+│  │ Custom Bot  │  │   YAGPDB    │  │  AutoMod    │  │ Community Settings│  │
+│  │ (Railway)   │  │  (3rd party)│  │  (Native)   │  │    (Native)       │  │
+│  └──────┬──────┘  └──────┬──────┘  └─────────────┘  └───────────────────┘  │
+└─────────┼────────────────┼──────────────────────────────────────────────────┘
+          │                │
+          │ Webhooks       │ Mod Logs
+          ▼                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           WEBSITE (Vercel)                                   │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
+│  │ /api/discord/       │  │ /api/discord/       │  │ /api/admin/         │  │
+│  │    callback         │  │    webhook          │  │    moderate         │  │
+│  │ (OAuth linking)     │  │ (Receive events)    │  │ (Admin actions)     │  │
+│  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘  │
+│                                      │                        │              │
+│                                      ▼                        ▼              │
+│                           ┌─────────────────────────────────────────────┐   │
+│                           │              SUPABASE                        │   │
+│                           │  ┌─────────────┐  ┌───────────────────────┐ │   │
+│                           │  │  profiles   │  │  moderation_actions   │ │   │
+│                           │  │ (discord_id)│  │  discord_reports      │ │   │
+│                           │  └─────────────┘  └───────────────────────┘ │   │
+│                           └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Components
+
+#### 1. Custom Discord Bot (`apps/discord-bot`)
+
+A Node.js bot deployed on Railway that handles:
+
+| Feature | Description |
+|---------|-------------|
+| **Account Linking** | `/verify` command directs users to OAuth flow |
+| **Role Assignment** | Assigns roles based on user type (candidate, recruiter, etc.) |
+| **Moderation Sync** | Listens for ban/unban/kick events and syncs to website |
+| **Welcome Messages** | DMs new members with verification instructions |
+
+**Key Events Monitored:**
+- `GuildBanAdd` - User banned from Discord → Ban on website
+- `GuildBanRemove` - User unbanned from Discord → Unban on website
+- `GuildMemberRemove` - Detects kicks vs. voluntary leaves
+
+**Deployment:** Railway (auto-deploys from `apps/discord-bot/`)
+
+#### 2. Website Webhook Endpoint (`/api/discord/webhook`)
+
+Receives events from:
+- Custom bot (ban/unban/kick/leave events)
+- YAGPDB moderation logs (optional)
+
+**Payload Types:**
+```typescript
+type WebhookPayload =
+  | { type: 'REPORT', reporter_discord_id, reported_discord_id, reason, ... }
+  | { type: 'MOD_ACTION', target_discord_id, action_type, reason, ... }
+  | { type: 'USER_JOIN', discord_id }
+  | { type: 'USER_LEAVE', discord_id, reason }
+  | { type: 'BAN_ADD', discord_id, moderator_discord_id?, reason? }
+  | { type: 'BAN_REMOVE', discord_id, moderator_discord_id? }
+```
+
+#### 3. Admin Moderation API (`/api/admin/moderate`)
+
+Allows website admins to moderate users with optional Discord sync:
+
+```typescript
+POST /api/admin/moderate
+{
+  user_id: string,
+  action: 'warn' | 'mute' | 'kick' | 'ban' | 'unban',
+  reason?: string,
+  sync_discord?: boolean,  // Also apply action in Discord
+  duration_minutes?: number  // For mutes
+}
+```
+
+#### 4. Discord OAuth Callback (`/api/discord/callback`)
+
+Handles the OAuth2 flow for linking Discord accounts:
+1. User initiates from Settings page
+2. Redirected to Discord OAuth
+3. Callback validates and stores `discord_id` in profile
+4. Notifies bot to assign appropriate role
+
+### Third-Party Bots
+
+#### YAGPDB (Yet Another General Purpose Discord Bot)
+
+Used for advanced moderation logging and automation:
+
+| Feature | Usage |
+|---------|-------|
+| **Mod Logs** | Sends moderation events to a log channel |
+| **Custom Commands** | Server-specific automation |
+| **Auto-moderation** | Spam/raid protection beyond native AutoMod |
+
+**Setup:** Configure YAGPDB to send webhook notifications to `/api/discord/webhook` for mod actions.
+
+### Native Discord Features
+
+#### AutoMod (Discord's Built-in)
+
+Configure in **Server Settings → Safety Setup → AutoMod**:
+- Block harmful links
+- Block spam content
+- Block mention spam
+- Custom keyword filters
+
+#### Community Settings
+
+Enable in **Server Settings → Community**:
+- Membership screening (rules agreement)
+- Welcome screen
+- Server insights
+- Discovery eligibility
+
+### Database Schema (Discord-related)
+
+#### `profiles` table additions:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `discord_id` | TEXT | Discord user ID |
+| `discord_username` | TEXT | Current Discord username |
+| `discord_verified_at` | TIMESTAMPTZ | When account was linked |
+| `is_banned` | BOOLEAN | Website ban status (syncs with Discord) |
+| `banned_at` | TIMESTAMPTZ | When user was banned |
+| `banned_by` | UUID | Admin who issued ban |
+| `ban_reason` | TEXT | Reason for ban |
+| `ban_expires_at` | TIMESTAMPTZ | For temporary bans |
+
+#### `moderation_actions` table:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `target_user_id` | UUID | FK to profiles (if linked) |
+| `target_discord_id` | TEXT | Discord ID (even if not linked) |
+| `moderator_id` | UUID | FK to profiles |
+| `moderator_discord_id` | TEXT | Discord ID of moderator |
+| `action_type` | TEXT | warn, mute, kick, ban, unban |
+| `reason` | TEXT | Reason for action |
+| `platform` | TEXT | 'website' or 'discord' |
+| `expires_at` | TIMESTAMPTZ | For temporary actions |
+| `is_active` | BOOLEAN | Current status |
+
+#### `discord_reports` table:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `reporter_discord_id` | TEXT | Who filed the report |
+| `reported_discord_id` | TEXT | Who was reported |
+| `reason` | TEXT | Report reason |
+| `message_content` | TEXT | Reported message (optional) |
+| `message_link` | TEXT | Link to message |
+| `status` | TEXT | pending, reviewed, resolved, dismissed |
+| `reviewed_by` | UUID | Admin who reviewed |
+
+### Environment Variables
+
+#### Website (`apps/www/.env.local`)
+
+```bash
+# Discord OAuth (from Discord Developer Portal)
+DISCORD_CLIENT_ID=your_application_client_id
+DISCORD_CLIENT_SECRET=your_application_client_secret
+
+# Bot API Communication
+DISCORD_BOT_API_URL=https://your-bot.railway.app
+DISCORD_BOT_API_SECRET=shared_secret_with_bot
+
+# Webhook Security
+DISCORD_WEBHOOK_SECRET=your_webhook_secret
+```
+
+#### Discord Bot (`apps/discord-bot/.env`)
+
+```bash
+# Discord Bot (from Discord Developer Portal → Bot section)
+DISCORD_BOT_TOKEN=your_bot_token
+DISCORD_CLIENT_ID=your_application_client_id
+DISCORD_GUILD_ID=your_server_id
+
+# Role IDs (from Discord → Server Settings → Roles → right-click → Copy ID)
+DISCORD_UNVERIFIED_ROLE_ID=
+DISCORD_CANDIDATE_ROLE_ID=
+DISCORD_RECRUITER_ROLE_ID=
+DISCORD_CAREER_SERVICES_ROLE_ID=
+DISCORD_ADMIN_ROLE_ID=
+
+# Supabase (service role for admin access)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# API Security
+BOT_API_SECRET=shared_secret_with_website
+
+# Website Webhook
+WEBSITE_WEBHOOK_URL=https://coastalhavenpartners.com/api/discord/webhook
+WEBSITE_WEBHOOK_SECRET=your_webhook_secret
+
+# Railway sets this automatically
+PORT=3001
+```
+
+### Railway Deployment
+
+The Discord bot is deployed on Railway for 24/7 uptime.
+
+**Setup Steps:**
+1. Create new project in Railway
+2. Connect GitHub repository
+3. Set Root Directory to `apps/discord-bot`
+4. Set Watch Paths to `apps/discord-bot/**`
+5. Add all environment variables
+6. Deploy
+
+**Monitoring:**
+- View logs in Railway dashboard
+- Health check endpoint: `GET /health`
+- Bot status visible in Discord (online indicator)
+
+### Discord Server Setup Checklist
+
+1. **Create Roles** (in order of hierarchy):
+   - `@Admin` - Full permissions
+   - `@Career Services` - School admin access
+   - `@Recruiter` - Verified recruiter
+   - `@Candidate` - Verified candidate
+   - `@Unverified` - New members, limited access
+
+2. **Bot Permissions** (when inviting):
+   - Manage Roles
+   - Kick Members
+   - Ban Members
+   - View Audit Log
+   - Send Messages
+   - Read Message History
+
+3. **Channel Structure** (recommended):
+   ```
+   📢 INFORMATION
+   ├── #welcome
+   ├── #rules
+   └── #announcements
+
+   💬 GENERAL
+   ├── #general-chat
+   └── #introductions
+
+   🎯 CANDIDATES
+   ├── #candidate-lounge
+   └── #job-hunting-tips
+
+   🏢 RECRUITERS
+   ├── #recruiter-lounge
+   └── #hiring-discussions
+
+   🛡️ MODERATION (staff only)
+   ├── #mod-logs
+   └── #mod-discussion
+   ```
+
+4. **Enable Developer Mode** (to get IDs):
+   - User Settings → Advanced → Developer Mode
+   - Right-click roles/channels/users → Copy ID
+
+---
+
 ## 🏃‍♂️ Getting Started
 
 ### Prerequisites

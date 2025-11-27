@@ -164,6 +164,108 @@ apps/www/
     └── migrations/       # SQL migration files
 ```
 
+---
+
+## Discord Integration
+
+The website integrates with Discord for community features and moderation sync. For full architecture details, see the [root README](../../README.md#-discord-integration).
+
+### Discord API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/discord/callback` | GET | OAuth2 callback for account linking |
+| `/api/discord/webhook` | POST | Receives events from Discord bot |
+| `/api/admin/moderate` | POST | Admin moderation with Discord sync |
+
+### OAuth Flow
+
+```
+User clicks "Link Discord" in Settings
+         │
+         ▼
+Redirect to Discord OAuth2
+         │
+         ▼
+User authorizes app
+         │
+         ▼
+Discord redirects to /api/discord/callback
+         │
+         ▼
+Callback validates state, exchanges code for token
+         │
+         ▼
+Fetches Discord user info, stores discord_id in profile
+         │
+         ▼
+Notifies bot API to assign role in Discord server
+```
+
+### Webhook Security
+
+The `/api/discord/webhook` endpoint requires a secret header:
+
+```typescript
+// Request must include:
+headers: {
+  'x-webhook-secret': process.env.DISCORD_WEBHOOK_SECRET
+}
+```
+
+### Environment Variables (Discord-specific)
+
+Add these to `.env.local`:
+
+```bash
+# Discord OAuth (from Discord Developer Portal → OAuth2)
+DISCORD_CLIENT_ID=your_application_client_id
+DISCORD_CLIENT_SECRET=your_application_client_secret
+
+# Bot Communication
+DISCORD_BOT_API_URL=https://your-bot.railway.app
+DISCORD_BOT_API_SECRET=shared_secret_with_bot
+
+# Webhook Security (generate a random string, share with bot)
+DISCORD_WEBHOOK_SECRET=your_webhook_secret
+```
+
+### Database Tables (Discord-related)
+
+Located in `supabase/migrations/`:
+
+| Migration | Tables |
+|-----------|--------|
+| `20251127500000_discord_moderation.sql` | `moderation_actions`, `discord_reports` |
+
+Key fields added to `profiles`:
+- `discord_id` - Discord user ID
+- `discord_username` - Current username
+- `discord_verified_at` - When linked
+- `is_banned`, `banned_at`, `banned_by`, `ban_reason` - Ban status
+
+### Moderation Actions API
+
+```typescript
+// POST /api/admin/moderate
+{
+  user_id: string,           // Target user's profile ID
+  action: 'warn' | 'mute' | 'kick' | 'ban' | 'unban',
+  reason?: string,
+  sync_discord?: boolean,    // Also apply in Discord
+  duration_minutes?: number  // For mutes
+}
+```
+
+### Testing Discord Integration
+
+1. **Link Account**: Go to `/dashboard/settings` and click "Link Discord"
+2. **Verify Role**: Check that bot assigns correct role in Discord
+3. **Test Ban Sync**: Ban a user in Discord, verify `is_banned` updates in database
+4. **Test Admin Moderation**: Use admin panel to ban with `sync_discord: true`
+
+---
+
 ## Learn More
 
 - [Next.js Documentation](https://nextjs.org/docs)
