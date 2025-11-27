@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,8 @@ import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,6 +55,14 @@ export default function LoginPage() {
         return
       }
 
+      // If there's a redirect parameter, use it (for Discord OAuth flow, etc.)
+      if (redirectTo && redirectTo.startsWith('/')) {
+        router.push(redirectTo)
+        router.refresh()
+        return
+      }
+
+      // Default role-based redirect
       if (role === 'candidate') {
         router.push('/candidate')
         router.refresh()
