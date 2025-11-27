@@ -11,7 +11,9 @@
       "Bash(pnpm supabase db push:*)",
       "Bash(pnpm add:*)",
       "Bash(pnpm install)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(pnpm supabase gen types:*)",
+      "Bash(npx shadcn@latest add:*)"
     ],
     "deny": [],
     "ask": []

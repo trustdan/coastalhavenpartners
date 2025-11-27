@@ -142,3 +142,424 @@ Cast the JSON field to a specific type before accessing dynamic properties:
 const visibility = recruiter.visible_fields_to_candidates as Record<string, boolean> | null
 if (visibility?.['email']) { ... }
 ```
+
+---
+
+## 📊 Supabase Database Schema
+
+This section documents the complete Supabase database structure for rebuilding from scratch.
+
+### Database Overview
+
+The platform uses PostgreSQL via Supabase with the following core tables:
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | Core user identity (extends Supabase auth.users) |
+| `candidate_profiles` | Student/candidate academic and professional data |
+| `recruiter_profiles` | Recruiter and firm information |
+| `school_profiles` | University career services admin profiles |
+| `candidate_interactions` | Tracks recruiter-candidate engagement |
+| `analytics_events` | Platform usage analytics |
+
+### Enums
+
+Create these custom types before creating tables:
+
+```sql
+CREATE TYPE user_role AS ENUM ('candidate', 'recruiter', 'admin', 'school_admin');
+CREATE TYPE candidate_status AS ENUM ('pending_verification', 'verified', 'active', 'placed', 'rejected');
+CREATE TYPE education_level AS ENUM ('bachelors', 'masters', 'mba', 'phd');
+CREATE TYPE school_verification_status AS ENUM ('pending_documents', 'documents_submitted', 'under_review', 'approved', 'rejected');
+```
+
+### Entity Relationship Diagram
+
+```
+┌─────────────────────┐
+│   auth.users        │  (Supabase managed)
+│   - id (PK)         │
+│   - email           │
+└──────────┬──────────┘
+           │ 1:1
+           ▼
+┌─────────────────────┐
+│   profiles          │  (Core user identity)
+│   - id (PK/FK)      │◄──────────────────────────────────────────────────┐
+│   - email           │                                                    │
+│   - role            │                                                    │
+│   - full_name       │                                                    │
+└──────────┬──────────┘                                                    │
+           │                                                               │
+    ┌──────┴──────┬─────────────────┐                                      │
+    │ 1:1         │ 1:1             │ 1:1                                  │
+    ▼             ▼                 ▼                                      │
+┌───────────────┐ ┌─────────────────┐ ┌─────────────────┐                  │
+│candidate_     │ │recruiter_       │ │school_          │                  │
+│profiles       │ │profiles         │ │profiles         │                  │
+│- id (PK)      │ │- id (PK)        │ │- id (PK)        │                  │
+│- user_id (FK) │ │- user_id (FK)   │ │- user_id (FK)   │                  │
+│- school_name  │ │- firm_name      │ │- school_name    │                  │
+│- gpa          │ │- is_approved    │ │- is_approved    │                  │
+│- major        │ │- approved_by ───┼─┼──────────────────┘  (FK to profiles)
+│- rejected_by ─┼─┼──────────────────┘ │- approved_by ───► profiles
+└───────┬───────┘ └────────┬────────┘ │- rejected_by ───► profiles
+        │                  │          └─────────────────┘
+        │                  │
+        └───────┬──────────┘
+                │ M:N
+                ▼
+┌─────────────────────────┐
+│  candidate_interactions │
+│  - id (PK)              │
+│  - candidate_id (FK)    │
+│  - recruiter_id (FK)    │
+│  - interaction_type     │
+└─────────────────────────┘
+
+┌─────────────────────────┐
+│  analytics_events       │  (Standalone)
+│  - id (PK)              │
+│  - event_type           │
+│  - user_id              │
+│  - target_id            │
+│  - metadata (JSONB)     │
+└─────────────────────────┘
+```
+
+### Table Definitions
+
+#### 1. `profiles` - Core User Identity
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, FK → auth.users(id) | Matches Supabase auth user ID |
+| `email` | TEXT | UNIQUE, NOT NULL | User email |
+| `role` | user_role | NOT NULL, DEFAULT 'candidate' | User type |
+| `full_name` | TEXT | NOT NULL | Display name |
+| `phone` | TEXT | | Phone number |
+| `linkedin_url` | TEXT | | LinkedIn profile URL |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Auto-updated via trigger |
+
+#### 2. `candidate_profiles` - Student/Candidate Data
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, DEFAULT uuid_generate_v4() | |
+| `user_id` | UUID | UNIQUE, FK → profiles(id) | Links to user |
+| **Undergrad Education** ||||
+| `school_name` | TEXT | NOT NULL | University name |
+| `graduation_year` | INTEGER | NOT NULL | Expected/actual graduation |
+| `major` | TEXT | NOT NULL | Primary major |
+| `gpa` | DECIMAL(3,2) | NOT NULL, CHECK 0-4.0 | Undergrad GPA |
+| `education_level` | education_level | DEFAULT 'bachelors' | Highest education level |
+| `undergrad_degree_type` | TEXT | | BA, BS, etc. |
+| `undergrad_specialty` | TEXT | | Concentration/minor |
+| **Graduate Education** ||||
+| `grad_school` | TEXT | | Graduate school name |
+| `grad_degree_type` | TEXT | | MA, MBA, JD, PhD, etc. |
+| `grad_major` | TEXT | | Graduate field of study |
+| `grad_gpa` | NUMERIC(3,2) | CHECK 0-4.0 | Graduate GPA |
+| `grad_graduation_year` | INTEGER | CHECK 1950-2050 | |
+| `grad_specialty` | TEXT | | Graduate concentration |
+| **Professional** ||||
+| `resume_url` | TEXT | | Path in storage bucket |
+| `transcript_url` | TEXT | | Path in storage bucket |
+| `target_roles` | TEXT[] | | e.g., ['IB', 'PE', 'VC'] |
+| `preferred_locations` | TEXT[] | | e.g., ['NYC', 'SF'] |
+| `bio` | TEXT | | Personal bio/summary |
+| `scheduling_url` | TEXT | | Calendly/booking link |
+| **Verification** ||||
+| `status` | candidate_status | DEFAULT 'pending_verification' | |
+| `email_verified` | BOOLEAN | DEFAULT FALSE | |
+| `gpa_verified` | BOOLEAN | DEFAULT FALSE | |
+| `school_verified` | BOOLEAN | DEFAULT FALSE | |
+| **Rejection** ||||
+| `is_rejected` | BOOLEAN | DEFAULT FALSE | |
+| `rejected_at` | TIMESTAMPTZ | | |
+| `rejected_by` | UUID | FK → profiles(id) | Admin who rejected |
+| **Visibility Controls** ||||
+| `visible_fields_to_recruiters` | JSONB | DEFAULT (see below) | Field-level privacy |
+| `visible_fields_to_schools` | JSONB | DEFAULT (see below) | Field-level privacy |
+| **Metadata** ||||
+| `notes` | TEXT | | Internal recruiter notes |
+| `tags` | TEXT[] | | Searchable tags |
+| `last_activity_at` | TIMESTAMPTZ | | |
+| `created_at` | TIMESTAMPTZ | | |
+| `updated_at` | TIMESTAMPTZ | | |
+
+**Default visibility for recruiters:**
+```json
+{
+  "linkedin_url": true,
+  "email": false,
+  "resume": true,
+  "transcript": false
+}
+```
+
+**Default visibility for schools:**
+```json
+{
+  "linkedin_url": true,
+  "email": true,
+  "resume": true,
+  "transcript": true
+}
+```
+
+#### 3. `recruiter_profiles` - Recruiter/Firm Data
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, DEFAULT uuid_generate_v4() | |
+| `user_id` | UUID | UNIQUE, FK → profiles(id) | |
+| **Firm Details** ||||
+| `firm_name` | TEXT | NOT NULL | Company name |
+| `firm_type` | TEXT | | 'Investment Bank', 'PE', 'VC', etc. |
+| `job_title` | TEXT | NOT NULL | Recruiter's title |
+| `bio` | TEXT | | About the recruiter |
+| `specialties` | TEXT[] | | e.g., ['IB', 'Trading'] |
+| `locations` | TEXT[] | | Office locations |
+| `years_experience` | INTEGER | | |
+| `linkedin_url` | TEXT | | |
+| `company_website` | TEXT | | |
+| `profile_photo_url` | TEXT | | |
+| **Approval** ||||
+| `is_approved` | BOOLEAN | DEFAULT FALSE | Admin approval status |
+| `approved_at` | TIMESTAMPTZ | | |
+| `approved_by` | UUID | FK → profiles(id) | Admin who approved |
+| **Rejection** ||||
+| `is_rejected` | BOOLEAN | DEFAULT FALSE | |
+| `rejected_at` | TIMESTAMPTZ | | |
+| `rejected_by` | UUID | FK → profiles(id) | |
+| **Visibility Toggles** ||||
+| `is_visible_to_candidates` | BOOLEAN | DEFAULT FALSE | Master toggle |
+| `is_visible_to_recruiters` | BOOLEAN | DEFAULT FALSE | Master toggle |
+| `is_visible_to_schools` | BOOLEAN | DEFAULT FALSE | Master toggle |
+| **Field-Level Visibility** ||||
+| `visible_fields_to_candidates` | JSONB | DEFAULT (see below) | |
+| `visible_fields_to_recruiters` | JSONB | DEFAULT (see below) | |
+| `visible_fields_to_schools` | JSONB | DEFAULT (see below) | |
+| **Metadata** ||||
+| `created_at` | TIMESTAMPTZ | | |
+| `updated_at` | TIMESTAMPTZ | | |
+
+**Default visibility config structure:**
+```json
+{
+  "full_name": true,
+  "email": false,
+  "phone": false,
+  "firm_name": true,
+  "firm_type": true,
+  "job_title": true,
+  "bio": true,
+  "specialties": true,
+  "locations": true,
+  "linkedin_url": false,
+  "years_experience": true,
+  "company_website": true,
+  "profile_photo_url": true
+}
+```
+
+#### 4. `school_profiles` - Career Services Admin Data
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | |
+| `user_id` | UUID | UNIQUE, FK → profiles(id) | |
+| **School Details** ||||
+| `school_name` | TEXT | NOT NULL | University name |
+| `school_domain` | TEXT | | e.g., 'harvard.edu' for verification |
+| `department_name` | TEXT | DEFAULT 'Career Services' | |
+| `contact_email` | TEXT | | |
+| `contact_phone` | TEXT | | |
+| `website` | TEXT | | |
+| **Verification** ||||
+| `verification_document_url` | TEXT | | Path to uploaded doc |
+| `verification_document_type` | TEXT | | employment_letter, staff_id, etc. |
+| `verification_notes` | TEXT | | Admin review notes |
+| `verification_status` | TEXT | DEFAULT 'pending_documents' | |
+| **Approval** ||||
+| `is_approved` | BOOLEAN | DEFAULT FALSE | |
+| `approved_at` | TIMESTAMPTZ | | |
+| `approved_by` | UUID | FK → profiles(id) | |
+| **Rejection** ||||
+| `is_rejected` | BOOLEAN | DEFAULT FALSE | |
+| `rejected_at` | TIMESTAMPTZ | | |
+| `rejected_by` | UUID | FK → profiles(id) | |
+| **Metadata** ||||
+| `created_at` | TIMESTAMPTZ | | |
+| `updated_at` | TIMESTAMPTZ | | |
+
+#### 5. `candidate_interactions` - Engagement Tracking
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, DEFAULT uuid_generate_v4() | |
+| `candidate_id` | UUID | FK → candidate_profiles(id) | |
+| `recruiter_id` | UUID | FK → recruiter_profiles(id) | |
+| `interaction_type` | TEXT | NOT NULL | 'viewed', 'contacted', 'interviewed', 'offered' |
+| `notes` | TEXT | | |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | |
+
+#### 6. `analytics_events` - Usage Analytics
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | |
+| `event_type` | TEXT | NOT NULL | 'profile_view', 'login', 'search', etc. |
+| `user_id` | UUID | FK → auth.users(id) | Who performed action |
+| `target_id` | UUID | | Target of action (e.g., viewed candidate) |
+| `metadata` | JSONB | DEFAULT '{}' | Additional data |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | |
+
+### Storage Buckets
+
+| Bucket | Public | Purpose |
+|--------|--------|---------|
+| `resumes` | Yes | Candidate resume PDFs |
+| `transcripts` | Yes | Candidate transcript PDFs |
+| `school-documents` | Yes | School verification documents |
+
+**File path convention:** `{user_id}/{filename}`
+
+### Database Functions
+
+| Function | Purpose |
+|----------|---------|
+| `handle_new_user()` | Trigger: auto-creates profile on auth.users insert |
+| `update_updated_at_column()` | Trigger: auto-updates `updated_at` timestamps |
+| `is_admin()` | Returns TRUE if current user has admin role |
+| `current_user_role()` | Returns the role of the current user |
+| `create_candidate_profile(...)` | Creates candidate profile (bypasses RLS for signup) |
+| `get_school_candidates(school_admin_id)` | Returns all candidates from a school admin's school |
+| `get_visible_recruiter_fields(recruiter_id, viewer_role)` | Returns filtered recruiter profile based on visibility settings |
+| `get_visible_candidate_fields(candidate_id, viewer_role)` | Returns filtered candidate profile based on visibility settings |
+
+### Row Level Security (RLS) Summary
+
+All tables have RLS enabled. Key policies:
+
+**profiles:**
+- Users can view/update their own profile
+- Admins can view all profiles
+
+**candidate_profiles:**
+- Candidates can view/update their own profile
+- Approved recruiters can view verified candidates
+- School admins can view candidates from their school
+
+**recruiter_profiles:**
+- Recruiters can view/update their own profile
+- Candidates can view approved recruiters with `is_visible_to_candidates = TRUE`
+- Other recruiters can view approved recruiters with `is_visible_to_recruiters = TRUE`
+- School admins can view approved recruiters with `is_visible_to_schools = TRUE`
+
+**school_profiles:**
+- School admins can view/update their own profile
+- Admins can view all school profiles
+
+**analytics_events:**
+- Authenticated users can insert events
+- Admins can view all events
+- Candidates can view events targeting them
+- Recruiters can view their own events
+- School admins can view events for their students
+
+### Indexes
+
+```sql
+-- Candidate Profiles
+CREATE INDEX idx_candidate_status ON candidate_profiles(status);
+CREATE INDEX idx_candidate_gpa ON candidate_profiles(gpa);
+CREATE INDEX idx_candidate_graduation_year ON candidate_profiles(graduation_year);
+
+-- Recruiter Profiles
+CREATE INDEX idx_recruiter_approved ON recruiter_profiles(is_approved);
+CREATE INDEX idx_recruiter_visible_to_candidates ON recruiter_profiles(is_visible_to_candidates) WHERE is_visible_to_candidates = TRUE;
+CREATE INDEX idx_recruiter_visible_to_recruiters ON recruiter_profiles(is_visible_to_recruiters) WHERE is_visible_to_recruiters = TRUE;
+CREATE INDEX idx_recruiter_visible_to_schools ON recruiter_profiles(is_visible_to_schools) WHERE is_visible_to_schools = TRUE;
+CREATE INDEX idx_recruiter_specialties ON recruiter_profiles USING GIN(specialties);
+CREATE INDEX idx_recruiter_locations ON recruiter_profiles USING GIN(locations);
+
+-- School Profiles
+CREATE INDEX idx_school_profiles_school_name ON school_profiles(school_name);
+CREATE INDEX idx_school_profiles_approved ON school_profiles(is_approved) WHERE is_approved = TRUE;
+
+-- Analytics
+CREATE INDEX idx_analytics_event_type ON analytics_events(event_type);
+CREATE INDEX idx_analytics_user_id ON analytics_events(user_id);
+CREATE INDEX idx_analytics_target_id ON analytics_events(target_id);
+CREATE INDEX idx_analytics_created_at ON analytics_events(created_at);
+```
+
+### Rebuilding the Database
+
+To rebuild the database from scratch:
+
+1. **Create a new Supabase project** at [supabase.com](https://supabase.com)
+
+2. **Apply migrations in order:**
+   ```bash
+   cd apps/www
+   pnpm supabase db push
+   ```
+
+3. **Or apply manually via SQL Editor:**
+   - Run each migration file in `apps/www/supabase/migrations/` in chronological order (by filename date prefix)
+
+4. **Create storage buckets:**
+   ```sql
+   INSERT INTO storage.buckets (id, name, public)
+   VALUES
+     ('resumes', 'resumes', true),
+     ('transcripts', 'transcripts', true),
+     ('school-documents', 'school-documents', true);
+   ```
+
+5. **Regenerate TypeScript types:**
+   ```bash
+   pnpm supabase gen types typescript --local > apps/www/lib/types/database.types.ts
+   ```
+
+6. **Update environment variables** in `apps/www/.env.local`:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your_new_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_new_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_new_service_role_key
+   ```
+
+### Migration Files Reference
+
+Located in `apps/www/supabase/migrations/`:
+
+| File | Description |
+|------|-------------|
+| `20251122000000_initial_schema.sql` | Core tables, enums, RLS, triggers |
+| `20251122000001_add_insert_policies.sql` | INSERT policies for signup |
+| `20251123000100_fix_profile_role.sql` | Profile role handling fixes |
+| `20251123000200_storage_buckets.sql` | Resume/transcript storage |
+| `20251123000300_admin_policies.sql` | Admin access policies |
+| `20251123191050_analytics_schema.sql` | Analytics events table |
+| `20251123205500_harden_handle_new_user.sql` | Hardened signup trigger |
+| `20251124000000_fix_circular_rls.sql` | RLS recursion fixes |
+| `20251124000100_fix_admin_function.sql` | Admin function improvements |
+| `20251125000000_recruiter_profile_visibility.sql` | Recruiter visibility controls |
+| `20251125000100_school_profiles.sql` | School admin profiles |
+| `20251125000200_candidate_signup_function.sql` | Candidate signup helper |
+| `20251125000300_recruiter_rejection.sql` | Recruiter rejection fields |
+| `20251125000400_school_verification_docs.sql` | School verification docs |
+| `20251125000500_school_documents_bucket.sql` | School docs storage |
+| `20251125000600_make_school_docs_public.sql` | Public school docs access |
+| `20251125000700_school_rejection.sql` | School rejection fields |
+| `20251125000800_candidate_rejection.sql` | Candidate rejection fields |
+| `20251125001000_fix_recruiter_rls_recursion.sql` | More RLS fixes |
+| `20251127000000_candidate_profile_visibility.sql` | Candidate visibility controls |
+| `20251127100000_recruiter_view_candidate_profiles.sql` | Recruiter candidate access |
+| `20251127200000_candidate_scheduling_url.sql` | Scheduling URL field |
+| `20251127300000_candidate_bio_field.sql` | Candidate bio field |
+| `20251127400000_candidate_education_fields.sql` | Graduate education fields |

@@ -7,7 +7,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.redirect(new URL('/auth/login?redirect=/dashboard/settings', process.env.NEXT_PUBLIC_APP_URL!))
+    return NextResponse.redirect(new URL('/login?redirect=/dashboard/settings', process.env.NEXT_PUBLIC_APP_URL!))
   }
 
   const clientId = process.env.DISCORD_CLIENT_ID
