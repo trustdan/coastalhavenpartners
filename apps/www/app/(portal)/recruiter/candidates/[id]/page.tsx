@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Mail, Calendar, GraduationCap } from 'lucide-react'
 
 export default async function CandidateDetailsPage({
   params,
@@ -100,36 +100,146 @@ export default async function CandidateDetailsPage({
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">Contact</Button>
-          <Button>Schedule Interview</Button>
+          <Button variant="outline" asChild>
+            <a href={`mailto:${candidate.profiles?.email}`} className="gap-2">
+              <Mail className="h-4 w-4" />
+              Contact
+            </a>
+          </Button>
+          {(candidate as any).scheduling_url ? (
+            <Button asChild>
+              <a
+                href={(candidate as any).scheduling_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gap-2"
+              >
+                <Calendar className="h-4 w-4" />
+                Schedule Interview
+              </a>
+            </Button>
+          ) : (
+            <Button disabled className="gap-2">
+              <Calendar className="h-4 w-4" />
+              No Scheduling Link
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="grid gap-8 md:grid-cols-3">
         {/* Main Info Column */}
         <div className="md:col-span-2 space-y-8">
-          {/* Academic Stats */}
+          {/* Education Section */}
           <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
-            <h2 className="text-lg font-semibold">Academic Performance</h2>
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800">
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">GPA</p>
-                <p className="mt-1 text-2xl font-bold text-green-700 dark:text-green-400">
-                  {candidate.gpa.toFixed(2)}
-                </p>
+            <h2 className="text-lg font-semibold mb-4">Education</h2>
+
+            {/* Undergraduate Education */}
+            <div className="rounded-lg border p-4 bg-purple-50/50 dark:bg-purple-900/10">
+              <div className="flex items-center gap-2 mb-3">
+                <GraduationCap className="h-5 w-5 text-purple-600" />
+                <h3 className="font-semibold text-purple-900 dark:text-purple-300">Undergraduate</h3>
               </div>
-              <div className="rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800">
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">Major</p>
-                <p className="mt-1 text-lg font-semibold">{candidate.major}</p>
-              </div>
-              <div className="rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800">
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">Education</p>
-                <p className="mt-1 text-lg font-semibold capitalize">
-                  {candidate.education_level || 'Bachelors'}
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">School</p>
+                  <p className="font-medium">{candidate.school_name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Degree</p>
+                  <p className="font-medium">
+                    {(candidate as any).undergrad_degree_type || 'BS'} in {candidate.major}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">GPA</p>
+                  <p className="font-bold text-green-700 dark:text-green-400">{candidate.gpa.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Class of</p>
+                  <p className="font-medium">{candidate.graduation_year}</p>
+                </div>
+                {(candidate as any).undergrad_specialty && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Concentration</p>
+                    <p className="font-medium">{(candidate as any).undergrad_specialty}</p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Graduate Education (if exists) */}
+            {((candidate as any).grad_school || (candidate as any).grad_degree_type) && (
+              <div className="rounded-lg border p-4 bg-blue-50/50 dark:bg-blue-900/10 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <GraduationCap className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-semibold text-blue-900 dark:text-blue-300">Graduate</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {(candidate as any).grad_school && (
+                    <div>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">School</p>
+                      <p className="font-medium">{(candidate as any).grad_school}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Degree</p>
+                    <p className="font-medium">
+                      {(candidate as any).grad_degree_type}
+                      {(candidate as any).grad_major && ` in ${(candidate as any).grad_major}`}
+                    </p>
+                  </div>
+                  {(candidate as any).grad_gpa && (
+                    <div>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">GPA</p>
+                      <p className="font-bold text-green-700 dark:text-green-400">
+                        {parseFloat((candidate as any).grad_gpa).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                  {(candidate as any).grad_graduation_year && (
+                    <div>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Class of</p>
+                      <p className="font-medium">{(candidate as any).grad_graduation_year}</p>
+                    </div>
+                  )}
+                  {(candidate as any).grad_specialty && (
+                    <div className="col-span-2">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Concentration</p>
+                      <p className="font-medium">{(candidate as any).grad_specialty}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* About / Bio */}
+          {(candidate as any).bio && (
+            <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
+              <h2 className="text-lg font-semibold">About</h2>
+              <p className="mt-4 text-neutral-700 dark:text-neutral-300">
+                {(candidate as any).bio}
+              </p>
+            </div>
+          )}
+
+          {/* Skills & Interests */}
+          {candidate.tags && candidate.tags.length > 0 && (
+            <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
+              <h2 className="text-lg font-semibold">Skills & Interests</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {candidate.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-purple-50 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Documents */}
           <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">

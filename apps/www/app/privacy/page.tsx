@@ -193,8 +193,8 @@ export default function PrivacyPage() {
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
               To exercise these rights, contact us at{" "}
-              <a href="mailto:privacy@coastalhavenpartners.com" className="text-primary hover:underline">
-                privacy@coastalhavenpartners.com
+              <a href="mailto:contact@coastalhavenpartners.com" className="text-primary hover:underline">
+                contact@coastalhavenpartners.com
               </a>
               .
             </p>
@@ -283,10 +283,10 @@ export default function PrivacyPage() {
               If you have questions, concerns, or requests regarding this Privacy Policy or our data practices,
               please contact us at{" "}
               <a
-                href="mailto:privacy@coastalhavenpartners.com"
+                href="mailto:contact@coastalhavenpartners.com"
                 className="text-primary hover:underline"
               >
-                privacy@coastalhavenpartners.com
+                contact@coastalhavenpartners.com
               </a>
               .
             </p>

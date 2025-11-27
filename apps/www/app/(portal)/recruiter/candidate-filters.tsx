@@ -5,6 +5,29 @@ import { useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { UNDERGRAD_DEGREES, GRADUATE_DEGREES } from '@/components/ui/degree-type-select'
+
+const TARGET_ROLES = [
+  'Investment Banking',
+  'Private Equity',
+  'Venture Capital',
+  'Hedge Fund',
+  'Asset Management',
+  'Consulting',
+  'Corporate Finance',
+  'Equity Research',
+  'Sales & Trading',
+  'Wealth Management',
+  'Real Estate',
+  'Fintech',
+]
 
 export function CandidateFilters() {
   const router = useRouter()
@@ -44,7 +67,7 @@ export function CandidateFilters() {
 
   return (
     <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
         <div className="space-y-2">
           <Label htmlFor="gpa">Min GPA</Label>
           <Input
@@ -86,8 +109,65 @@ export function CandidateFilters() {
             onChange={(e) => debouncedUpdate('gradYear', e.target.value)}
           />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="targetRole">Target Role</Label>
+          <Select
+            value={searchParams.get('targetRole') || '__all__'}
+            onValueChange={(value: string) => updateFilter('targetRole', value === '__all__' ? '' : value)}
+          >
+            <SelectTrigger id="targetRole">
+              <SelectValue placeholder="Any role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Any role</SelectItem>
+              {TARGET_ROLES.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="undergradDegree">Undergrad Degree</Label>
+          <Select
+            value={searchParams.get('undergradDegree') || '__all__'}
+            onValueChange={(value: string) => updateFilter('undergradDegree', value === '__all__' ? '' : value)}
+          >
+            <SelectTrigger id="undergradDegree">
+              <SelectValue placeholder="Any degree" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Any degree</SelectItem>
+              {UNDERGRAD_DEGREES.map((degree) => (
+                <SelectItem key={degree} value={degree}>
+                  {degree}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="gradDegree">Grad Degree</Label>
+          <Select
+            value={searchParams.get('gradDegree') || '__all__'}
+            onValueChange={(value: string) => updateFilter('gradDegree', value === '__all__' ? '' : value)}
+          >
+            <SelectTrigger id="gradDegree">
+              <SelectValue placeholder="Any degree" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Any degree</SelectItem>
+              {GRADUATE_DEGREES.map((degree) => (
+                <SelectItem key={degree} value={degree}>
+                  {degree}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-      {(searchParams.get('gpa') || searchParams.get('major') || searchParams.get('school') || searchParams.get('gradYear')) && (
+      {(searchParams.get('gpa') || searchParams.get('major') || searchParams.get('school') || searchParams.get('gradYear') || searchParams.get('targetRole') || searchParams.get('undergradDegree') || searchParams.get('gradDegree')) && (
         <div className="mt-4 flex justify-end">
           <Button 
             variant="ghost" 

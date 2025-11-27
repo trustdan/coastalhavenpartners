@@ -225,10 +225,10 @@ export default function TermsPage() {
             <p className="text-muted-foreground leading-relaxed">
               For questions about these Terms of Service, please contact us at{" "}
               <a
-                href="mailto:legal@coastalhavenpartners.com"
+                href="mailto:contact@coastalhavenpartners.com"
                 className="text-primary hover:underline"
               >
-                legal@coastalhavenpartners.com
+                contact@coastalhavenpartners.com
               </a>
               .
             </p>

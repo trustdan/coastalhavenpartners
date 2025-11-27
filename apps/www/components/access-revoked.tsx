@@ -38,7 +38,7 @@ export function AccessRevoked({ userType, email }: AccessRevokedProps) {
 
         <div className="mt-6 space-y-3">
           <Button asChild className="w-full">
-            <a href="mailto:support@coastalhavenpartners.com">
+            <a href="mailto:contact@coastalhavenpartners.com">
               Contact Support
             </a>
           </Button>

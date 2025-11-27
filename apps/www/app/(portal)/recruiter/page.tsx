@@ -18,6 +18,9 @@ export default async function RecruiterDashboard({
   const major = typeof params.major === 'string' ? params.major : undefined
   const school = typeof params.school === 'string' ? params.school : undefined
   const gradYear = typeof params.gradYear === 'string' ? params.gradYear : undefined
+  const targetRole = typeof params.targetRole === 'string' ? params.targetRole : undefined
+  const undergradDegree = typeof params.undergradDegree === 'string' ? params.undergradDegree : undefined
+  const gradDegree = typeof params.gradDegree === 'string' ? params.gradDegree : undefined
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -105,6 +108,8 @@ export default async function RecruiterDashboard({
       target_roles,
       preferred_locations,
       status,
+      undergrad_degree_type,
+      grad_degree_type,
       profiles!user_id (
         full_name,
         email
@@ -123,6 +128,15 @@ export default async function RecruiterDashboard({
   }
   if (gradYear) {
     query = query.eq('graduation_year', parseInt(gradYear))
+  }
+  if (targetRole) {
+    query = query.contains('target_roles', [targetRole])
+  }
+  if (undergradDegree) {
+    query = query.eq('undergrad_degree_type', undergradDegree)
+  }
+  if (gradDegree) {
+    query = query.eq('grad_degree_type', gradDegree)
   }
 
   // Execute query with ordering
