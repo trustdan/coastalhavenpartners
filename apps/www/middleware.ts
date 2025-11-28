@@ -56,15 +56,38 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /candidate, /recruiter, and /admin routes
-  if (request.nextUrl.pathname.startsWith('/candidate') ||
+  // Protect /candidate, /recruiter, /school, and /admin routes
+  const isProtectedRoute = request.nextUrl.pathname.startsWith('/candidate') ||
       request.nextUrl.pathname.startsWith('/recruiter') ||
-      request.nextUrl.pathname.startsWith('/admin')) {
+      request.nextUrl.pathname.startsWith('/school') ||
+      request.nextUrl.pathname.startsWith('/admin')
+
+  if (isProtectedRoute) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Check admin MFA requirement
+    // Don't redirect if already on mfa-verify page
+    if (request.nextUrl.pathname === '/mfa-verify') {
+      return response
+    }
+
+    // Check if user has MFA enabled and needs to verify
+    const { data: factors } = await supabase.auth.mfa.listFactors()
+    const hasMFA = factors?.totp?.some((f: { status: string }) => f.status === 'verified')
+
+    if (hasMFA) {
+      // User has MFA enabled - check if they've verified in this session
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+
+      if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
+        // User needs to verify MFA
+        const redirectPath = encodeURIComponent(request.nextUrl.pathname)
+        return NextResponse.redirect(new URL(`/mfa-verify?redirect=${redirectPath}`, request.url))
+      }
+    }
+
+    // Special admin-only checks
     if (request.nextUrl.pathname.startsWith('/admin')) {
       // Don't redirect if already on mfa-required page
       if (request.nextUrl.pathname === '/admin/mfa-required') {
@@ -78,23 +101,9 @@ export async function middleware(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      if (profile?.role === 'admin') {
-        // Check if admin has MFA enabled
-        const { data: factors } = await supabase.auth.mfa.listFactors()
-        const hasMFA = factors?.totp?.some((f: { status: string }) => f.status === 'verified')
-
-        if (!hasMFA) {
-          // Admin doesn't have MFA - redirect to setup page
-          return NextResponse.redirect(new URL('/admin/mfa-required', request.url))
-        }
-
-        // Check MFA assurance level
-        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-
-        if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
-          // Admin needs to verify MFA
-          return NextResponse.redirect(new URL('/mfa-verify?redirect=/admin', request.url))
-        }
+      if (profile?.role === 'admin' && !hasMFA) {
+        // Admin doesn't have MFA - redirect to setup page (MFA is required for admins)
+        return NextResponse.redirect(new URL('/admin/mfa-required', request.url))
       }
     }
   }
