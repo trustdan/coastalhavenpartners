@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/candidate'
+  const redirect = searchParams.get('redirect')
 
   if (code) {
     const supabase = await createClient()
@@ -24,20 +24,30 @@ export async function GET(request: Request) {
           .eq('id', user.id)
           .single()
 
+        // If no profile exists, this is a new OAuth user - send to profile completion
+        if (!profile?.role) {
+          return NextResponse.redirect(`${origin}/complete-profile`)
+        }
+
+        // If there's a redirect param, use it
+        if (redirect && redirect.startsWith('/')) {
+          return NextResponse.redirect(`${origin}${redirect}`)
+        }
+
         // Redirect based on role
-        if (profile?.role === 'candidate') {
+        if (profile.role === 'candidate') {
           return NextResponse.redirect(`${origin}/candidate`)
-        } else if (profile?.role === 'recruiter') {
+        } else if (profile.role === 'recruiter') {
           return NextResponse.redirect(`${origin}/recruiter`)
-        } else if (profile?.role === 'school_admin') {
+        } else if (profile.role === 'school_admin') {
           return NextResponse.redirect(`${origin}/school`)
-        } else if (profile?.role === 'admin') {
+        } else if (profile.role === 'admin') {
           return NextResponse.redirect(`${origin}/admin`)
         }
       }
 
-      // Default redirect
-      return NextResponse.redirect(`${origin}${next}`)
+      // No user found after exchange - send to complete profile (OAuth new user)
+      return NextResponse.redirect(`${origin}/complete-profile`)
     }
   }
 

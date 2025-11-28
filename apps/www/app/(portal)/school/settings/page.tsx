@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { MFASettings } from '@/components/auth/mfa-settings'
 
 export default function SchoolSettingsPage() {
   const router = useRouter()
@@ -195,6 +196,9 @@ export default function SchoolSettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Security Settings */}
+        <MFASettings />
 
         {/* Approval Status */}
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">

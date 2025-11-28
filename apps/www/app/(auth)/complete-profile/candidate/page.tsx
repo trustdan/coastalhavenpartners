@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -9,46 +9,55 @@ import { Label } from '@/components/ui/label'
 import { AutocompleteInput } from '@/components/ui/autocomplete-input'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
-import { createCandidateProfile } from './actions'
+import { completeOAuthCandidateProfile } from './actions'
 
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-    </svg>
-  )
-}
-
-export default function CandidateSignupPage() {
+export default function CompleteCandidateProfilePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [schoolName, setSchoolName] = useState('')
   const [major, setMajor] = useState('')
+  const [user, setUser] = useState<{
+    id: string
+    email: string
+    fullName: string
+  } | null>(null)
 
-  async function handleGoogleSignup() {
-    const supabase = createClient()
-    setGoogleLoading(true)
-    setError(null)
+  useEffect(() => {
+    async function checkUser() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      // Check if user already has a profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role) {
+        // User already has a profile, redirect to dashboard
+        if (profile.role === 'candidate') router.push('/candidate')
+        else router.push('/complete-profile')
+        return
+      }
+
+      setUser({
+        id: user.id,
+        email: user.email || '',
+        fullName: user.user_metadata?.full_name || user.user_metadata?.name || '',
       })
-
-      if (error) throw error
-    } catch (err: any) {
-      setError(err.message)
-      setGoogleLoading(false)
+      setPageLoading(false)
     }
-  }
+
+    checkUser()
+  }, [router])
 
   const fetchSchoolSuggestions = useCallback(async (query: string) => {
     const response = await fetch(`/api/autocomplete/schools?q=${encodeURIComponent(query)}`)
@@ -62,15 +71,14 @@ export default function CandidateSignupPage() {
     return data.majors || []
   }, [])
 
-  async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const supabase = createClient()
+    if (!user) return
+
     setLoading(true)
     setError(null)
 
     const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
     const fullName = formData.get('fullName') as string
     const gpa = parseFloat(formData.get('gpa') as string)
     const graduationYear = parseInt(formData.get('graduationYear') as string)
@@ -103,37 +111,19 @@ export default function CandidateSignupPage() {
     }
 
     try {
-      // Step 1: Sign up user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            role: 'candidate',
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+      await completeOAuthCandidateProfile({
+        userId: user.id,
+        email: user.email,
+        fullName,
+        schoolName: schoolName.trim(),
+        major: major.trim(),
+        gpa,
+        graduationYear,
+        linkedinUrl,
       })
 
-      if (authError) throw authError
-
-      // Step 2: Create candidate profile
-      if (authData.user) {
-        await createCandidateProfile({
-          userId: authData.user.id,
-          email,
-          fullName,
-          schoolName: schoolName.trim(),
-          major: major.trim(),
-          gpa,
-          graduationYear,
-          linkedinUrl,
-        })
-
-        // Redirect to email verification page
-        router.push('/verify-email')
-      }
+      router.push('/candidate')
+      router.refresh()
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -141,55 +131,40 @@ export default function CandidateSignupPage() {
     }
   }
 
+  if (pageLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
       <Link
-        href="/"
+        href="/complete-profile"
         className="absolute left-4 top-4 inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m12 19-7-7 7-7"/>
           <path d="M19 12H5"/>
         </svg>
-        Back to Home
+        Change Role
       </Link>
       <div className="w-full max-w-md space-y-8 rounded-xl border bg-white p-8 shadow-lg dark:bg-neutral-950">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Join Coastal Haven</h1>
+          <h1 className="text-3xl font-bold">Complete Your Profile</h1>
           <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-            Elite finance talent network
+            Just a few more details to join the network
           </p>
+          {user?.email && (
+            <p className="mt-1 text-xs text-neutral-500">
+              {user.email}
+            </p>
+          )}
         </div>
 
-        <div className="space-y-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignup}
-            disabled={loading || googleLoading}
-          >
-            {googleLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <GoogleIcon className="mr-2 h-4 w-4" />
-            )}
-            {googleLoading ? 'Connecting...' : 'Sign up with Google'}
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-neutral-300 dark:border-neutral-700" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-neutral-500 dark:bg-neutral-950 dark:text-neutral-400">
-                Or continue with email
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSignup} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20">
               {error}
@@ -203,30 +178,8 @@ export default function CandidateSignupPage() {
               name="fullName"
               type="text"
               required
+              defaultValue={user?.fullName}
               placeholder="John Smith"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="john@upenn.edu"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              placeholder="••••••••"
             />
           </div>
 
@@ -295,15 +248,8 @@ export default function CandidateSignupPage() {
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Sign Up'}
+            {loading ? 'Completing Profile...' : 'Complete Profile'}
           </Button>
-
-          <p className="text-center text-sm text-neutral-600 dark:text-neutral-400">
-            Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline">
-              Log in
-            </Link>
-          </p>
         </form>
       </div>
     </div>

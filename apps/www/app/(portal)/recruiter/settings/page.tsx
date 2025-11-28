@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { ArrowLeft, Loader2, Eye, Users, Building2 } from 'lucide-react'
 import Link from 'next/link'
+import { MFASettings } from '@/components/auth/mfa-settings'
 
 type VisibilityFields = {
   full_name: boolean
@@ -396,6 +397,9 @@ export default function RecruiterSettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Security Settings */}
+        <MFASettings />
 
         {/* Visibility Controls */}
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">

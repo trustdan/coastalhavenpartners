@@ -17,6 +17,7 @@ import { DegreeTypeSelect } from '@/components/ui/degree-type-select'
 import { validateFieldsForProfanity, FIELD_DISPLAY_NAMES } from '@/lib/profanity-filter'
 import Link from 'next/link'
 import { GraduationCap } from 'lucide-react'
+import { MFASettings } from '@/components/auth/mfa-settings'
 
 const TARGET_ROLES = [
   'Investment Banking',
@@ -660,6 +661,9 @@ export default function EditProfilePage() {
                 </p>
               </div>
             </div>
+
+            {/* Security Settings */}
+            <MFASettings />
 
             <div className="flex justify-end gap-4 pt-4">
               <Button type="button" variant="outline" asChild>

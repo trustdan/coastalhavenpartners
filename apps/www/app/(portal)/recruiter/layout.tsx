@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { MFAPromptBanner } from '@/components/auth/mfa-prompt-banner'
 
 export default async function RecruiterLayout({
   children,
@@ -42,6 +43,7 @@ export default async function RecruiterLayout({
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <MFAPromptBanner settingsPath="/recruiter/settings" />
       <nav className="border-b bg-white dark:bg-neutral-900">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <Link href="/" className="text-xl font-bold">
