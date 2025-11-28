@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import type { Database } from '@/lib/types/database.types'
+import { PortalNavExtras } from '@/components/portal/nav-extras'
 
 function NotificationBadge({ count }: { count: number }) {
   if (count === 0) return null
@@ -103,11 +104,14 @@ export default async function AdminLayout({
               </Link>
             </div>
           </div>
-          <form action={handleLogout}>
-            <Button type="submit" variant="outline" size="sm">
-              Log Out
-            </Button>
-          </form>
+          <div className="flex items-center gap-3">
+            <PortalNavExtras />
+            <form action={handleLogout}>
+              <Button type="submit" variant="outline" size="sm">
+                Log Out
+              </Button>
+            </form>
+          </div>
         </div>
       </nav>
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>

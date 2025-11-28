@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MFAPromptBanner } from '@/components/auth/mfa-prompt-banner'
+import { PortalNavExtras } from '@/components/portal/nav-extras'
 
 export default async function SchoolLayout({
   children,
@@ -86,6 +87,7 @@ export default async function SchoolLayout({
             <span className="text-sm text-neutral-600 dark:text-neutral-400">
               {profile?.full_name}
             </span>
+            <PortalNavExtras />
             <form action={handleLogout}>
               <Button type="submit" variant="outline" size="sm">
                 Log Out

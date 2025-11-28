@@ -66,6 +66,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [linkedInLoading, setLinkedInLoading] = useState(false)
+  const [discordLoading, setDiscordLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showMFA, setShowMFA] = useState(false)
   const [pendingRole, setPendingRole] = useState<string | null>(null)
@@ -130,6 +131,26 @@ function LoginForm() {
     } catch (err: any) {
       setError(err.message)
       setLinkedInLoading(false)
+    }
+  }
+
+  async function handleDiscordLogin() {
+    const supabase = createClient()
+    setDiscordLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`,
+        },
+      })
+
+      if (error) throw error
+    } catch (err: any) {
+      setError(err.message)
+      setDiscordLoading(false)
     }
   }
 
@@ -266,7 +287,7 @@ function LoginForm() {
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading || googleLoading || linkedInLoading}>
+        <Button type="submit" className="w-full" disabled={loading || googleLoading || linkedInLoading || discordLoading}>
           {loading ? 'Logging in...' : 'Log In'}
         </Button>
 
@@ -286,7 +307,7 @@ function LoginForm() {
           variant="outline"
           className="w-full"
           onClick={handleGoogleLogin}
-          disabled={loading || googleLoading || linkedInLoading}
+          disabled={loading || googleLoading || linkedInLoading || discordLoading}
         >
           {googleLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -301,7 +322,7 @@ function LoginForm() {
           variant="outline"
           className="w-full"
           onClick={handleLinkedInLogin}
-          disabled={loading || googleLoading || linkedInLoading}
+          disabled={loading || googleLoading || linkedInLoading || discordLoading}
         >
           {linkedInLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -309,6 +330,21 @@ function LoginForm() {
             <LinkedInIcon className="mr-2 h-4 w-4" />
           )}
           {linkedInLoading ? 'Connecting...' : 'Continue with LinkedIn'}
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={handleDiscordLogin}
+          disabled={loading || googleLoading || linkedInLoading || discordLoading}
+        >
+          {discordLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <DiscordIcon className="mr-2 h-4 w-4 text-[#5865F2]" />
+          )}
+          {discordLoading ? 'Connecting...' : 'Continue with Discord'}
         </Button>
 
         <div className="text-center text-sm text-neutral-600 dark:text-neutral-400">

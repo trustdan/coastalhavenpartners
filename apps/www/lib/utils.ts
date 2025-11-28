@@ -73,13 +73,17 @@ export function constructMetadata({
   title = "Coastal Haven Partners | Elite Finance Talent Network",
   description = "The network connecting top finance students with investment banks, PE firms, and hedge funds. Create your profile and get discovered by elite recruiters.",
   image = absoluteUrl("/opengraph-image"),
+  canonicalPath,
   ...props
 }: {
   title?: string
   description?: string
   image?: string
+  canonicalPath?: string
   [key: string]: Metadata[keyof Metadata]
 }): Metadata {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://coastalhavenpartners.com"
+
   return {
     title,
     description,
@@ -95,15 +99,33 @@ export function constructMetadata({
       "target school recruiting",
       "finance talent network",
     ],
+    authors: [{ name: "Coastal Haven Partners" }],
+    creator: "Coastal Haven Partners",
+    publisher: "Coastal Haven Partners",
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
     openGraph: {
       title,
       description,
       type: "website",
+      siteName: "Coastal Haven Partners",
+      locale: "en_US",
+      url: canonicalPath ? absoluteUrl(canonicalPath) : baseUrl,
       images: [
         {
           url: image,
           width: 1200,
           height: 630,
+          alt: title,
         },
       ],
     },
@@ -112,9 +134,15 @@ export function constructMetadata({
       title,
       description,
       images: [image],
+      creator: "@coastalhaven",
     },
     icons: "/favicon.ico",
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://coastalhavenpartners.com"),
+    metadataBase: new URL(baseUrl),
+    ...(canonicalPath && {
+      alternates: {
+        canonical: canonicalPath,
+      },
+    }),
     ...props,
   }
 }
