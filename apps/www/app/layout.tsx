@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { cn, constructMetadata } from "@/lib/utils";
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Inter as FontSans } from "next/font/google";
 import Script from "next/script";
@@ -51,6 +52,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <Analytics />
           <SpeedInsights />
         </ThemeProvider>
       </body>

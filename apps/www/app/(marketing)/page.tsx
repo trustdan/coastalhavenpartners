@@ -7,6 +7,9 @@ import { StatsSection } from "@/components/sections/stats-section"
 import { TechStackSection } from "@/components/sections/tech-stack-section"
 import { CTASection } from "@/components/sections/cta-section"
 
+// Force static generation at build time for instant CDN delivery
+export const dynamic = "force-static"
+
 export default function Page() {
   return (
     <main className="relative scroll-smooth">
