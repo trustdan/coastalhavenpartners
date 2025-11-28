@@ -1,12 +1,16 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlignJustify, XIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatedThemeToggler } from "@/components/magicui/animated-theme-toggler";
+
+type UserRole = "candidate" | "recruiter" | "school_admin" | "admin" | null;
 
 const DISCORD_INVITE_URL = "https://discord.gg/MarkPXNfXd";
 
@@ -88,7 +92,75 @@ export function SiteHeader() {
     },
   };
 
+  const router = useRouter();
   const [hamburgerMenuIsOpen, setHamburgerMenuIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check auth state on mount and subscribe to changes
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        setUserRole(profile?.role as UserRole || null);
+      } else {
+        setUserRole(null);
+      }
+      setIsLoading(false);
+    }
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        setUserRole(profile?.role as UserRole || null);
+      } else {
+        setUserRole(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUserRole(null);
+    router.push("/");
+    router.refresh();
+  }
+
+  function getPortalInfo() {
+    switch (userRole) {
+      case "candidate":
+        return { label: "Candidate Portal", href: "/candidate" };
+      case "recruiter":
+        return { label: "Recruiter Portal", href: "/recruiter" };
+      case "school_admin":
+        return { label: "Career Services Portal", href: "/school" };
+      case "admin":
+        return { label: "Admin Portal", href: "/admin" };
+      default:
+        return null;
+    }
+  }
+
+  const portalInfo = getPortalInfo();
 
   useEffect(() => {
     const html = document.querySelector("html");
@@ -141,18 +213,41 @@ export function SiteHeader() {
           </nav>
 
           <div className="ml-auto md:ml-6 flex h-full items-center gap-3">
-            <Link
-              href="/login"
-              className="hidden md:inline-flex text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className="hidden md:inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
-            >
-              Get Started
-            </Link>
+            {!isLoading && (
+              <>
+                {portalInfo ? (
+                  <>
+                    <Link
+                      href={portalInfo.href}
+                      className="hidden md:inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+                    >
+                      {portalInfo.label}
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="hidden md:inline-flex text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
+                    >
+                      Log Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="hidden md:inline-flex text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="hidden md:inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+                    >
+                      Get Started
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
             <a
               href={DISCORD_INVITE_URL}
               target="_blank"
@@ -237,29 +332,63 @@ export function SiteHeader() {
               </motion.li>
             ))}
             {/* Mobile Auth Buttons */}
-            <motion.li
-              variants={mobileLinkVar}
-              className="border-grey-dark pl-6 py-0.5 border-b md:hidden"
-            >
-              <Link
-                className="hover:text-grey flex w-full items-center text-xl transition-[color,transform] duration-300"
-                style={{ height: "var(--navigation-height)" }}
-                href="/login"
-              >
-                Sign In
-              </Link>
-            </motion.li>
-            <motion.li
-              variants={mobileLinkVar}
-              className="pl-6 py-4 md:hidden"
-            >
-              <Link
-                className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-lg font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
-                href="/signup"
-              >
-                Get Started
-              </Link>
-            </motion.li>
+            {!isLoading && (
+              <>
+                {portalInfo ? (
+                  <>
+                    <motion.li
+                      variants={mobileLinkVar}
+                      className="pl-6 py-4 md:hidden"
+                    >
+                      <Link
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-lg font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+                        href={portalInfo.href}
+                      >
+                        {portalInfo.label}
+                      </Link>
+                    </motion.li>
+                    <motion.li
+                      variants={mobileLinkVar}
+                      className="border-grey-dark pl-6 py-0.5 border-b md:hidden"
+                    >
+                      <button
+                        onClick={handleLogout}
+                        className="hover:text-grey flex w-full items-center text-xl transition-[color,transform] duration-300"
+                        style={{ height: "var(--navigation-height)" }}
+                      >
+                        Log Out
+                      </button>
+                    </motion.li>
+                  </>
+                ) : (
+                  <>
+                    <motion.li
+                      variants={mobileLinkVar}
+                      className="border-grey-dark pl-6 py-0.5 border-b md:hidden"
+                    >
+                      <Link
+                        className="hover:text-grey flex w-full items-center text-xl transition-[color,transform] duration-300"
+                        style={{ height: "var(--navigation-height)" }}
+                        href="/login"
+                      >
+                        Sign In
+                      </Link>
+                    </motion.li>
+                    <motion.li
+                      variants={mobileLinkVar}
+                      className="pl-6 py-4 md:hidden"
+                    >
+                      <Link
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-lg font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+                        href="/signup"
+                      >
+                        Get Started
+                      </Link>
+                    </motion.li>
+                  </>
+                )}
+              </>
+            )}
             <motion.li
               variants={mobileLinkVar}
               className="pl-6 py-4 md:hidden"
