@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Building2, MapPin, Briefcase } from 'lucide-react'
+import { Building2, MapPin, Briefcase, Clock } from 'lucide-react'
 import { RecruiterFilters } from './recruiter-filters'
+import type { Database } from '@/lib/types/database.types'
 
 export default async function CandidateRecruitersPage({
   searchParams,
@@ -22,8 +24,20 @@ export default async function CandidateRecruitersPage({
     redirect('/login')
   }
 
+  // Use admin client to bypass RLS for profile checks
+  const supabaseAdmin = createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
   // Check user role
-  const { data: profile } = await supabase
+  const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -32,6 +46,52 @@ export default async function CandidateRecruitersPage({
   // Redirect recruiters to recruiter dashboard
   if (profile?.role === 'recruiter') {
     redirect('/recruiter')
+  }
+
+  // Check if candidate is verified
+  const { data: candidateProfile } = await supabaseAdmin
+    .from('candidate_profiles')
+    .select('status')
+    .eq('user_id', user.id)
+    .single()
+
+  // If candidate is not verified, show a message instead of the recruiter directory
+  if (!candidateProfile || candidateProfile.status !== 'verified') {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold">Recruiter Directory</h1>
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+            Connect with elite recruiters from top firms
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-white p-8 text-center shadow-sm dark:bg-neutral-900">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20">
+            <Clock className="h-8 w-8 text-yellow-600" />
+          </div>
+          <h2 className="mt-4 text-2xl font-bold">Verification Required</h2>
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+            Your profile must be verified before you can view the recruiter directory.
+          </p>
+          <div className="mt-6 rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800">
+            <p className="text-sm font-medium">What happens next?</p>
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+              Our team will review your profile and verify your information. This usually takes 24-48 hours.
+              Once verified, you'll have full access to connect with recruiters.
+            </p>
+          </div>
+          <div className="mt-6">
+            <Link
+              href="/candidate"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Fetch visible recruiters with filters
