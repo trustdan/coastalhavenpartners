@@ -114,8 +114,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/candidate', request.url))
       } else if (profile?.role === 'recruiter') {
         return NextResponse.redirect(new URL('/recruiter', request.url))
+      } else if (profile?.role === 'school_admin') {
+        return NextResponse.redirect(new URL('/school', request.url))
       } else if (profile?.role === 'admin') {
         return NextResponse.redirect(new URL('/admin', request.url))
+      } else if (!profile?.role) {
+        // User has no profile yet - send to complete profile
+        return NextResponse.redirect(new URL('/complete-profile', request.url))
       }
     }
   }
@@ -131,6 +136,7 @@ export const config = {
     '/school/:path*',
     '/login',
     '/signup/:path*',
+    '/complete-profile/:path*',
     '/mfa-verify',
   ],
 }

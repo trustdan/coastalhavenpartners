@@ -43,6 +43,9 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/school`)
         } else if (profile.role === 'admin') {
           return NextResponse.redirect(`${origin}/admin`)
+        } else {
+          // Unknown role - send to complete profile
+          return NextResponse.redirect(`${origin}/complete-profile`)
         }
       }
 
