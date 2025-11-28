@@ -242,7 +242,7 @@ export default async function CandidateDashboard() {
               <div>
                 <p className="font-medium">Complete your profile</p>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Add target roles and preferred locations
+                  Add graduate education, target roles, preferred locations, calendar scheduling link, and more
                 </p>
               </div>
             </li>

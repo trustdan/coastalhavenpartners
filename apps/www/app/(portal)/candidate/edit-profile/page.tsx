@@ -561,7 +561,7 @@ export default function EditProfilePage() {
             <div className="pt-6 border-t">
               <h3 className="text-base font-semibold mb-2">Information Sharing</h3>
               <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-                Control which information recruiters and your career services department can see
+                Control which information recruiters and your school's career services department can see.
               </p>
 
               <div className="space-y-4">
