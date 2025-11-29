@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       analytics_events: {
@@ -65,6 +40,69 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      applications: {
+        Row: {
+          applied_at: string | null
+          candidate_profile_id: string
+          cover_letter: string
+          firm_id: string | null
+          id: string
+          internal_notes: string | null
+          outreach_approach: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          snapshot: Json
+          status: Database["public"]["Enums"]["application_status"]
+          target_type: Database["public"]["Enums"]["application_target"]
+          updated_at: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          candidate_profile_id: string
+          cover_letter: string
+          firm_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          outreach_approach: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snapshot: Json
+          status?: Database["public"]["Enums"]["application_status"]
+          target_type?: Database["public"]["Enums"]["application_target"]
+          updated_at?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          candidate_profile_id?: string
+          cover_letter?: string
+          firm_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          outreach_approach?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snapshot?: Json
+          status?: Database["public"]["Enums"]["application_status"]
+          target_type?: Database["public"]["Enums"]["application_target"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_candidate_profile_id_fkey"
+            columns: ["candidate_profile_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       candidate_interactions: {
         Row: {
@@ -670,6 +708,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_capital_application: {
+        Args: { p_cover_letter: string; p_outreach_approach: string }
+        Returns: string
+      }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -704,6 +746,14 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
+      application_status:
+        | "pending"
+        | "reviewing"
+        | "interviewed"
+        | "accepted"
+        | "rejected"
+        | "withdrawn"
+      application_target: "capital" | "firm"
       candidate_status:
         | "pending_verification"
         | "verified"
@@ -843,11 +893,17 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
+      application_status: [
+        "pending",
+        "reviewing",
+        "interviewed",
+        "accepted",
+        "rejected",
+        "withdrawn",
+      ],
+      application_target: ["capital", "firm"],
       candidate_status: [
         "pending_verification",
         "verified",
