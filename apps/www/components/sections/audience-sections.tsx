@@ -4,6 +4,7 @@ import { TextAnimate } from "@/components/magicui/text-animate"
 import { ShineBorder } from "@/components/magicui/shine-border"
 import Link from "next/link"
 import { ShimmerButton } from "@/components/magicui/shimmer-button"
+import { Check, GraduationCap, Landmark, Briefcase, BarChart3, Building2, Target } from "lucide-react"
 
 export function AudienceSections() {
   return (
@@ -35,7 +36,7 @@ export function AudienceSections() {
                   "100% free for students"
                 ].map((benefit, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <span className="text-green-500 mt-1 flex-shrink-0">✓</span>
+                    <Check className="h-4 w-4 text-green-500 mt-1 shrink-0" />
                     <span className="text-muted-foreground">{benefit}</span>
                   </li>
                 ))}
@@ -60,7 +61,9 @@ export function AudienceSections() {
               >
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <div className="text-5xl">🎓</div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+                      <GraduationCap className="h-7 w-7 text-emerald-500" />
+                    </div>
                     <div>
                       <h4 className="font-semibold text-lg">Top School Student</h4>
                       <p className="text-sm text-muted-foreground">Wharton, Finance • 3.9 GPA</p>
@@ -70,15 +73,15 @@ export function AudienceSections() {
                     <p className="text-sm text-muted-foreground mb-3">Recent Profile Views</p>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-2xl">🏦</span>
+                        <Landmark className="h-5 w-5 text-emerald-500" />
                         <span>Goldman Sachs — 2 days ago</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-2xl">💼</span>
+                        <Briefcase className="h-5 w-5 text-emerald-500" />
                         <span>Blackstone — 3 days ago</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="text-2xl">📊</span>
+                        <BarChart3 className="h-5 w-5 text-emerald-500" />
                         <span>Citadel — 5 days ago</span>
                       </div>
                     </div>
@@ -101,7 +104,9 @@ export function AudienceSections() {
               >
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <div className="text-5xl">🏢</div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
+                      <Building2 className="h-7 w-7 text-blue-500" />
+                    </div>
                     <div>
                       <h4 className="font-semibold text-lg">Filter & Discover</h4>
                       <p className="text-sm text-muted-foreground">Find your perfect candidates</p>
@@ -145,7 +150,7 @@ export function AudienceSections() {
                   "Join the recruiter network and collaborate with peers"
                 ].map((benefit, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <span className="text-green-500 mt-1 flex-shrink-0">✓</span>
+                    <Check className="h-4 w-4 text-green-500 mt-1 shrink-0" />
                     <span className="text-muted-foreground">{benefit}</span>
                   </li>
                 ))}
@@ -190,7 +195,7 @@ export function AudienceSections() {
                   "Connect with recruiters actively hiring your graduates"
                 ].map((benefit, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <span className="text-green-500 mt-1 flex-shrink-0">✓</span>
+                    <Check className="h-4 w-4 text-green-500 mt-1 shrink-0" />
                     <span className="text-muted-foreground">{benefit}</span>
                   </li>
                 ))}
@@ -215,7 +220,9 @@ export function AudienceSections() {
               >
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <div className="text-5xl">🎯</div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-500/10">
+                      <Target className="h-7 w-7 text-teal-500" />
+                    </div>
                     <div>
                       <h4 className="font-semibold text-lg">Wharton Career Services</h4>
                       <p className="text-sm text-muted-foreground">University of Pennsylvania</p>

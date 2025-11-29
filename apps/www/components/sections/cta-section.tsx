@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ShimmerButton } from "@/components/magicui/shimmer-button"
 import { TextAnimate } from "@/components/magicui/text-animate"
+import { Check, Target, Building2, GraduationCap } from "lucide-react"
 
 export function CTASection() {
   return (
@@ -61,15 +62,15 @@ export function CTASection() {
           {/* Trust Indicators */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
+              <Check className="h-4 w-4 text-green-500" />
               <span>Free for students</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
+              <Check className="h-4 w-4 text-green-500" />
               <span>Profile in 5 minutes</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
+              <Check className="h-4 w-4 text-green-500" />
               <span>Connect with top firms</span>
             </div>
           </div>
@@ -79,7 +80,9 @@ export function CTASection() {
         <div className="mt-16 pt-12 border-t border-foreground/10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-4xl mb-3">🎯</div>
+              <div className="flex justify-center mb-3">
+                <Target className="h-10 w-10 text-emerald-500" />
+              </div>
               <div className="text-lg font-semibold mb-1">
                 For Students
               </div>
@@ -88,7 +91,9 @@ export function CTASection() {
               </div>
             </div>
             <div>
-              <div className="text-4xl mb-3">🏢</div>
+              <div className="flex justify-center mb-3">
+                <Building2 className="h-10 w-10 text-emerald-500" />
+              </div>
               <div className="text-lg font-semibold mb-1">
                 For Recruiters
               </div>
@@ -97,7 +102,9 @@ export function CTASection() {
               </div>
             </div>
             <div>
-              <div className="text-4xl mb-3">🎓</div>
+              <div className="flex justify-center mb-3">
+                <GraduationCap className="h-10 w-10 text-emerald-500" />
+              </div>
               <div className="text-lg font-semibold mb-1">
                 For Schools
               </div>

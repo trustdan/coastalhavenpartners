@@ -3,6 +3,7 @@
 import { ShineBorder } from "@/components/magicui/shine-border"
 import { TypingAnimation } from "@/components/magicui/typing-animation"
 import { TextAnimate } from "@/components/magicui/text-animate"
+import { X, CheckCircle, AlertTriangle, Sparkles } from "lucide-react"
 
 export function BeforeAfterSection() {
   return (
@@ -26,7 +27,7 @@ export function BeforeAfterSection() {
           {/* BEFORE Card */}
           <div className="relative">
             <div className="absolute -top-4 -left-4 w-16 h-16 bg-red-500/10 dark:bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500/50 z-10">
-              <span className="text-2xl">❌</span>
+              <X className="h-6 w-6 text-red-500" />
             </div>
             <div className="border-2 border-red-500/30 rounded-2xl p-8 bg-background/50 backdrop-blur-sm h-full">
               <div className="mb-4">
@@ -48,8 +49,9 @@ export function BeforeAfterSection() {
                 <p>Thanks</p>
               </div>
               <div className="mt-6 pt-6 border-t border-red-500/20">
-                <p className="text-sm text-muted-foreground">
-                  ⚠️ <span className="font-semibold">Issues:</span> No personalization, no value proposition, forgettable
+                <p className="text-sm text-muted-foreground flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span><span className="font-semibold">Issues:</span> No personalization, no value proposition, forgettable</span>
                 </p>
               </div>
             </div>
@@ -58,7 +60,7 @@ export function BeforeAfterSection() {
           {/* AFTER Card */}
           <div className="relative">
             <div className="absolute -top-4 -left-4 w-16 h-16 bg-green-500/10 dark:bg-green-500/20 rounded-full flex items-center justify-center border-2 border-green-500/50 z-10">
-              <span className="text-2xl">✅</span>
+              <CheckCircle className="h-6 w-6 text-green-500" />
             </div>
             <ShineBorder
               borderWidth={2}
@@ -94,22 +96,25 @@ Jordan`}
                 </TypingAnimation>
               </div>
               <div className="mt-6 pt-6 border-t border-green-500/20">
-                <p className="text-sm text-muted-foreground">
-                  ✨ <span className="font-semibold">Personalization:</span>{" "}
-                  <span className="text-green-600 dark:text-green-400 font-medium">
-                    Recruiter Name
-                  </span>
-                  ,{" "}
-                  <span className="text-green-600 dark:text-green-400 font-medium">
-                    Recent Activity
-                  </span>
-                  ,{" "}
-                  <span className="text-green-600 dark:text-green-400 font-medium">
-                    Relevant Deal
-                  </span>
-                  ,{" "}
-                  <span className="text-green-600 dark:text-green-400 font-medium">
-                    Specific Ask
+                <p className="text-sm text-muted-foreground flex items-start gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <span>
+                    <span className="font-semibold">Personalization:</span>{" "}
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      Recruiter Name
+                    </span>
+                    ,{" "}
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      Recent Activity
+                    </span>
+                    ,{" "}
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      Relevant Deal
+                    </span>
+                    ,{" "}
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      Specific Ask
+                    </span>
                   </span>
                 </p>
               </div>

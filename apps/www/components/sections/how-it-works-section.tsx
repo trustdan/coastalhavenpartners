@@ -5,19 +5,20 @@ import { TextAnimate } from "@/components/magicui/text-animate"
 import { AnimatedBeam } from "@/components/magicui/animated-beam"
 import { ShineBorder } from "@/components/magicui/shine-border"
 import { cn } from "@/lib/utils"
+import { UserPlus, Search, Trophy, type LucideIcon } from "lucide-react"
 
 interface HowItWorksSectionProps {
   className?: string
 }
 
 const ProcessCard = ({
-  icon,
+  icon: Icon,
   title,
   description,
   stepNumber,
   forwardedRef,
 }: {
-  icon: string
+  icon: LucideIcon
   title: string
   description: string
   stepNumber: number
@@ -29,7 +30,7 @@ const ProcessCard = ({
       <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-teal-600 to-emerald-600 text-sm font-bold text-white shadow-lg flex-shrink-0">
         {stepNumber}
       </div>
-      
+
       <ShineBorder
         borderWidth={2}
         shineColor={["#14b8a6", "#10b981", "#047857"]}
@@ -40,8 +41,8 @@ const ProcessCard = ({
           ref={forwardedRef}
           className="flex flex-col items-center space-y-4 p-8 text-center w-full"
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 via-emerald-500 to-green-600 text-4xl shadow-lg flex-shrink-0">
-            {icon}
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 via-emerald-500 to-green-600 shadow-lg flex-shrink-0">
+            <Icon className="h-8 w-8 text-white" />
           </div>
           <h3 className="text-xl font-semibold">{title}</h3>
           <p className="text-muted-foreground leading-relaxed">{description}</p>
@@ -59,19 +60,19 @@ export function HowItWorksSection({ className }: HowItWorksSectionProps) {
 
   const steps = [
     {
-      icon: "👤",
+      icon: UserPlus,
       title: "Sign Up",
       description: "Create your profile with academic info, resume, and target roles in under 5 minutes",
       ref: step1Ref,
     },
     {
-      icon: "🔍",
+      icon: Search,
       title: "Get Discovered",
       description: "Recruiters from top firms browse and filter candidates by school, GPA, and target roles",
       ref: step2Ref,
     },
     {
-      icon: "🏆",
+      icon: Trophy,
       title: "Get Placed",
       description: "Connect via email or LinkedIn and land your dream role at Goldman Sachs, Blackstone, or other elite firms",
       ref: step3Ref,

@@ -2,14 +2,15 @@
 
 import { ShineBorder } from "@/components/magicui/shine-border"
 import { TextAnimate } from "@/components/magicui/text-animate"
+import { ShieldCheck, Users, Lock, TrendingUp, type LucideIcon } from "lucide-react"
 
 interface FeatureCardProps {
-  icon: string
+  icon: LucideIcon
   title: string
   description: string
 }
 
-function FeatureCard({ icon, title, description }: FeatureCardProps) {
+function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
   return (
     <div className="relative group">
       <ShineBorder
@@ -21,7 +22,7 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
         <div className="flex flex-col items-center text-center h-full">
           {/* Icon Circle */}
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500/10 via-emerald-500/10 to-green-600/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-            <span className="text-4xl">{icon}</span>
+            <Icon className="h-8 w-8 text-emerald-500" />
           </div>
 
           {/* Title */}
@@ -40,25 +41,25 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 export function FeaturesSection() {
   const features = [
     {
-      icon: "🛡️",
+      icon: ShieldCheck,
       title: "GPA-Verified Talent",
       description:
         "Every student profile is verified with transcripts, ensuring you're connecting with top performers from target schools.",
     },
     {
-      icon: "🔗",
+      icon: Users,
       title: "Students, Recruiters, Career Services",
       description:
         "A balanced ecosystem where candidates showcase skills, recruiters discover talent, and schools track placements.",
     },
     {
-      icon: "🔒",
+      icon: Lock,
       title: "Control Your Visibility",
       description:
         "Granular privacy controls let you decide who sees what - from contact info to GPA to preferred locations.",
     },
     {
-      icon: "📈",
+      icon: TrendingUp,
       title: "Track Your Impact",
       description:
         "Students see who viewed their profile. Recruiters track outreach. Schools monitor placement rates.",

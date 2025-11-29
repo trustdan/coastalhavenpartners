@@ -1,17 +1,20 @@
 "use client"
 
 import { TextAnimate } from "@/components/magicui/text-animate"
+import { GraduationCap, Search, Lock, BarChart3, type LucideIcon } from "lucide-react"
 
 interface FeatureCardProps {
-  icon: string
+  icon: LucideIcon
   label: string
   description: string
 }
 
-function FeatureCard({ icon, label, description }: FeatureCardProps) {
+function FeatureCard({ icon: Icon, label, description }: FeatureCardProps) {
   return (
     <div className="flex flex-col items-center text-center p-6">
-      <div className="mb-4 text-5xl">{icon}</div>
+      <div className="mb-4">
+        <Icon className="h-12 w-12 text-emerald-500" />
+      </div>
       <h3 className="text-xl md:text-2xl font-semibold mb-2">{label}</h3>
       <p className="text-sm md:text-base text-muted-foreground max-w-xs">
         {description}
@@ -23,22 +26,22 @@ function FeatureCard({ icon, label, description }: FeatureCardProps) {
 export function StatsSection() {
   const features = [
     {
-      icon: "🎓",
+      icon: GraduationCap,
       label: "Student Verification",
       description: "Secure transcript verification system to showcase your academic excellence",
     },
     {
-      icon: "🔍",
+      icon: Search,
       label: "Firm Discovery",
       description: "Browse and connect with investment banks, PE firms, and hedge funds",
     },
     {
-      icon: "🔒",
+      icon: Lock,
       label: "Privacy Controls",
       description: "You control what information is visible and who can contact you",
     },
     {
-      icon: "📊",
+      icon: BarChart3,
       label: "Profile Analytics",
       description: "Track who views your profile and measure your networking impact",
     },

@@ -6,6 +6,7 @@ import TextShimmer from "@/components/magicui/text-shimmer";
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { useInView } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import { useRef } from "react";
 
 export default function HeroSection() {
@@ -18,7 +19,8 @@ export default function HeroSection() {
     >
       <div className="backdrop-filter-[12px] inline-flex h-7 items-center justify-between rounded-full border border-border bg-white/10 px-3 text-xs text-white dark:text-black transition-all ease-in hover:cursor-pointer hover:bg-white/20 group gap-1 translate-y-[-1rem] animate-fade-in opacity-0">
         <TextShimmer className="inline-flex items-center justify-center">
-          <span>✨ AI-Powered Email Outreach</span>{" "}
+          <Sparkles className="mr-1 h-3 w-3" />
+          <span>AI-Powered Email Outreach</span>{" "}
           <ArrowRightIcon className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
         </TextShimmer>
       </div>

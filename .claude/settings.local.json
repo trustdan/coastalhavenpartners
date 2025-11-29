@@ -13,7 +13,11 @@
       "Bash(pnpm install)",
       "Bash(git add:*)",
       "Bash(pnpm supabase gen types:*)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(git show:*)",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
 export function SiteBanner() {
   return (
@@ -7,11 +8,12 @@ export function SiteBanner() {
         <Link
           href="https://www.producthunt.com/posts/chat-collect?utm_source=banner-featured&utm_medium=banner&utm_souce=banner-chat&#0045;collect"
           target="_blank"
-          className="text-center text-sm leading-loose text-muted-background"
+          className="inline-flex items-center gap-2 text-center text-sm leading-loose text-muted-background"
         >
-          ✨
-          <span className="font-bold"> We&apos;re live on ProductHunt! - </span>{" "}
-          Come check us out and leave a review! ✨
+          <Sparkles className="h-4 w-4" />
+          <span className="font-bold">We&apos;re live on ProductHunt!</span>
+          <span>Come check us out and leave a review!</span>
+          <Sparkles className="h-4 w-4" />
         </Link>
       </div>
       <hr className="absolute bottom-0 m-0 h-px w-full bg-neutral-200/30" />
