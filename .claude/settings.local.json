@@ -17,7 +17,9 @@
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(git show:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(pnpm update:*)",
+      "Bash(pnpm list:*)"
     ],
     "deny": [],
     "ask": []

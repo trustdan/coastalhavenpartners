@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { redirect } from "next/navigation"
 import type { Database } from "@/lib/types/database.types"
 import { ApplicantCard } from "./applicant-card"
+import { ApplicationFilters } from "./application-filters"
 
 type ApplicationWithSnapshot = Database["public"]["Tables"]["applications"]["Row"] & {
   snapshot: {
@@ -23,7 +24,18 @@ type ApplicationWithSnapshot = Database["public"]["Tables"]["applications"]["Row
   }
 }
 
-export default async function CapitalApplicationsPage() {
+interface PageProps {
+  searchParams: Promise<{
+    university?: string
+    gradYear?: string
+    minGpa?: string
+    maxGpa?: string
+    sort?: string
+  }>
+}
+
+export default async function CapitalApplicationsPage({ searchParams }: PageProps) {
+  const params = await searchParams
   const supabase = await createClient()
 
   const {
@@ -64,16 +76,86 @@ export default async function CapitalApplicationsPage() {
 
   const typedApplications = (applications || []) as ApplicationWithSnapshot[]
 
-  // Group by status
-  const pending = typedApplications.filter((a) => a.status === "pending")
-  const reviewing = typedApplications.filter((a) => a.status === "reviewing")
-  const interviewed = typedApplications.filter((a) => a.status === "interviewed")
-  const accepted = typedApplications.filter((a) => a.status === "accepted")
-  const rejected = typedApplications.filter((a) => a.status === "rejected")
-  const withdrawn = typedApplications.filter((a) => a.status === "withdrawn")
+  // Extract unique filter options from all applications
+  const universities = [...new Set(typedApplications.map((a) => a.snapshot.school_name))].sort()
+  const graduationYears = [...new Set(typedApplications.map((a) => a.snapshot.graduation_year))].sort((a, b) => a - b)
+
+  // Apply filters
+  const filteredApplications = typedApplications.filter((app) => {
+    // University filter
+    if (params.university && app.snapshot.school_name !== params.university) {
+      return false
+    }
+
+    // Graduation year filter
+    if (params.gradYear && app.snapshot.graduation_year !== parseInt(params.gradYear)) {
+      return false
+    }
+
+    // Min GPA filter
+    if (params.minGpa && app.snapshot.gpa < parseFloat(params.minGpa)) {
+      return false
+    }
+
+    // Max GPA filter
+    if (params.maxGpa && app.snapshot.gpa > parseFloat(params.maxGpa)) {
+      return false
+    }
+
+    return true
+  })
+
+  // Apply sorting
+  const sortOption = params.sort || "date_desc"
+  const sortedApplications = [...filteredApplications].sort((a, b) => {
+    switch (sortOption) {
+      case "date_asc":
+        return new Date(a.applied_at || 0).getTime() - new Date(b.applied_at || 0).getTime()
+      case "name_asc":
+        return a.snapshot.full_name.localeCompare(b.snapshot.full_name)
+      case "name_desc":
+        return b.snapshot.full_name.localeCompare(a.snapshot.full_name)
+      case "gpa_desc":
+        return b.snapshot.gpa - a.snapshot.gpa
+      case "gpa_asc":
+        return a.snapshot.gpa - b.snapshot.gpa
+      case "university_asc":
+        return a.snapshot.school_name.localeCompare(b.snapshot.school_name)
+      case "date_desc":
+      default:
+        return new Date(b.applied_at || 0).getTime() - new Date(a.applied_at || 0).getTime()
+    }
+  })
+
+  const hasActiveFilters = params.university || params.gradYear || params.minGpa || params.maxGpa
+
+  // Group by status (using sorted and filtered applications)
+  const pending = sortedApplications.filter((a) => a.status === "pending")
+  const reviewing = sortedApplications.filter((a) => a.status === "reviewing")
+  const interviewed = sortedApplications.filter((a) => a.status === "interviewed")
+  const accepted = sortedApplications.filter((a) => a.status === "accepted")
+  const rejected = sortedApplications.filter((a) => a.status === "rejected")
+  const withdrawn = sortedApplications.filter((a) => a.status === "withdrawn")
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
+      {/* Filters */}
+      <ApplicationFilters
+        universities={universities}
+        graduationYears={graduationYears}
+      />
+
+      {/* Active Filters Summary */}
+      {hasActiveFilters && (
+        <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+          Showing {filteredApplications.length} of {typedApplications.length} applications
+          {params.university && <span className="ml-1">from {params.university}</span>}
+          {params.gradYear && <span className="ml-1">graduating in {params.gradYear}</span>}
+          {params.minGpa && <span className="ml-1">with GPA {">="} {params.minGpa}</span>}
+          {params.maxGpa && <span className="ml-1">with GPA {"<="} {params.maxGpa}</span>}
+        </div>
+      )}
+
       {/* Stats Overview */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-lg border bg-white p-4 dark:bg-neutral-900">

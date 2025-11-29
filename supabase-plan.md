@@ -686,17 +686,24 @@ withdrawn (can happen from any state except accepted/rejected)
 ## Implementation Order
 
 ### Phase 1: Core Auth & Profiles
-- [ ] Set up Supabase project
-- [ ] Configure Google/LinkedIn OAuth
-- [ ] Create profiles table + trigger
-- [ ] Build profile form UI
-- [ ] Resume upload to Storage
+- [x] Set up Supabase project
+- [x] Configure Google/LinkedIn OAuth
+- [x] Create profiles table + trigger
+- [x] Build profile form UI
+- [x] Resume upload to Storage
 
 ### Phase 2: Applications
-- [ ] Create applications table
-- [ ] Build "Apply to Capital" flow
-- [ ] Application status page for candidates
-- [ ] Basic admin view for Capital team
+- [x] Create applications table
+- [x] Build "Apply to Capital" flow
+- [x] Application status page for candidates
+- [x] Basic admin view for Capital team
+
+### Phase 2.5: Capital Admin Improvements
+- [x] Add internal notes editing UI (action exists but no UI to add/edit notes in applicant card)
+- [x] Fix `updated_at` field on status change (currently only `reviewed_at` is updated, breaking "Last updated" display on candidate dashboard)
+- [x] Add filtering capabilities (by university, GPA range, graduation year, date range)
+- [x] Add sorting options (by date, name, GPA, university)
+- [ ] Email notifications on status change (notify candidates when their application status changes via Resend)
 
 ### Phase 3: Partner Firms
 - [ ] Create firms table
@@ -705,7 +712,7 @@ withdrawn (can happen from any state except accepted/rejected)
 - [ ] Firm admin dashboard
 
 ### Phase 4: Polish
-- [ ] Email notifications
+- [ ] Email notifications (new application alerts to admin)
 - [ ] Application tracking/analytics
 - [ ] Profile completion prompts
 - [ ] Mobile optimization

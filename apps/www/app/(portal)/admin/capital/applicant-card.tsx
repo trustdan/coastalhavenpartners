@@ -9,9 +9,13 @@ import {
   Mail,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
+  Pencil,
+  Check,
+  X,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -19,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { updateApplicationStatus } from "./actions"
+import { updateApplicationStatus, addInternalNotes } from "./actions"
 import type { Database } from "@/lib/types/database.types"
 
 type ApplicationStatus =
@@ -84,6 +88,9 @@ function formatRelativeTime(dateString: string): string {
 export function ApplicantCard({ application }: ApplicantCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [editingNotes, setEditingNotes] = useState(false)
+  const [notes, setNotes] = useState(application.internal_notes || "")
+  const [savingNotes, setSavingNotes] = useState(false)
   const { snapshot } = application
 
   // Generate signed URLs for documents (simplified - using direct paths)
@@ -94,6 +101,20 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
     setUpdating(true)
     await updateApplicationStatus(application.id, newStatus)
     setUpdating(false)
+  }
+
+  async function handleSaveNotes() {
+    setSavingNotes(true)
+    const result = await addInternalNotes(application.id, notes)
+    setSavingNotes(false)
+    if (!result.error) {
+      setEditingNotes(false)
+    }
+  }
+
+  function handleCancelNotes() {
+    setNotes(application.internal_notes || "")
+    setEditingNotes(false)
   }
 
   return (
@@ -308,16 +329,68 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
           </div>
 
           {/* Internal Notes */}
-          {application.internal_notes && (
-            <div className="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-900/20">
-              <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-yellow-700 dark:text-yellow-300">
+          <div className="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-900/20">
+            <div className="mb-2 flex items-center justify-between">
+              <h4 className="text-xs font-medium uppercase tracking-wider text-yellow-700 dark:text-yellow-300">
                 Internal Notes
               </h4>
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              {!editingNotes && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/40"
+                  onClick={() => setEditingNotes(true)}
+                >
+                  <Pencil className="mr-1 h-3 w-3" />
+                  {application.internal_notes ? "Edit" : "Add"}
+                </Button>
+              )}
+            </div>
+            {editingNotes ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add internal notes about this applicant..."
+                  className="min-h-[80px] border-yellow-200 bg-white text-sm dark:border-yellow-800 dark:bg-neutral-900"
+                  disabled={savingNotes}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelNotes}
+                    disabled={savingNotes}
+                    className="h-7 text-neutral-600"
+                  >
+                    <X className="mr-1 h-3 w-3" />
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveNotes}
+                    disabled={savingNotes}
+                    className="h-7 bg-yellow-600 text-white hover:bg-yellow-700"
+                  >
+                    {savingNotes ? (
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    ) : (
+                      <Check className="mr-1 h-3 w-3" />
+                    )}
+                    Save
+                  </Button>
+                </div>
+              </div>
+            ) : application.internal_notes ? (
+              <p className="whitespace-pre-wrap text-sm text-yellow-800 dark:text-yellow-200">
                 {application.internal_notes}
               </p>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm italic text-yellow-600 dark:text-yellow-400">
+                No notes yet. Click "Add" to add internal notes.
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>

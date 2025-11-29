@@ -50,6 +50,7 @@ export async function updateApplicationStatus(
       status: newStatus,
       reviewed_by: user.id,
       reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     })
     .eq("id", applicationId)
 
@@ -102,6 +103,7 @@ export async function addInternalNotes(applicationId: string, notes: string) {
       internal_notes: notes,
       reviewed_by: user.id,
       reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     })
     .eq("id", applicationId)
 
