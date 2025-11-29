@@ -52,7 +52,7 @@ export function HeroSection({ className }: HeroSectionProps) {
       <div className="container mx-auto flex max-w-4xl flex-col items-center text-center">
         <BlurFade delay={0.1}>
           <div className="mb-6 inline-flex items-center rounded-full border border-border/50 bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
-            <span>Now recruiting for Summer 2025</span>
+            <span>Now recruiting for Spring 2026</span>
             <ArrowRight className="ml-2 h-3 w-3" />
           </div>
         </BlurFade>

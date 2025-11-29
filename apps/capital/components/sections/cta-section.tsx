@@ -85,7 +85,7 @@ export function CtaSection({ className }: CtaSectionProps) {
                 Applications reviewed on a rolling basis
               </p>
               <p className="text-sm text-muted-foreground">
-                Summer 2025 positions available
+                Spring 2026 positions available
               </p>
             </div>
           </BlurFade>
