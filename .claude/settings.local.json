@@ -19,7 +19,11 @@
       "Bash(git show:*)",
       "Bash(del nul)",
       "Bash(pnpm update:*)",
-      "Bash(pnpm list:*)"
+      "Bash(pnpm list:*)",
+      "Bash(dir:*)",
+      "Bash(copy \"c:\\Users\\Dan\\coastalhavenpartners\\apps\\capital\\favicon.ico\" \"c:\\Users\\Dan\\coastalhavenpartners\\apps\\capital\\app\\favicon.ico\")",
+      "Bash(copy \"c:\\Users\\Dan\\coastalhavenpartners\\apps\\capital\\favicon.svg\" \"c:\\Users\\Dan\\coastalhavenpartners\\apps\\capital\\app\\icon.svg\")",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []
