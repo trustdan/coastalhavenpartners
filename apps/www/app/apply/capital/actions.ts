@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 import type { Database } from "@/lib/types/database.types"
+import { sendCapitalApplicationNotification } from "@/lib/resend"
 
 interface SubmitApplicationInput {
   candidateProfileId: string
@@ -114,7 +115,18 @@ export async function submitCapitalApplication(input: SubmitApplicationInput) {
     return { error: "Failed to submit application. Please try again." }
   }
 
-  // TODO: Send notification email to admin via Resend
+  // Send notification email to admins (don't block on this)
+  sendCapitalApplicationNotification({
+    applicantName: profile.full_name,
+    applicantEmail: profile.email,
+    school: candidateProfile.school_name,
+    major: candidateProfile.major,
+    graduationYear: candidateProfile.graduation_year,
+    gpa: candidateProfile.gpa,
+    applicationId: application.id,
+  }).catch((err) => {
+    console.error("Failed to send notification email:", err)
+  })
 
   revalidatePath("/apply/capital")
   revalidatePath("/candidate")

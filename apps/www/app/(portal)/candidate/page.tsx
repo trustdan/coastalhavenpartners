@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { CompleteProfileForm } from './complete-profile-form'
 import { AccessRevoked } from '@/components/access-revoked'
 import type { Database } from '@/lib/types/database.types'
+import { Building2, Clock, CheckCircle2, XCircle, MessageSquare, UserCheck } from 'lucide-react'
 
 export default async function CandidateDashboard() {
   const supabase = await createClient()
@@ -64,6 +65,14 @@ export default async function CandidateDashboard() {
     profiles: profile
   }
 
+  // Fetch Capital application status
+  const { data: capitalApplication } = await supabaseAdmin
+    .from('applications')
+    .select('id, status, applied_at, updated_at')
+    .eq('candidate_profile_id', candidateProfile.id)
+    .eq('target_type', 'capital')
+    .single()
+
   // Fetch analytics stats
   const { count: profileViewCount } = await supabase
     .from('analytics_events')
@@ -85,6 +94,52 @@ export default async function CandidateDashboard() {
     active: 'Recruiters are viewing your profile',
     placed: 'Congratulations on your placement!',
     rejected: 'Please contact support for more information',
+  }
+
+  // Capital application status configuration
+  const capitalStatusConfig = {
+    pending: {
+      color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200',
+      icon: Clock,
+      message: 'Your application is in queue for review',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/10',
+      borderColor: 'border-yellow-200 dark:border-yellow-800',
+    },
+    reviewing: {
+      color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200',
+      icon: MessageSquare,
+      message: 'Our team is actively reviewing your application',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/10',
+      borderColor: 'border-blue-200 dark:border-blue-800',
+    },
+    interviewed: {
+      color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-200',
+      icon: UserCheck,
+      message: 'Great progress! Interview completed, decision pending',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/10',
+      borderColor: 'border-purple-200 dark:border-purple-800',
+    },
+    accepted: {
+      color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200',
+      icon: CheckCircle2,
+      message: 'Congratulations! Welcome to Coastal Haven Capital',
+      bgColor: 'bg-green-50 dark:bg-green-900/10',
+      borderColor: 'border-green-200 dark:border-green-800',
+    },
+    rejected: {
+      color: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200',
+      icon: XCircle,
+      message: 'Unfortunately, we cannot move forward at this time',
+      bgColor: 'bg-red-50 dark:bg-red-900/10',
+      borderColor: 'border-red-200 dark:border-red-800',
+    },
+    withdrawn: {
+      color: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900/20 dark:text-neutral-200',
+      icon: XCircle,
+      message: 'You have withdrawn your application',
+      bgColor: 'bg-neutral-50 dark:bg-neutral-900/10',
+      borderColor: 'border-neutral-200 dark:border-neutral-800',
+    },
   }
 
   return (
@@ -133,6 +188,71 @@ export default async function CandidateDashboard() {
             <div className="mb-1 text-xs text-neutral-500">
               by approved recruiters
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Coastal Haven Capital Application Status */}
+      <div className={`rounded-xl border p-6 shadow-sm ${
+        capitalApplication
+          ? `${capitalStatusConfig[capitalApplication.status].bgColor} ${capitalStatusConfig[capitalApplication.status].borderColor}`
+          : 'bg-white dark:bg-neutral-900'
+      }`}>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+              capitalApplication
+                ? capitalStatusConfig[capitalApplication.status].color
+                : 'bg-linear-to-br from-blue-500 to-purple-600'
+            }`}>
+              {capitalApplication ? (
+                (() => {
+                  const StatusIcon = capitalStatusConfig[capitalApplication.status].icon
+                  return <StatusIcon className="h-6 w-6" />
+                })()
+              ) : (
+                <Building2 className="h-6 w-6 text-white" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Coastal Haven Capital</h2>
+              {capitalApplication ? (
+                <>
+                  <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                    {capitalStatusConfig[capitalApplication.status].message}
+                  </p>
+                  <p className="mt-2 text-xs text-neutral-500">
+                    Applied on {new Date(capitalApplication.applied_at!).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                    {capitalApplication.updated_at && capitalApplication.updated_at !== capitalApplication.applied_at && (
+                      <> · Last updated {new Date(capitalApplication.updated_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}</>
+                    )}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                  Join our team and source real deals in private equity
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            {capitalApplication ? (
+              <span className={`rounded-full px-4 py-2 text-sm font-medium ${capitalStatusConfig[capitalApplication.status].color}`}>
+                {capitalApplication.status.charAt(0).toUpperCase() + capitalApplication.status.slice(1)}
+              </span>
+            ) : (
+              <Button asChild>
+                <Link href="/apply/capital">Apply Now</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>
