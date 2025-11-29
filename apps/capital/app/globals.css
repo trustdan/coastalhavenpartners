@@ -1,0 +1,186 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --navigation-height: 3.5rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Animation Variables */
+  --animate-fade-in: fade-in 1000ms var(--animation-delay, 0ms) ease forwards;
+  --animate-fade-up: fade-up 1000ms var(--animation-delay, 0ms) ease forwards;
+  --animate-shimmer: shimmer 8s infinite;
+  --animate-marquee: marquee var(--duration) infinite linear;
+  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+  --animate-shine: shine var(--duration) infinite linear;
+  --animate-pulse: pulse var(--duration) ease-out infinite;
+  --animate-blur-fade-in: blur-fade-in 0.5s ease-out forwards;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shimmer {
+    0%,
+    90%,
+    100% {
+      background-position: calc(-100% - var(--shimmer-width)) 0;
+    }
+    30%,
+    60% {
+      background-position: calc(100% + var(--shimmer-width)) 0;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes spin-around {
+    0% {
+      transform: translateZ(0) rotate(0);
+    }
+    15%,
+    35% {
+      transform: translateZ(0) rotate(90deg);
+    }
+    65%,
+    85% {
+      transform: translateZ(0) rotate(270deg);
+    }
+    100% {
+      transform: translateZ(0) rotate(360deg);
+    }
+  }
+  @keyframes shimmer-slide {
+    to {
+      transform: translate(calc(100cqw - 100%), 0);
+    }
+  }
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    to {
+      background-position: 0% 0%;
+    }
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 var(--pulse-color);
+    }
+    50% {
+      box-shadow: 0 0 0 8px var(--pulse-color);
+    }
+  }
+  @keyframes blur-fade-in {
+    from {
+      opacity: 0;
+      filter: blur(10px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(100% 0 0);
+  --foreground: oklch(15% 0 0);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(15% 0 0);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(15% 0 0);
+  --primary: oklch(26% 0 0);
+  --primary-foreground: oklch(98% 0 0);
+  --secondary: oklch(96% 0 0);
+  --secondary-foreground: oklch(26% 0 0);
+  --muted: oklch(96% 0 0);
+  --muted-foreground: oklch(58% 0 0);
+  --accent: oklch(96% 0 0);
+  --accent-foreground: oklch(26% 0 0);
+  --destructive: oklch(63% 0.22 25);
+  --destructive-foreground: oklch(98% 0 0);
+  --border: oklch(90% 0 0);
+  --input: oklch(90% 0 0);
+  --ring: oklch(15% 0 0);
+}
+
+.dark {
+  --background: oklch(0% 0 0);
+  --foreground: oklch(98% 0 0);
+  --card: oklch(15% 0 0);
+  --card-foreground: oklch(98% 0 0);
+  --popover: oklch(15% 0 0);
+  --popover-foreground: oklch(98% 0 0);
+  --primary: oklch(98% 0 0);
+  --primary-foreground: oklch(26% 0 0);
+  --secondary: oklch(35% 0 0);
+  --secondary-foreground: oklch(98% 0 0);
+  --muted: oklch(35% 0 0);
+  --muted-foreground: oklch(70% 0 0);
+  --accent: oklch(35% 0 0);
+  --accent-foreground: oklch(98% 0 0);
+  --destructive: oklch(45% 0.15 25);
+  --destructive-foreground: oklch(98% 0 0);
+  --border: oklch(35% 0 0);
+  --input: oklch(35% 0 0);
+  --ring: oklch(85% 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
