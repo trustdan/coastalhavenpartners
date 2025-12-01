@@ -32,13 +32,14 @@ import {
 } from "../actions"
 import type { TranscriptRecord } from "./page"
 
-type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd'
+type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
 
 const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {
   bachelors: 'Undergraduate',
   masters: "Master's",
   mba: 'MBA',
   phd: 'PhD',
+  professional: 'Professional',
 }
 
 interface CandidateProfile {

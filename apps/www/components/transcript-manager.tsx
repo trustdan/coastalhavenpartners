@@ -24,7 +24,7 @@ import {
 import { Loader2, Upload, Plus, Trash2, FileText, CheckCircle2, Clock, ExternalLink, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
 
-type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd'
+type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
 
 interface Transcript {
   id: string
@@ -43,6 +43,7 @@ const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {
   masters: "Master's",
   mba: 'MBA',
   phd: 'PhD',
+  professional: 'Professional (JD, MD)',
 }
 
 export function TranscriptManager() {
@@ -238,6 +239,7 @@ export function TranscriptManager() {
                     <SelectItem value="masters">Master's Degree</SelectItem>
                     <SelectItem value="mba">MBA</SelectItem>
                     <SelectItem value="phd">PhD / Doctorate</SelectItem>
+                    <SelectItem value="professional">Professional (JD, MD)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

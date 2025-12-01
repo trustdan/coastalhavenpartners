@@ -36,6 +36,7 @@ export const GRADUATE_DEGREES = [
   'MD',     // Doctor of Medicine
   'DO',     // Doctor of Osteopathic Medicine
   'PhD',    // Doctor of Philosophy
+  'DPhil',  // Doctor of Philosophy (Oxford style)
   'EdD',    // Doctor of Education
   'DBA',    // Doctor of Business Administration
   'SJD',    // Doctor of Juridical Science

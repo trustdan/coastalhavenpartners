@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { VerificationCard } from './verification-card'
 import type { Database } from '@/lib/types/database.types'
 
-type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd'
+type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
 
 export interface TranscriptRecord {
   id: string

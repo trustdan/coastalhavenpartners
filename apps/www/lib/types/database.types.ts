@@ -1117,7 +1117,7 @@ export type Database = {
         | "active"
         | "placed"
         | "rejected"
-      education_level: "bachelors" | "masters" | "mba" | "phd"
+      education_level: "bachelors" | "masters" | "mba" | "phd" | "professional"
       school_verification_status:
         | "pending_documents"
         | "documents_submitted"
@@ -1280,7 +1280,7 @@ export const Constants = {
         "placed",
         "rejected",
       ],
-      education_level: ["bachelors", "masters", "mba", "phd"],
+      education_level: ["bachelors", "masters", "mba", "phd", "professional"],
       school_verification_status: [
         "pending_documents",
         "documents_submitted",
