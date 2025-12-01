@@ -71,8 +71,8 @@ export function MessageBadge({ role, userId }: MessageBadgeProps) {
     // Fetch initially
     fetchUnreadCount()
 
-    // Poll every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000)
+    // Poll every 10 seconds
+    const interval = setInterval(fetchUnreadCount, 10000)
 
     return () => clearInterval(interval)
   }, [role, userId])
