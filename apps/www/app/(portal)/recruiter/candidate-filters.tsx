@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useState, useTransition } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { UNDERGRAD_DEGREES, GRADUATE_DEGREES } from '@/components/ui/degree-type-select'
+import { Bookmark, ChevronDown, Trash2, Loader2 } from 'lucide-react'
+import { saveSearch, deleteSearch, type SearchFilters, type SavedSearchResult } from './saved-search-actions'
+
+interface CandidateFiltersProps {
+  savedSearches?: SavedSearchResult[]
+}
 
 const TARGET_ROLES = [
   'Investment Banking',
@@ -29,9 +50,27 @@ const TARGET_ROLES = [
   'Fintech',
 ]
 
-export function CandidateFilters() {
+export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [searchName, setSearchName] = useState('')
+
+  const hasActiveFilters = searchParams.get('gpa') || searchParams.get('major') ||
+    searchParams.get('school') || searchParams.get('gradYear') ||
+    searchParams.get('targetRole') || searchParams.get('undergradDegree') ||
+    searchParams.get('gradDegree')
+
+  const getCurrentFilters = (): SearchFilters => ({
+    gpa: searchParams.get('gpa') || undefined,
+    major: searchParams.get('major') || undefined,
+    school: searchParams.get('school') || undefined,
+    gradYear: searchParams.get('gradYear') || undefined,
+    targetRole: searchParams.get('targetRole') || undefined,
+    undergradDegree: searchParams.get('undergradDegree') || undefined,
+    gradDegree: searchParams.get('gradDegree') || undefined,
+  })
 
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -52,6 +91,29 @@ export function CandidateFilters() {
 
   const updateFilter = (name: string, value: string) => {
      handleSearch(name, value)
+  }
+
+  const applyFilters = (filters: SearchFilters) => {
+    const params = new URLSearchParams()
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, value)
+    })
+    router.push('?' + params.toString())
+  }
+
+  const handleSaveSearch = async () => {
+    if (!searchName.trim()) return
+    startTransition(async () => {
+      await saveSearch(searchName, getCurrentFilters())
+      setShowSaveDialog(false)
+      setSearchName('')
+    })
+  }
+
+  const handleDeleteSearch = async (id: string) => {
+    startTransition(async () => {
+      await deleteSearch(id)
+    })
   }
 
   const debounce = (func: Function, wait: number) => {
@@ -167,17 +229,99 @@ export function CandidateFilters() {
           </Select>
         </div>
       </div>
-      {(searchParams.get('gpa') || searchParams.get('major') || searchParams.get('school') || searchParams.get('gradYear') || searchParams.get('targetRole') || searchParams.get('undergradDegree') || searchParams.get('gradDegree')) && (
-        <div className="mt-4 flex justify-end">
-          <Button 
-            variant="ghost" 
+      {/* Saved Searches & Actions Row */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {savedSearches.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Bookmark className="h-4 w-4" />
+                  Saved Searches
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {savedSearches.map((search) => (
+                  <DropdownMenuItem
+                    key={search.id}
+                    className="flex items-center justify-between"
+                  >
+                    <button
+                      onClick={() => applyFilters(search.filters)}
+                      className="flex-1 text-left"
+                    >
+                      {search.name}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteSearch(search.id)
+                      }}
+                      className="ml-2 text-neutral-400 hover:text-red-600"
+                      disabled={isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setShowSaveDialog(true)}
+            >
+              <Bookmark className="h-4 w-4" />
+              Save Search
+            </Button>
+          )}
+        </div>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => router.push('/recruiter')}
             className="text-sm text-neutral-500 hover:text-neutral-900"
           >
             Clear Filters
           </Button>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Save Search Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Search</DialogTitle>
+            <DialogDescription>
+              Give your search a name to quickly apply these filters later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="searchName">Search Name</Label>
+            <Input
+              id="searchName"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              placeholder="e.g., Top Finance Majors 2026"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveSearch} disabled={isPending || !searchName.trim()}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Search
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

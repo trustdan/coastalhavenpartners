@@ -16,9 +16,9 @@
 - [x] Interview scheduling (text-based MVP via messaging)
 
 ### Phase 4: Recruiter Power Features
-- [ ] Saved searches
-- [ ] Bulk candidate export (CSV)
-- [ ] Match recommendations
+- [x] Saved searches
+- [x] Bulk candidate export (CSV)
+- [x] Match recommendations
 
 ---
 

@@ -727,6 +727,44 @@ export type Database = {
           },
         ]
       }
+      saved_searches: {
+        Row: {
+          created_at: string | null
+          filters: Json
+          id: string
+          name: string
+          notify_new_matches: boolean | null
+          recruiter_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          filters?: Json
+          id?: string
+          name: string
+          notify_new_matches?: boolean | null
+          recruiter_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          filters?: Json
+          id?: string
+          name?: string
+          notify_new_matches?: boolean | null
+          recruiter_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_searches_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       school_profiles: {
         Row: {
           approved_at: string | null

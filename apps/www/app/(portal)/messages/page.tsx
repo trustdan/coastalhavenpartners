@@ -34,13 +34,8 @@ export default async function MessagesPage({
 
   // Handle starting a new conversation
   if (candidateIdToMessage) {
-    try {
-      const { conversationId } = await startConversation(candidateIdToMessage)
-      redirect(`/messages/${conversationId}`)
-    } catch (error) {
-      // If conversation start fails, just show inbox
-      console.error('Failed to start conversation:', error)
-    }
+    const { conversationId } = await startConversation(candidateIdToMessage)
+    redirect(`/messages/${conversationId}`)
   }
 
   // Get user's role and profile

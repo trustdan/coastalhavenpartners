@@ -4,8 +4,13 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CandidateFilters } from './candidate-filters'
 import { AccessRevoked } from '@/components/access-revoked'
-import { BadgeCheck } from 'lucide-react'
+import { BadgeCheck, Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { Database } from '@/lib/types/database.types'
+import { getSavedSearches } from './saved-search-actions'
+import { ExportButton } from './export-button'
+import { getRecommendedCandidates } from '@/lib/recommendations'
+import { RecommendedCandidates } from '@/components/recruiter/recommended-candidates'
 
 export default async function RecruiterDashboard({
   searchParams,
@@ -56,7 +61,7 @@ export default async function RecruiterDashboard({
   // Check if recruiter is approved
   const { data: recruiterProfile } = await supabaseAdmin
     .from('recruiter_profiles')
-    .select('is_approved, is_rejected, firm_name')
+    .select('id, is_approved, is_rejected, firm_name')
     .eq('user_id', user.id)
     .single()
 
@@ -96,6 +101,12 @@ export default async function RecruiterDashboard({
       </div>
     )
   }
+
+  // Fetch saved searches and recommendations for this recruiter
+  const [savedSearches, recommendedCandidates] = await Promise.all([
+    getSavedSearches(),
+    getRecommendedCandidates(recruiterProfile.id, 5)
+  ])
 
   // Fetch verified candidates with filters
   let query = supabase
@@ -148,14 +159,20 @@ export default async function RecruiterDashboard({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Candidate Pool</h1>
-        <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          {candidates?.length || 0} verified candidates available
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Candidate Pool</h1>
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+            {candidates?.length || 0} verified candidates available
+          </p>
+        </div>
+        <ExportButton />
       </div>
 
-      <CandidateFilters />
+      {/* Personalized Recommendations */}
+      <RecommendedCandidates candidates={recommendedCandidates} />
+
+      <CandidateFilters savedSearches={savedSearches} />
 
       {/* Candidate Table */}
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm dark:bg-neutral-900">
