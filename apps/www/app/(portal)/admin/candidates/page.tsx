@@ -1,9 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { verifyCandidate, rejectCandidate, revokeCandidate, reinstateCandidate } from '../actions'
-import { Mail, Linkedin } from 'lucide-react'
+import { CandidateRow } from './candidate-row'
 import type { Database } from '@/lib/types/database.types'
 
 export default async function AdminCandidatesPage() {
@@ -41,7 +39,7 @@ export default async function AdminCandidatesPage() {
   // Fetch all candidates (using admin client to bypass RLS)
   const { data: candidates } = await supabaseAdmin
     .from('candidate_profiles')
-    .select('*')
+    .select('id, user_id, school_name, major, gpa, graduation_year, status, is_rejected, rejected_at, resume_url, transcript_url')
     .order('created_at', { ascending: false })
 
   // Fetch profiles separately to avoid RLS join issues
@@ -93,48 +91,7 @@ export default async function AdminCandidatesPage() {
             </thead>
             <tbody className="divide-y">
               {pendingCandidates.map((candidate) => (
-                <tr key={candidate.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium">{candidate.profiles?.full_name}</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {candidate.profiles?.email}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm">{candidate.school_name}</td>
-                  <td className="px-6 py-4 text-sm">{candidate.major}</td>
-                  <td className="px-6 py-4 text-sm">{candidate.gpa.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm">{candidate.graduation_year}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      {candidate.profiles?.linkedin_url && (
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={candidate.profiles.linkedin_url} target="_blank" rel="noopener noreferrer" title="View LinkedIn">
-                            <Linkedin className="h-4 w-4" />
-                            <span className="sr-only">LinkedIn</span>
-                          </a>
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={`mailto:${candidate.profiles?.email}`} title="Contact Candidate">
-                          <Mail className="h-4 w-4" />
-                          <span className="sr-only">Contact</span>
-                        </a>
-                      </Button>
-                      <form action={rejectCandidate.bind(null, candidate.id)}>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700">
-                          Reject
-                        </Button>
-                      </form>
-                      <form action={verifyCandidate.bind(null, candidate.id)}>
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                          Verify
-                        </Button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
+                <CandidateRow key={candidate.id} candidate={candidate} variant="pending" />
               ))}
             </tbody>
           </table>
@@ -170,53 +127,7 @@ export default async function AdminCandidatesPage() {
             </thead>
             <tbody className="divide-y">
               {verifiedCandidates.map((candidate) => (
-                <tr key={candidate.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium">{candidate.profiles?.full_name}</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {candidate.profiles?.email}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm">{candidate.school_name}</td>
-                  <td className="px-6 py-4 text-sm">{candidate.major}</td>
-                  <td className="px-6 py-4 text-sm">{candidate.gpa.toFixed(2)}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium
-                      ${candidate.status === 'placed' 
-                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-200'
-                        : candidate.status === 'active'
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200'
-                        : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200'}
-                    `}>
-                      {(candidate.status || 'verified').replace('_', ' ').toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      {candidate.profiles?.linkedin_url && (
-                        <Button variant="ghost" size="sm" asChild>
-                          <a href={candidate.profiles.linkedin_url} target="_blank" rel="noopener noreferrer" title="View LinkedIn">
-                            <Linkedin className="h-4 w-4" />
-                            <span className="sr-only">LinkedIn</span>
-                          </a>
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={`mailto:${candidate.profiles?.email}`} title="Contact Candidate">
-                          <Mail className="h-4 w-4" />
-                          <span className="sr-only">Contact</span>
-                        </a>
-                      </Button>
-                      <form action={revokeCandidate.bind(null, candidate.id)}>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700">
-                          Revoke
-                        </Button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
+                <CandidateRow key={candidate.id} candidate={candidate} variant="verified" />
               ))}
             </tbody>
           </table>
@@ -252,37 +163,7 @@ export default async function AdminCandidatesPage() {
             </thead>
             <tbody className="divide-y">
               {rejectedCandidates.map((candidate) => (
-                <tr key={candidate.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium">{candidate.profiles?.full_name}</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {candidate.profiles?.email}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm">{candidate.school_name}</td>
-                  <td className="px-6 py-4 text-sm">{candidate.major}</td>
-                  <td className="px-6 py-4 text-sm">{candidate.gpa.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">
-                    {candidate.rejected_at ? new Date(candidate.rejected_at).toLocaleDateString() : '-'}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={`mailto:${candidate.profiles?.email}`} title="Contact Candidate">
-                          <Mail className="h-4 w-4" />
-                          <span className="sr-only">Contact</span>
-                        </a>
-                      </Button>
-                      <form action={reinstateCandidate.bind(null, candidate.id)}>
-                        <Button variant="outline" size="sm" className="text-blue-600 hover:bg-blue-50 hover:text-blue-700">
-                          Reinstate
-                        </Button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
+                <CandidateRow key={candidate.id} candidate={candidate} variant="rejected" />
               ))}
             </tbody>
           </table>

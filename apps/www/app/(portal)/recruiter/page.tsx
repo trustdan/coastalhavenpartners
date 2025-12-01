@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CandidateFilters } from './candidate-filters'
 import { AccessRevoked } from '@/components/access-revoked'
+import { BadgeCheck } from 'lucide-react'
 import type { Database } from '@/lib/types/database.types'
 
 export default async function RecruiterDashboard({
@@ -110,6 +111,9 @@ export default async function RecruiterDashboard({
       status,
       undergrad_degree_type,
       grad_degree_type,
+      gpa_verified,
+      resume_verified,
+      transcript_verified,
       profiles!user_id (
         full_name,
         email
@@ -183,8 +187,11 @@ export default async function RecruiterDashboard({
                     <td className="px-6 py-4 text-sm">{candidate.school_name}</td>
                     <td className="px-6 py-4 text-sm">{candidate.major}</td>
                     <td className="px-6 py-4">
-                      <span className="rounded-full bg-green-100 px-2 py-1 text-sm font-medium text-green-800 dark:bg-green-900/20 dark:text-green-200">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-sm font-medium text-green-800 dark:bg-green-900/20 dark:text-green-200">
                         {candidate.gpa.toFixed(2)}
+                        {candidate.gpa_verified && (
+                          <BadgeCheck className="h-3.5 w-3.5 text-green-600" />
+                        )}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">{candidate.graduation_year}</td>

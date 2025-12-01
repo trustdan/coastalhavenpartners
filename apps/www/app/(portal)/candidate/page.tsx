@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { CompleteProfileForm } from './complete-profile-form'
 import { AccessRevoked } from '@/components/access-revoked'
+import { ProfileCompletion } from '@/components/candidate/profile-completion'
 import type { Database } from '@/lib/types/database.types'
 import { Building2, Clock, CheckCircle2, XCircle, MessageSquare, UserCheck } from 'lucide-react'
 
@@ -151,6 +152,25 @@ export default async function CandidateDashboard() {
           Your candidate dashboard
         </p>
       </div>
+
+      {/* Profile Completion Progress */}
+      <ProfileCompletion
+        profile={{
+          full_name: fullProfile.profiles?.full_name ?? null,
+          email: fullProfile.profiles?.email ?? '',
+          linkedin_url: null,
+          school_name: fullProfile.school_name,
+          major: fullProfile.major,
+          gpa: fullProfile.gpa,
+          graduation_year: fullProfile.graduation_year,
+          resume_url: fullProfile.resume_url,
+          transcript_url: fullProfile.transcript_url,
+          target_roles: fullProfile.target_roles,
+          preferred_locations: fullProfile.preferred_locations,
+          bio: fullProfile.bio,
+          scheduling_url: fullProfile.scheduling_url,
+        }}
+      />
 
       {/* Status and Analytics Grid */}
       <div className="grid gap-6 md:grid-cols-2">

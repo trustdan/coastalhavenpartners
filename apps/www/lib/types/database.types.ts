@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       analytics_events: {
@@ -150,6 +175,8 @@ export type Database = {
         Row: {
           bio: string | null
           created_at: string | null
+          documents_verified_at: string | null
+          documents_verified_by: string | null
           education_level: Database["public"]["Enums"]["education_level"] | null
           email_verified: boolean | null
           gpa: number
@@ -170,6 +197,7 @@ export type Database = {
           rejected_at: string | null
           rejected_by: string | null
           resume_url: string | null
+          resume_verified: boolean | null
           scheduling_url: string | null
           school_name: string
           school_verified: boolean | null
@@ -177,6 +205,7 @@ export type Database = {
           tags: string[] | null
           target_roles: string[] | null
           transcript_url: string | null
+          transcript_verified: boolean | null
           undergrad_degree_type: string | null
           undergrad_specialty: string | null
           updated_at: string | null
@@ -187,6 +216,8 @@ export type Database = {
         Insert: {
           bio?: string | null
           created_at?: string | null
+          documents_verified_at?: string | null
+          documents_verified_by?: string | null
           education_level?:
             | Database["public"]["Enums"]["education_level"]
             | null
@@ -209,6 +240,7 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           resume_url?: string | null
+          resume_verified?: boolean | null
           scheduling_url?: string | null
           school_name: string
           school_verified?: boolean | null
@@ -216,6 +248,7 @@ export type Database = {
           tags?: string[] | null
           target_roles?: string[] | null
           transcript_url?: string | null
+          transcript_verified?: boolean | null
           undergrad_degree_type?: string | null
           undergrad_specialty?: string | null
           updated_at?: string | null
@@ -226,6 +259,8 @@ export type Database = {
         Update: {
           bio?: string | null
           created_at?: string | null
+          documents_verified_at?: string | null
+          documents_verified_by?: string | null
           education_level?:
             | Database["public"]["Enums"]["education_level"]
             | null
@@ -248,6 +283,7 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           resume_url?: string | null
+          resume_verified?: boolean | null
           scheduling_url?: string | null
           school_name?: string
           school_verified?: boolean | null
@@ -255,6 +291,7 @@ export type Database = {
           tags?: string[] | null
           target_roles?: string[] | null
           transcript_url?: string | null
+          transcript_verified?: boolean | null
           undergrad_degree_type?: string | null
           undergrad_specialty?: string | null
           updated_at?: string | null
@@ -263,6 +300,13 @@ export type Database = {
           visible_fields_to_schools?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "candidate_profiles_documents_verified_by_fkey"
+            columns: ["documents_verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "candidate_profiles_rejected_by_fkey"
             columns: ["rejected_by"]
@@ -275,6 +319,45 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          candidate_id: string
+          created_at: string | null
+          id: string
+          last_message_at: string | null
+          recruiter_id: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          recruiter_id: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          recruiter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -356,6 +439,48 @@ export type Database = {
           {
             foreignKeyName: "discord_reports_reviewed_by_fkey"
             columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -893,6 +1018,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status: [

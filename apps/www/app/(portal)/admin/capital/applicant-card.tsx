@@ -13,6 +13,7 @@ import {
   Check,
   X,
   Loader2,
+  AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,6 +24,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { updateApplicationStatus, addInternalNotes } from "./actions"
 import type { Database } from "@/lib/types/database.types"
 
@@ -91,6 +102,7 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
   const [editingNotes, setEditingNotes] = useState(false)
   const [notes, setNotes] = useState(application.internal_notes || "")
   const [savingNotes, setSavingNotes] = useState(false)
+  const [showRejectDialog, setShowRejectDialog] = useState(false)
   const { snapshot } = application
 
   // Generate signed URLs for documents (simplified - using direct paths)
@@ -98,8 +110,21 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 
   async function handleStatusChange(newStatus: ApplicationStatus) {
+    // Show confirmation dialog for destructive actions
+    if (newStatus === "rejected") {
+      setShowRejectDialog(true)
+      return
+    }
+
     setUpdating(true)
     await updateApplicationStatus(application.id, newStatus)
+    setUpdating(false)
+  }
+
+  async function handleConfirmReject() {
+    setShowRejectDialog(false)
+    setUpdating(true)
+    await updateApplicationStatus(application.id, "rejected")
     setUpdating(false)
   }
 
@@ -393,6 +418,31 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
           </div>
         </div>
       )}
+
+      {/* Reject Confirmation Dialog */}
+      <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Reject Application
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject <strong>{snapshot.full_name}</strong>&apos;s application?
+              This will move them to the rejected pool. You can change this later if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmReject}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Reject Application
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

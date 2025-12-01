@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MFAPromptBanner } from '@/components/auth/mfa-prompt-banner'
 import { PortalNavExtras } from '@/components/portal/nav-extras'
+import { MessageBadge } from '@/components/portal/message-badge'
 
 export default async function CandidateLayout({
   children,
@@ -69,6 +70,7 @@ export default async function CandidateLayout({
             >
               Edit Profile
             </Link>
+            <MessageBadge role="candidate" userId={user.id} />
             <span className="text-sm text-neutral-600 dark:text-neutral-400">
               {profile?.full_name}
             </span>

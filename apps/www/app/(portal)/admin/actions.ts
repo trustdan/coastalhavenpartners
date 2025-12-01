@@ -296,7 +296,7 @@ export async function reinstateSchool(schoolId: string) {
   // Reinstate a rejected school (moves them back to pending)
   const { error } = await supabaseAdmin
     .from('school_profiles')
-    .update({ 
+    .update({
       is_rejected: false,
       rejected_at: null,
       rejected_by: null
@@ -306,4 +306,106 @@ export async function reinstateSchool(schoolId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin/schools')
+}
+
+// =============================================
+// DOCUMENT VERIFICATION ACTIONS
+// =============================================
+
+export async function verifyResume(candidateId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({
+      resume_verified: true,
+      documents_verified_by: user.id,
+      documents_verified_at: new Date().toISOString()
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function rejectResume(candidateId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({
+      resume_verified: false,
+      resume_url: null // Clear the rejected resume
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function verifyTranscript(candidateId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({
+      transcript_verified: true,
+      documents_verified_by: user.id,
+      documents_verified_at: new Date().toISOString()
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function rejectTranscript(candidateId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({
+      transcript_verified: false,
+      transcript_url: null // Clear the rejected transcript
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function verifyGpa(candidateId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({
+      gpa_verified: true,
+      documents_verified_by: user.id,
+      documents_verified_at: new Date().toISOString()
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function rejectGpa(candidateId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_profiles')
+    .update({
+      gpa_verified: false
+    })
+    .eq('id', candidateId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
 }

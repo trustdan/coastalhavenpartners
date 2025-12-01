@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MFAPromptBanner } from '@/components/auth/mfa-prompt-banner'
 import { PortalNavExtras } from '@/components/portal/nav-extras'
+import { MessageBadge } from '@/components/portal/message-badge'
 
 export default async function RecruiterLayout({
   children,
@@ -63,6 +64,7 @@ export default async function RecruiterLayout({
             >
               Network
             </Link>
+            <MessageBadge role="recruiter" userId={user.id} />
             <Link
               href="/recruiter/settings"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"

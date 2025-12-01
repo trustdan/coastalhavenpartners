@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Calendar, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Mail, Calendar, GraduationCap, BadgeCheck, ShieldCheck, MessageSquare } from 'lucide-react'
 
 export default async function CandidateDetailsPage({
   params,
@@ -101,9 +101,15 @@ export default async function CandidateDetailsPage({
         </div>
         <div className="flex gap-3">
           <Button variant="outline" asChild>
+            <Link href={`/messages?start=${candidate.id}`} className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Message
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
             <a href={`mailto:${candidate.profiles?.email}`} className="gap-2">
               <Mail className="h-4 w-4" />
-              Contact
+              Email
             </a>
           </Button>
           {(candidate as any).scheduling_url ? (
@@ -153,7 +159,12 @@ export default async function CandidateDetailsPage({
                 </div>
                 <div>
                   <p className="text-sm text-neutral-600 dark:text-neutral-400">GPA</p>
-                  <p className="font-bold text-green-700 dark:text-green-400">{candidate.gpa.toFixed(2)}</p>
+                  <p className="flex items-center gap-1.5 font-bold text-green-700 dark:text-green-400">
+                    {candidate.gpa.toFixed(2)}
+                    {candidate.gpa_verified && (
+                      <BadgeCheck className="h-4 w-4 text-green-600" />
+                    )}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-neutral-600 dark:text-neutral-400">Class of</p>
@@ -246,14 +257,25 @@ export default async function CandidateDetailsPage({
             <h2 className="text-lg font-semibold">Documents</h2>
             <div className="mt-4 space-y-4">
               {candidate.resume_url ? (
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className={`flex items-center justify-between rounded-lg border p-4 ${
+                  candidate.resume_verified
+                    ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
+                    : ''
+                }`}>
                   <div className="flex items-center gap-3">
                     <div className="rounded bg-red-100 p-2 text-red-600 dark:bg-red-900/20">
                       PDF
                     </div>
                     <div>
-                      <p className="font-medium">Resume</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Uploaded on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}</p>
+                      <p className="flex items-center gap-1.5 font-medium">
+                        Resume
+                        {candidate.resume_verified && (
+                          <BadgeCheck className="h-4 w-4 text-green-600" />
+                        )}
+                      </p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        {candidate.resume_verified ? 'Verified' : 'Uploaded'} on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}
+                      </p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" asChild>
@@ -265,14 +287,25 @@ export default async function CandidateDetailsPage({
               )}
 
               {candidate.transcript_url ? (
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className={`flex items-center justify-between rounded-lg border p-4 ${
+                  candidate.transcript_verified
+                    ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
+                    : ''
+                }`}>
                   <div className="flex items-center gap-3">
                     <div className="rounded bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/20">
                       PDF
                     </div>
                     <div>
-                      <p className="font-medium">Transcript</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">Uploaded on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}</p>
+                      <p className="flex items-center gap-1.5 font-medium">
+                        Transcript
+                        {candidate.transcript_verified && (
+                          <BadgeCheck className="h-4 w-4 text-green-600" />
+                        )}
+                      </p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        {candidate.transcript_verified ? 'Verified' : 'Uploaded'} on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}
+                      </p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" asChild>
