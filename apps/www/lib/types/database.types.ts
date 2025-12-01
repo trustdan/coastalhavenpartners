@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       analytics_events: {
@@ -364,6 +389,79 @@ export type Database = {
             foreignKeyName: "candidate_profiles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_transcripts: {
+        Row: {
+          candidate_profile_id: string
+          created_at: string | null
+          degree_type: string | null
+          education_level: Database["public"]["Enums"]["education_level"]
+          gpa: number | null
+          gpa_verified: boolean | null
+          id: string
+          is_verified: boolean | null
+          school_name: string | null
+          transcript_url: string
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          candidate_profile_id: string
+          created_at?: string | null
+          degree_type?: string | null
+          education_level?: Database["public"]["Enums"]["education_level"]
+          gpa?: number | null
+          gpa_verified?: boolean | null
+          id?: string
+          is_verified?: boolean | null
+          school_name?: string | null
+          transcript_url: string
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          candidate_profile_id?: string
+          created_at?: string | null
+          degree_type?: string | null
+          education_level?: Database["public"]["Enums"]["education_level"]
+          gpa?: number | null
+          gpa_verified?: boolean | null
+          id?: string
+          is_verified?: boolean | null
+          school_name?: string | null
+          transcript_url?: string
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_transcripts_candidate_profile_id_fkey"
+            columns: ["candidate_profile_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_transcripts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_transcripts_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1152,6 +1250,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status: [

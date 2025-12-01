@@ -4,6 +4,19 @@ import { redirect } from 'next/navigation'
 import { VerificationCard } from './verification-card'
 import type { Database } from '@/lib/types/database.types'
 
+type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd'
+
+export interface TranscriptRecord {
+  id: string
+  transcript_url: string
+  education_level: EducationLevel
+  school_name: string | null
+  degree_type: string | null
+  gpa: number | null
+  is_verified: boolean | null
+  gpa_verified: boolean | null
+}
+
 export default async function AdminVerificationPage() {
   const supabase = await createClient()
 
@@ -37,7 +50,6 @@ export default async function AdminVerificationPage() {
   }
 
   // Fetch candidates with documents that need verification
-  // Only show candidates who have uploaded documents but they're not yet verified
   const { data: candidates } = await supabaseAdmin
     .from('candidate_profiles')
     .select(`
@@ -47,15 +59,22 @@ export default async function AdminVerificationPage() {
       gpa,
       graduation_year,
       resume_url,
-      transcript_url,
       resume_verified,
-      transcript_verified,
       gpa_verified,
       user_id
     `)
     .eq('is_rejected', false)
-    .or('resume_url.not.is.null,transcript_url.not.is.null')
     .order('created_at', { ascending: false })
+
+  // Fetch all transcripts from the new table
+  const candidateIds = candidates?.map(c => c.id).filter(Boolean) || []
+  const { data: allTranscripts } = candidateIds.length > 0
+    ? await supabaseAdmin
+        .from('candidate_transcripts')
+        .select('*')
+        .in('candidate_profile_id', candidateIds)
+        .order('created_at', { ascending: false })
+    : { data: [] }
 
   // Fetch profiles for the candidates
   const userIds = (candidates?.map(c => c.user_id).filter((id): id is string => id !== null) || [])
@@ -66,29 +85,32 @@ export default async function AdminVerificationPage() {
         .in('id', userIds)
     : { data: [] }
 
-  // Combine candidates with their profiles
+  // Combine candidates with their profiles and transcripts
   const candidatesWithProfiles = candidates?.map(candidate => ({
     ...candidate,
-    profiles: profiles?.find(p => p.id === candidate.user_id) || null
+    profiles: profiles?.find(p => p.id === candidate.user_id) || null,
+    transcripts: (allTranscripts?.filter(t => t.candidate_profile_id === candidate.id) || []) as TranscriptRecord[]
   })) || []
 
-  // Filter into pending and verified
-  const pendingVerification = candidatesWithProfiles.filter(c =>
-    (c.resume_url && !c.resume_verified) ||
-    (c.transcript_url && !c.transcript_verified) ||
-    (c.transcript_verified && !c.gpa_verified)
-  )
+  // Filter: show candidates with pending resume OR any pending transcripts
+  const pendingVerification = candidatesWithProfiles.filter(c => {
+    const hasUnverifiedResume = c.resume_url && !c.resume_verified
+    const hasUnverifiedTranscripts = c.transcripts.some(t => !t.is_verified)
+    const hasUnverifiedGpa = c.transcripts.some(t => t.is_verified && t.gpa && !t.gpa_verified)
+    return hasUnverifiedResume || hasUnverifiedTranscripts || hasUnverifiedGpa
+  })
 
-  const fullyVerified = candidatesWithProfiles.filter(c =>
-    (!c.resume_url || c.resume_verified) &&
-    (!c.transcript_url || c.transcript_verified) &&
-    c.gpa_verified
-  )
+  const fullyVerified = candidatesWithProfiles.filter(c => {
+    const resumeOk = !c.resume_url || c.resume_verified
+    const transcriptsOk = c.transcripts.length === 0 || c.transcripts.every(t => t.is_verified)
+    const gpasOk = c.transcripts.every(t => !t.gpa || t.gpa_verified)
+    return resumeOk && transcriptsOk && gpasOk && c.transcripts.length > 0
+  })
 
   // Stats
   const pendingResumeCount = candidatesWithProfiles.filter(c => c.resume_url && !c.resume_verified).length
-  const pendingTranscriptCount = candidatesWithProfiles.filter(c => c.transcript_url && !c.transcript_verified).length
-  const pendingGpaCount = candidatesWithProfiles.filter(c => c.transcript_verified && !c.gpa_verified).length
+  const pendingTranscriptCount = allTranscripts?.filter(t => !t.is_verified).length || 0
+  const pendingGpaCount = allTranscripts?.filter(t => t.is_verified && t.gpa && !t.gpa_verified).length || 0
 
   return (
     <div className="space-y-8">

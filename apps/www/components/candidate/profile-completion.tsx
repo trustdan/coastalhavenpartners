@@ -13,7 +13,7 @@ interface ProfileData {
   gpa: number
   graduation_year: number
   resume_url: string | null
-  transcript_url: string | null
+  transcript_count: number // Count from candidate_transcripts table
   target_roles: string[] | null
   preferred_locations: string[] | null
   bio: string | null
@@ -63,7 +63,7 @@ function calculateCompletion(profile: ProfileData): {
       key: "transcript",
       label: "Transcript uploaded",
       weight: 15,
-      complete: Boolean(profile.transcript_url),
+      complete: profile.transcript_count > 0,
       href: "/candidate/edit-profile",
     },
     {

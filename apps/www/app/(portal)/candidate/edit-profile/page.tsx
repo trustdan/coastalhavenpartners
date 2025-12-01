@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FileUpload } from '@/components/file-upload'
+import { TranscriptManager } from '@/components/transcript-manager'
 import { toast } from 'sonner'
 import { ArrowLeft, Loader2, Building2, Users, Calendar, FileText, Tag } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
@@ -277,7 +278,7 @@ export default function EditProfilePage() {
         {/* Documents Section */}
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
           <h2 className="text-lg font-semibold mb-4">Documents</h2>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-6">
             <FileUpload
               bucket="resumes"
               label="Resume"
@@ -287,15 +288,9 @@ export default function EditProfilePage() {
                 router.refresh()
               }}
             />
-            <FileUpload
-              bucket="transcripts"
-              label="Transcript"
-              currentUrl={profile?.transcript_url}
-              onUploadComplete={(url) => {
-                setProfile({ ...profile, transcript_url: url })
-                router.refresh()
-              }}
-            />
+            <div className="border-t pt-6">
+              <TranscriptManager />
+            </div>
           </div>
         </div>
 

@@ -53,6 +53,14 @@ export default async function CandidateDashboard() {
     .eq('user_id', user.id)
     .single()
 
+  // Fetch transcript count from the new candidate_transcripts table
+  const { count: transcriptCount } = candidateProfile
+    ? await supabaseAdmin
+        .from('candidate_transcripts')
+        .select('id', { count: 'exact', head: true })
+        .eq('candidate_profile_id', candidateProfile.id)
+    : { count: 0 }
+
   if (!candidateProfile) {
     // Show profile completion form instead of error
     return <CompleteProfileForm />
@@ -160,7 +168,7 @@ export default async function CandidateDashboard() {
           gpa: fullProfile.gpa,
           graduation_year: fullProfile.graduation_year,
           resume_url: fullProfile.resume_url,
-          transcript_url: fullProfile.transcript_url,
+          transcript_count: transcriptCount ?? 0,
           target_roles: fullProfile.target_roles,
           preferred_locations: fullProfile.preferred_locations,
           bio: fullProfile.bio,

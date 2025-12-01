@@ -409,3 +409,71 @@ export async function rejectGpa(candidateId: string) {
 
   revalidatePath('/admin/verification')
 }
+
+// =============================================
+// INDIVIDUAL TRANSCRIPT VERIFICATION ACTIONS
+// (for candidate_transcripts table - multiple transcripts per candidate)
+// =============================================
+
+export async function verifyIndividualTranscript(transcriptId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_transcripts')
+    .update({
+      is_verified: true,
+      verified_by: user.id,
+      verified_at: new Date().toISOString()
+    })
+    .eq('id', transcriptId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function rejectIndividualTranscript(transcriptId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  // Delete the transcript record (candidate can upload a new one)
+  const { error } = await supabaseAdmin
+    .from('candidate_transcripts')
+    .delete()
+    .eq('id', transcriptId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function verifyIndividualTranscriptGpa(transcriptId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_transcripts')
+    .update({
+      gpa_verified: true,
+      verified_by: user.id,
+      verified_at: new Date().toISOString()
+    })
+    .eq('id', transcriptId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function rejectIndividualTranscriptGpa(transcriptId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_transcripts')
+    .update({
+      gpa_verified: false
+    })
+    .eq('id', transcriptId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
