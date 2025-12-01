@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import Link from 'next/link'
 import { MessageSquare, User } from 'lucide-react'
 import { startConversation } from './actions'
@@ -34,8 +35,17 @@ export default async function MessagesPage({
 
   // Handle starting a new conversation
   if (candidateIdToMessage) {
-    const { conversationId } = await startConversation(candidateIdToMessage)
-    redirect(`/messages/${conversationId}`)
+    try {
+      const { conversationId } = await startConversation(candidateIdToMessage)
+      redirect(`/messages/${conversationId}`)
+    } catch (error) {
+      // Re-throw redirect errors (they're not real errors)
+      if (isRedirectError(error)) {
+        throw error
+      }
+      // For other errors, just show the inbox
+      console.error('Failed to start conversation:', error)
+    }
   }
 
   // Get user's role and profile

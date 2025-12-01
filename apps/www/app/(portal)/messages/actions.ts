@@ -21,15 +21,26 @@ export async function startConversation(candidateId: string) {
   }
 
   // Check if conversation already exists
-  const { data: existingConversation } = await supabase
+  const { data: existingConversation, error: existingError } = await supabase
     .from('conversations')
     .select('id')
     .eq('recruiter_id', recruiterProfile.id)
     .eq('candidate_id', candidateId)
-    .single()
+    .maybeSingle()
 
   if (existingConversation) {
     return { conversationId: existingConversation.id }
+  }
+
+  // Verify candidate exists and is verified
+  const { data: candidateExists } = await supabase
+    .from('candidate_profiles')
+    .select('id, status')
+    .eq('id', candidateId)
+    .single()
+
+  if (!candidateExists) {
+    throw new Error('Candidate not found')
   }
 
   // Create new conversation
