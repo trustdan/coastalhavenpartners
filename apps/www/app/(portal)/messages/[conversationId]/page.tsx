@@ -24,14 +24,14 @@ export default async function ConversationPage({
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!profile) {
     redirect('/login')
   }
 
   // Get conversation with participants
-  const { data: conversation, error } = await supabase
+  const { data: conversation } = await supabase
     .from('conversations')
     .select(`
       id,
@@ -47,9 +47,9 @@ export default async function ConversationPage({
       )
     `)
     .eq('id', conversationId)
-    .single()
+    .maybeSingle()
 
-  if (error || !conversation) {
+  if (!conversation) {
     redirect('/messages')
   }
 
@@ -74,7 +74,7 @@ export default async function ConversationPage({
       .from('profiles')
       .select('full_name')
       .eq('id', otherUserId)
-      .single()
+      .maybeSingle()
 
     otherPartyName = otherProfile?.full_name || 'Unknown'
     otherPartySubtitle = isRecruiter
@@ -95,8 +95,12 @@ export default async function ConversationPage({
     created_at: msg.created_at || new Date().toISOString()
   }))
 
-  // Mark messages as read
-  await markMessagesAsRead(conversationId)
+  // Mark messages as read (don't let this crash the page)
+  try {
+    await markMessagesAsRead(conversationId)
+  } catch (e) {
+    console.error('Failed to mark messages as read:', e)
+  }
 
   return (
     <div className="flex h-[calc(100vh-12rem)] flex-col">

@@ -53,7 +53,7 @@ export default async function MessagesPage({
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!profile) {
     redirect('/login')
@@ -67,7 +67,7 @@ export default async function MessagesPage({
       .from('recruiter_profiles')
       .select('id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (recruiterProfile) {
       const { data } = await supabase
@@ -106,7 +106,7 @@ export default async function MessagesPage({
       .from('candidate_profiles')
       .select('id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (candidateProfile) {
       const { data } = await supabase
