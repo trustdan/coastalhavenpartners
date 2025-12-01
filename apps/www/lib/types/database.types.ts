@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       analytics_events: {
@@ -125,6 +100,45 @@ export type Database = {
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookmarked_candidates: {
+        Row: {
+          candidate_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          recruiter_id: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          recruiter_id: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          recruiter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarked_candidates_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarked_candidates_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1056,9 +1070,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       application_status: [

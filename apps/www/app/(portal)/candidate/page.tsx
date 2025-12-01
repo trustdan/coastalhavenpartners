@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { CompleteProfileForm } from './complete-profile-form'
 import { AccessRevoked } from '@/components/access-revoked'
 import { ProfileCompletion } from '@/components/candidate/profile-completion'
+import { ProfileViewers } from '@/components/candidate/profile-viewers'
 import type { Database } from '@/lib/types/database.types'
 import { Building2, Clock, CheckCircle2, XCircle, MessageSquare, UserCheck } from 'lucide-react'
 
@@ -73,13 +74,6 @@ export default async function CandidateDashboard() {
     .eq('candidate_profile_id', candidateProfile.id)
     .eq('target_type', 'capital')
     .single()
-
-  // Fetch analytics stats
-  const { count: profileViewCount } = await supabase
-    .from('analytics_events')
-    .select('id', { count: 'exact', head: true })
-    .eq('target_id', user.id)
-    .eq('event_type', 'profile_view')
 
   const statusColors = {
     pending_verification: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200',
@@ -172,45 +166,31 @@ export default async function CandidateDashboard() {
         }}
       />
 
-      {/* Status and Analytics Grid */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Status Card */}
-        <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">Application Status</h2>
-              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                {statusMessages[fullProfile.status || 'pending_verification']}
-              </p>
-            </div>
-            <span className={`rounded-full px-4 py-2 text-sm font-medium ${statusColors[fullProfile.status || 'pending_verification']}`}>
-              {(fullProfile.status || 'pending_verification').replace(/_/g, ' ').toUpperCase()}
-            </span>
+      {/* Status Card */}
+      <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Application Status</h2>
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+              {statusMessages[fullProfile.status || 'pending_verification']}
+            </p>
           </div>
-
-          {!user.email_confirmed_at && (
-            <div className="mt-4 rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                Please verify your email to complete your profile
-              </p>
-            </div>
-          )}
+          <span className={`rounded-full px-4 py-2 text-sm font-medium ${statusColors[fullProfile.status || 'pending_verification']}`}>
+            {(fullProfile.status || 'pending_verification').replace(/_/g, ' ').toUpperCase()}
+          </span>
         </div>
 
-        {/* Analytics Card */}
-        <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
-          <h2 className="text-lg font-semibold">Profile Activity</h2>
-          <div className="mt-4 flex items-end gap-4">
-            <div>
-              <p className="text-3xl font-bold">{profileViewCount || 0}</p>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">Total Views</p>
-            </div>
-            <div className="mb-1 text-xs text-neutral-500">
-              by approved recruiters
-            </div>
+        {!user.email_confirmed_at && (
+          <div className="mt-4 rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Please verify your email to complete your profile
+            </p>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Profile Viewers - Shows which firms viewed the profile */}
+      <ProfileViewers userId={user.id} />
 
       {/* Coastal Haven Capital Application Status */}
       <div className={`rounded-xl border p-6 shadow-sm ${

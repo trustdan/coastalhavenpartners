@@ -59,6 +59,12 @@ export default async function RecruiterLayout({
               Candidates
             </Link>
             <Link
+              href="/recruiter/saved"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Saved
+            </Link>
+            <Link
               href="/recruiter/network"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >

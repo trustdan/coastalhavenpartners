@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ArrowLeft, Mail, Calendar, GraduationCap, BadgeCheck, ShieldCheck, MessageSquare } from 'lucide-react'
+import { BookmarkButton } from '@/components/recruiter/bookmark-button'
+import { getBookmarkStatus } from '../../bookmark-actions'
 
 export default async function CandidateDetailsPage({
   params,
@@ -66,6 +68,9 @@ export default async function CandidateDetailsPage({
     recruiter_firm: recruiterProfile.firm_name
   }, candidate.user_id || undefined)
 
+  // Get bookmark status
+  const { isBookmarked } = await getBookmarkStatus(id)
+
   return (
     <div className="space-y-8">
       {/* Back Button */}
@@ -100,6 +105,7 @@ export default async function CandidateDetailsPage({
           </div>
         </div>
         <div className="flex gap-3">
+          <BookmarkButton candidateId={id} initialBookmarked={isBookmarked} />
           <Button variant="outline" asChild>
             <Link href={`/messages?start=${candidate.id}`} className="gap-2">
               <MessageSquare className="h-4 w-4" />
