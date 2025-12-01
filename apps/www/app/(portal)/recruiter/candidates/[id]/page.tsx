@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ArrowLeft, Mail, Calendar, GraduationCap, BadgeCheck, ShieldCheck, MessageSquare } from 'lucide-react'
 import { BookmarkButton } from '@/components/recruiter/bookmark-button'
-import { getBookmarkStatus } from '../../bookmark-actions'
+import { CandidateNotes } from '@/components/recruiter/candidate-notes'
+import { CandidateStatusSelect } from '@/components/recruiter/candidate-status-select'
+import { InterestedBadge } from '@/components/recruiter/interested-badge'
+import { getBookmarkStatus, getCandidateNotes } from '../../bookmark-actions'
+import { checkCandidateInterest } from '@/app/(portal)/candidate/firm-interests-actions'
 
 export default async function CandidateDetailsPage({
   params,
@@ -68,8 +72,12 @@ export default async function CandidateDetailsPage({
     recruiter_firm: recruiterProfile.firm_name
   }, candidate.user_id || undefined)
 
-  // Get bookmark status
-  const { isBookmarked } = await getBookmarkStatus(id)
+  // Get bookmark status, notes, and interest status
+  const [{ isBookmarked, status: bookmarkStatus }, candidateNotes, isInterestedInFirm] = await Promise.all([
+    getBookmarkStatus(id),
+    getCandidateNotes(id),
+    checkCandidateInterest(id, recruiterProfile.firm_name)
+  ])
 
   return (
     <div className="space-y-8">
@@ -84,7 +92,10 @@ export default async function CandidateDetailsPage({
       {/* Header Section */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{candidate.profiles?.full_name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">{candidate.profiles?.full_name}</h1>
+            {isInterestedInFirm && <InterestedBadge />}
+          </div>
           <div className="mt-2 flex items-center gap-4 text-neutral-600 dark:text-neutral-400">
             <span>{candidate.school_name}</span>
             <span>•</span>
@@ -106,6 +117,9 @@ export default async function CandidateDetailsPage({
         </div>
         <div className="flex gap-3">
           <BookmarkButton candidateId={id} initialBookmarked={isBookmarked} />
+          {isBookmarked && bookmarkStatus && (
+            <CandidateStatusSelect candidateId={id} currentStatus={bookmarkStatus} />
+          )}
           <Button variant="outline" asChild>
             <Link href={`/messages?start=${candidate.id}`} className="gap-2">
               <MessageSquare className="h-4 w-4" />
@@ -138,6 +152,13 @@ export default async function CandidateDetailsPage({
           )}
         </div>
       </div>
+
+      {/* Private Notes Section */}
+      <CandidateNotes
+        candidateId={id}
+        initialContent={candidateNotes?.content || null}
+        initialUpdatedAt={candidateNotes?.updated_at || null}
+      />
 
       <div className="grid gap-8 md:grid-cols-3">
         {/* Main Info Column */}

@@ -111,6 +111,7 @@ export type Database = {
           id: string
           notes: string | null
           recruiter_id: string
+          status: Database["public"]["Enums"]["bookmark_status"]
         }
         Insert: {
           candidate_id: string
@@ -118,6 +119,7 @@ export type Database = {
           id?: string
           notes?: string | null
           recruiter_id: string
+          status?: Database["public"]["Enums"]["bookmark_status"]
         }
         Update: {
           candidate_id?: string
@@ -125,6 +127,7 @@ export type Database = {
           id?: string
           notes?: string | null
           recruiter_id?: string
+          status?: Database["public"]["Enums"]["bookmark_status"]
         }
         Relationships: [
           {
@@ -139,6 +142,35 @@ export type Database = {
             columns: ["recruiter_id"]
             isOneToOne: false
             referencedRelation: "recruiter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_firm_interests: {
+        Row: {
+          candidate_id: string
+          created_at: string | null
+          firm_name: string
+          id: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string | null
+          firm_name: string
+          id?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string | null
+          firm_name?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_firm_interests_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -632,6 +664,48 @@ export type Database = {
           },
         ]
       }
+      recruiter_candidate_notes: {
+        Row: {
+          candidate_id: string
+          content: string
+          created_at: string | null
+          id: string
+          recruiter_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          candidate_id: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          recruiter_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          recruiter_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiter_candidate_notes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_candidate_notes_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "recruiter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruiter_profiles: {
         Row: {
           approved_at: string | null
@@ -931,6 +1005,14 @@ export type Database = {
         | "rejected"
         | "withdrawn"
       application_target: "capital" | "firm"
+      bookmark_status:
+        | "new"
+        | "contacted"
+        | "interviewing"
+        | "offer_extended"
+        | "hired"
+        | "passed"
+        | "not_a_fit"
       candidate_status:
         | "pending_verification"
         | "verified"
@@ -1081,6 +1163,15 @@ export const Constants = {
         "withdrawn",
       ],
       application_target: ["capital", "firm"],
+      bookmark_status: [
+        "new",
+        "contacted",
+        "interviewing",
+        "offer_extended",
+        "hired",
+        "passed",
+        "not_a_fit",
+      ],
       candidate_status: [
         "pending_verification",
         "verified",

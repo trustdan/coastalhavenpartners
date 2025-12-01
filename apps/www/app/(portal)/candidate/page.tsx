@@ -7,6 +7,8 @@ import { CompleteProfileForm } from './complete-profile-form'
 import { AccessRevoked } from '@/components/access-revoked'
 import { ProfileCompletion } from '@/components/candidate/profile-completion'
 import { ProfileViewers } from '@/components/candidate/profile-viewers'
+import { FirmInterests } from '@/components/candidate/firm-interests'
+import { getFirmInterests } from './firm-interests-actions'
 import type { Database } from '@/lib/types/database.types'
 import { Building2, Clock, CheckCircle2, XCircle, MessageSquare, UserCheck } from 'lucide-react'
 
@@ -191,6 +193,9 @@ export default async function CandidateDashboard() {
 
       {/* Profile Viewers - Shows which firms viewed the profile */}
       <ProfileViewers userId={user.id} />
+
+      {/* Firm Interests - Express interest in firms */}
+      <FirmInterestsSection />
 
       {/* Coastal Haven Capital Application Status */}
       <div className={`rounded-xl border p-6 shadow-sm ${
@@ -383,4 +388,9 @@ export default async function CandidateDashboard() {
       )}
     </div>
   )
+}
+
+async function FirmInterestsSection() {
+  const interests = await getFirmInterests()
+  return <FirmInterests initialInterests={interests} />
 }

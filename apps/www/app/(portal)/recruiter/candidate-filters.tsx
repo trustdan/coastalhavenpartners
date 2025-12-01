@@ -28,7 +28,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { UNDERGRAD_DEGREES, GRADUATE_DEGREES } from '@/components/ui/degree-type-select'
-import { Bookmark, ChevronDown, Trash2, Loader2 } from 'lucide-react'
+import { Bookmark, ChevronDown, Trash2, Loader2, Heart } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { saveSearch, deleteSearch, type SearchFilters, type SavedSearchResult } from './saved-search-actions'
 
 interface CandidateFiltersProps {
@@ -60,7 +61,7 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
   const hasActiveFilters = searchParams.get('gpa') || searchParams.get('major') ||
     searchParams.get('school') || searchParams.get('gradYear') ||
     searchParams.get('targetRole') || searchParams.get('undergradDegree') ||
-    searchParams.get('gradDegree')
+    searchParams.get('gradDegree') || searchParams.get('interestedInFirm')
 
   const getCurrentFilters = (): SearchFilters => ({
     gpa: searchParams.get('gpa') || undefined,
@@ -229,6 +230,25 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
           </Select>
         </div>
       </div>
+
+      {/* Interest Filter */}
+      <div className="mt-4 flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="interestedInFirm"
+            checked={searchParams.get('interestedInFirm') === 'true'}
+            onCheckedChange={(checked) => updateFilter('interestedInFirm', checked ? 'true' : '')}
+          />
+          <Label
+            htmlFor="interestedInFirm"
+            className="flex items-center gap-1.5 cursor-pointer text-sm font-medium"
+          >
+            <Heart className="h-4 w-4 text-pink-500 fill-pink-500" />
+            Interested in my firm
+          </Label>
+        </div>
+      </div>
+
       {/* Saved Searches & Actions Row */}
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">

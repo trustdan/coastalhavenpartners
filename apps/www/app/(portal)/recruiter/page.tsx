@@ -4,13 +4,14 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CandidateFilters } from './candidate-filters'
 import { AccessRevoked } from '@/components/access-revoked'
-import { BadgeCheck, Download } from 'lucide-react'
+import { BadgeCheck, Download, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Database } from '@/lib/types/database.types'
 import { getSavedSearches } from './saved-search-actions'
 import { ExportButton } from './export-button'
 import { getRecommendedCandidates } from '@/lib/recommendations'
 import { RecommendedCandidates } from '@/components/recruiter/recommended-candidates'
+import { getCandidatesInterestedInMyFirm } from '@/app/(portal)/candidate/firm-interests-actions'
 
 export default async function RecruiterDashboard({
   searchParams,
@@ -27,6 +28,7 @@ export default async function RecruiterDashboard({
   const targetRole = typeof params.targetRole === 'string' ? params.targetRole : undefined
   const undergradDegree = typeof params.undergradDegree === 'string' ? params.undergradDegree : undefined
   const gradDegree = typeof params.gradDegree === 'string' ? params.gradDegree : undefined
+  const interestedInFirm = typeof params.interestedInFirm === 'string' ? params.interestedInFirm === 'true' : false
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -102,10 +104,11 @@ export default async function RecruiterDashboard({
     )
   }
 
-  // Fetch saved searches and recommendations for this recruiter
-  const [savedSearches, recommendedCandidates] = await Promise.all([
+  // Fetch saved searches, recommendations, and interested candidates for this recruiter
+  const [savedSearches, recommendedCandidates, interestedCandidateIds] = await Promise.all([
     getSavedSearches(),
-    getRecommendedCandidates(recruiterProfile.id, 5)
+    getRecommendedCandidates(recruiterProfile.id, 5),
+    getCandidatesInterestedInMyFirm()
   ])
 
   // Fetch verified candidates with filters
@@ -153,6 +156,9 @@ export default async function RecruiterDashboard({
   if (gradDegree) {
     query = query.eq('grad_degree_type', gradDegree)
   }
+  if (interestedInFirm && interestedCandidateIds.length > 0) {
+    query = query.in('id', interestedCandidateIds)
+  }
 
   // Execute query with ordering
   const { data: candidates } = await query.order('gpa', { ascending: false })
@@ -195,7 +201,14 @@ export default async function RecruiterDashboard({
                   <tr key={candidate.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800">
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-medium">{candidate.profiles?.full_name}</p>
+                        <p className="font-medium flex items-center gap-1.5">
+                          {candidate.profiles?.full_name}
+                          {interestedCandidateIds.includes(candidate.id) && (
+                            <span title="Interested in your firm">
+                              <Heart className="h-3.5 w-3.5 text-pink-500 fill-pink-500" />
+                            </span>
+                          )}
+                        </p>
                         <p className="text-sm text-neutral-600 dark:text-neutral-400">
                           {candidate.profiles?.email}
                         </p>
