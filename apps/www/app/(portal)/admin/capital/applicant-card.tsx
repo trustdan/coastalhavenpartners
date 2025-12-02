@@ -105,10 +105,6 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const { snapshot } = application
 
-  // Generate signed URLs for documents (simplified - using direct paths)
-  // In production, you'd generate signed URLs server-side
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-
   async function handleStatusChange(newStatus: ApplicationStatus) {
     // Show confirmation dialog for destructive actions
     if (newStatus === "rejected") {
@@ -177,7 +173,7 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
         {snapshot.resume_url && (
           <Button variant="outline" size="sm" asChild>
             <a
-              href={`${supabaseUrl}/storage/v1/object/public/resumes/${snapshot.resume_url}`}
+              href={snapshot.resume_url}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -189,7 +185,7 @@ export function ApplicantCard({ application }: ApplicantCardProps) {
         {snapshot.transcript_url && (
           <Button variant="outline" size="sm" asChild>
             <a
-              href={`${supabaseUrl}/storage/v1/object/public/transcripts/${snapshot.transcript_url}`}
+              href={snapshot.transcript_url}
               target="_blank"
               rel="noopener noreferrer"
             >

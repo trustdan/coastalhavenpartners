@@ -48,8 +48,6 @@ export function CandidateRow({ candidate, variant }: CandidateRowProps) {
   const [showRevokeDialog, setShowRevokeDialog] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-
   async function handleReject() {
     setIsLoading(true)
     await rejectCandidate(candidate.id)
@@ -120,7 +118,7 @@ export function CandidateRow({ candidate, variant }: CandidateRowProps) {
             {candidate.resume_url && (
               <Button variant="ghost" size="sm" asChild>
                 <a
-                  href={`${supabaseUrl}/storage/v1/object/public/resumes/${candidate.resume_url}`}
+                  href={candidate.resume_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   title="View Resume"
@@ -133,7 +131,7 @@ export function CandidateRow({ candidate, variant }: CandidateRowProps) {
             {candidate.transcript_url && (
               <Button variant="ghost" size="sm" asChild>
                 <a
-                  href={`${supabaseUrl}/storage/v1/object/public/transcripts/${candidate.transcript_url}`}
+                  href={candidate.transcript_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   title="View Transcript"
