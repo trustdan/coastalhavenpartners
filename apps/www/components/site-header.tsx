@@ -43,6 +43,11 @@ const menuItem = [
     label: "For Schools",
     href: "#schools",
   },
+  {
+    id: 4,
+    label: "Blog",
+    href: "/blog",
+  },
 ];
 
 export function SiteHeader() {

@@ -104,6 +104,71 @@ export type Database = {
           },
         ]
       }
+      articles: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          category: string | null
+          content: string
+          cover_image_url: string | null
+          created_at: string | null
+          excerpt: string | null
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          category?: string | null
+          content: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          category?: string | null
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookmarked_candidates: {
         Row: {
           candidate_id: string
@@ -794,54 +859,6 @@ export type Database = {
           },
         ]
       }
-      referrals: {
-        Row: {
-          id: string
-          referrer_id: string
-          referred_email: string
-          referred_user_id: string | null
-          status: Database["public"]["Enums"]["referral_status"]
-          signed_up_at: string | null
-          verified_at: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          referrer_id: string
-          referred_email: string
-          referred_user_id?: string | null
-          status?: Database["public"]["Enums"]["referral_status"]
-          signed_up_at?: string | null
-          verified_at?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          referrer_id?: string
-          referred_email?: string
-          referred_user_id?: string | null
-          status?: Database["public"]["Enums"]["referral_status"]
-          signed_up_at?: string | null
-          verified_at?: string | null
-          created_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "referrals_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referrals_referred_user_id_fkey"
-            columns: ["referred_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       recruiter_candidate_notes: {
         Row: {
           candidate_id: string
@@ -1003,6 +1020,54 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          referred_email: string
+          referred_user_id: string | null
+          referrer_id: string
+          signed_up_at: string | null
+          status: Database["public"]["Enums"]["referral_status"] | null
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          referred_email: string
+          referred_user_id?: string | null
+          referrer_id: string
+          signed_up_at?: string | null
+          status?: Database["public"]["Enums"]["referral_status"] | null
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          referrer_id?: string
+          signed_up_at?: string | null
+          status?: Database["public"]["Enums"]["referral_status"] | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_searches: {
         Row: {
           created_at: string | null
@@ -1156,11 +1221,8 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       generate_firm_slug: { Args: { firm_name: string }; Returns: string }
-      generate_referral_code: { Args: Record<PropertyKey, never>; Returns: string }
-      get_referral_stats: {
-        Args: { user_id: string }
-        Returns: Json
-      }
+      generate_referral_code: { Args: never; Returns: string }
+      get_referral_stats: { Args: { user_id: string }; Returns: Json }
       get_school_candidates: {
         Args: { school_admin_id: string }
         Returns: {
