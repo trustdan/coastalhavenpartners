@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useState, useTransition } from 'react'
+import { useCallback, useState, useTransition, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -28,12 +28,90 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { UNDERGRAD_DEGREES, GRADUATE_DEGREES } from '@/components/ui/degree-type-select'
-import { Bookmark, ChevronDown, Trash2, Loader2, Heart } from 'lucide-react'
+import { Bookmark, ChevronDown, Trash2, Loader2, Heart, History, X } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { saveSearch, deleteSearch, type SearchFilters, type SavedSearchResult } from './saved-search-actions'
 
 interface CandidateFiltersProps {
   savedSearches?: SavedSearchResult[]
+}
+
+interface RecentSearch {
+  id: string
+  filters: SearchFilters
+  label: string
+  timestamp: number
+}
+
+const SEARCH_HISTORY_KEY = 'recruiter_search_history'
+const MAX_HISTORY_ITEMS = 10
+
+function generateSearchLabel(filters: SearchFilters): string {
+  const parts: string[] = []
+  if (filters.school) parts.push(filters.school)
+  if (filters.major) parts.push(filters.major)
+  if (filters.gradYear) parts.push(`Class of ${filters.gradYear}`)
+  if (filters.gpa) parts.push(`GPA ≥${filters.gpa}`)
+  if (filters.targetRole) parts.push(filters.targetRole)
+  if (filters.undergradDegree) parts.push(filters.undergradDegree)
+  if (filters.gradDegree) parts.push(filters.gradDegree)
+  return parts.length > 0 ? parts.join(', ') : 'All candidates'
+}
+
+function getSearchHistory(): RecentSearch[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const stored = localStorage.getItem(SEARCH_HISTORY_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function saveToHistory(filters: SearchFilters): void {
+  if (typeof window === 'undefined') return
+
+  // Don't save empty searches
+  const hasFilters = Object.values(filters).some(v => v)
+  if (!hasFilters) return
+
+  try {
+    const history = getSearchHistory()
+    const label = generateSearchLabel(filters)
+
+    // Check if this exact search already exists (by label)
+    const existingIndex = history.findIndex(h => h.label === label)
+    if (existingIndex !== -1) {
+      // Move to top and update timestamp
+      const existing = history.splice(existingIndex, 1)[0]
+      existing.timestamp = Date.now()
+      history.unshift(existing)
+    } else {
+      // Add new search at the beginning
+      const newSearch: RecentSearch = {
+        id: crypto.randomUUID(),
+        filters,
+        label,
+        timestamp: Date.now(),
+      }
+      history.unshift(newSearch)
+    }
+
+    // Keep only the last MAX_HISTORY_ITEMS
+    const trimmed = history.slice(0, MAX_HISTORY_ITEMS)
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(trimmed))
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+function clearSearchHistory(): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(SEARCH_HISTORY_KEY)
+  } catch {
+    // Ignore localStorage errors
+  }
 }
 
 const TARGET_ROLES = [
@@ -57,6 +135,40 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
   const [isPending, startTransition] = useTransition()
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [searchName, setSearchName] = useState('')
+  const [searchHistory, setSearchHistory] = useState<RecentSearch[]>([])
+
+  // Load search history on mount
+  useEffect(() => {
+    setSearchHistory(getSearchHistory())
+  }, [])
+
+  // Save to history when filters change (debounced effect)
+  useEffect(() => {
+    const filters: SearchFilters = {
+      gpa: searchParams.get('gpa') || undefined,
+      major: searchParams.get('major') || undefined,
+      school: searchParams.get('school') || undefined,
+      gradYear: searchParams.get('gradYear') || undefined,
+      targetRole: searchParams.get('targetRole') || undefined,
+      undergradDegree: searchParams.get('undergradDegree') || undefined,
+      gradDegree: searchParams.get('gradDegree') || undefined,
+    }
+
+    const hasFilters = Object.values(filters).some(v => v)
+    if (hasFilters) {
+      // Debounce saving to history
+      const timeout = setTimeout(() => {
+        saveToHistory(filters)
+        setSearchHistory(getSearchHistory())
+      }, 1000)
+      return () => clearTimeout(timeout)
+    }
+  }, [searchParams])
+
+  const handleClearHistory = () => {
+    clearSearchHistory()
+    setSearchHistory([])
+  }
 
   const hasActiveFilters = searchParams.get('gpa') || searchParams.get('major') ||
     searchParams.get('school') || searchParams.get('gradYear') ||
@@ -285,6 +397,36 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
                     </button>
                   </DropdownMenuItem>
                 ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {searchHistory.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <History className="h-4 w-4" />
+                  Recent
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                {searchHistory.map((search) => (
+                  <DropdownMenuItem
+                    key={search.id}
+                    onClick={() => applyFilters(search.filters)}
+                    className="cursor-pointer"
+                  >
+                    <span className="truncate">{search.label}</span>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleClearHistory}
+                  className="text-neutral-500 hover:text-red-600 cursor-pointer"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear History
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

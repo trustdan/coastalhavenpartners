@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
   // Parse query parameters for filters
   const searchParams = request.nextUrl.searchParams
+  const ids = searchParams.get('ids') // Comma-separated candidate IDs for bulk export
   const gpa = searchParams.get('gpa')
   const major = searchParams.get('major')
   const school = searchParams.get('school')
@@ -50,6 +51,14 @@ export async function GET(request: NextRequest) {
       )
     `)
     .eq('status', 'verified')
+
+  // If specific IDs are provided, only export those candidates
+  if (ids) {
+    const candidateIds = ids.split(',').filter(id => id.trim())
+    if (candidateIds.length > 0) {
+      query = query.in('id', candidateIds)
+    }
+  }
 
   if (gpa) {
     query = query.gte('gpa', parseFloat(gpa))

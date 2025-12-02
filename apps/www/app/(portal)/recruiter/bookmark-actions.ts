@@ -231,3 +231,51 @@ export async function saveCandidateNotes(candidateId: string, content: string) {
   revalidatePath(`/recruiter/candidates/${candidateId}`)
   return { success: true }
 }
+
+// ============ BULK ACTIONS ============
+
+export async function batchBookmarkCandidates(candidateIds: string[]) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { data: recruiterProfile } = await supabase
+    .from('recruiter_profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!recruiterProfile) throw new Error('Recruiter profile not found')
+
+  // Get existing bookmarks to avoid duplicates
+  const { data: existingBookmarks } = await supabase
+    .from('bookmarked_candidates')
+    .select('candidate_id')
+    .eq('recruiter_id', recruiterProfile.id)
+    .in('candidate_id', candidateIds)
+
+  const existingIds = new Set(existingBookmarks?.map(b => b.candidate_id) || [])
+  const newCandidateIds = candidateIds.filter(id => !existingIds.has(id))
+
+  if (newCandidateIds.length > 0) {
+    const bookmarksToInsert = newCandidateIds.map(candidateId => ({
+      recruiter_id: recruiterProfile.id,
+      candidate_id: candidateId
+    }))
+
+    const { error } = await supabase
+      .from('bookmarked_candidates')
+      .insert(bookmarksToInsert)
+
+    if (error) throw error
+  }
+
+  revalidatePath('/recruiter')
+  revalidatePath('/recruiter/saved')
+
+  return {
+    added: newCandidateIds.length,
+    skipped: existingIds.size
+  }
+}

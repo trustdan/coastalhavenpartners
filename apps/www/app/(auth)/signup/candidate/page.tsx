@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AutocompleteInput } from '@/components/ui/autocomplete-input'
 import Link from 'next/link'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Gift } from 'lucide-react'
 import { createCandidateProfile } from './actions'
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -48,6 +48,7 @@ function DiscordIcon({ className }: { className?: string }) {
 
 export default function CandidateSignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [linkedInLoading, setLinkedInLoading] = useState(false)
@@ -55,6 +56,35 @@ export default function CandidateSignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [schoolName, setSchoolName] = useState('')
   const [major, setMajor] = useState('')
+  const [referrerName, setReferrerName] = useState<string | null>(null)
+  const [referralCode, setReferralCode] = useState<string | null>(null)
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    if (ref) {
+      setReferralCode(ref.toUpperCase())
+      // Store in localStorage for OAuth flows
+      localStorage.setItem('referral_code', ref.toUpperCase())
+      // Fetch referrer name
+      fetch(`/api/referral/validate?code=${encodeURIComponent(ref)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.name) {
+            setReferrerName(data.name)
+          }
+        })
+        .catch(() => {
+          // Ignore validation errors
+        })
+    } else {
+      // Check localStorage for referral code (for OAuth callbacks)
+      const storedCode = localStorage.getItem('referral_code')
+      if (storedCode) {
+        setReferralCode(storedCode)
+      }
+    }
+  }, [searchParams])
 
   async function handleGoogleSignup() {
     const supabase = createClient()
@@ -226,6 +256,25 @@ export default function CandidateSignupPage() {
             Elite finance talent network
           </p>
         </div>
+
+        {/* Referral Banner */}
+        {referrerName && (
+          <div className="rounded-lg bg-linear-to-r from-purple-50 to-blue-50 p-4 dark:from-purple-900/20 dark:to-blue-900/20">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-800/30">
+                <Gift className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="font-medium text-purple-900 dark:text-purple-100">
+                  Invited by {referrerName}
+                </p>
+                <p className="text-sm text-purple-700 dark:text-purple-300">
+                  You'll both benefit when you join and verify!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           <Button

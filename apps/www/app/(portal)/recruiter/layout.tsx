@@ -59,6 +59,18 @@ export default async function RecruiterLayout({
               Candidates
             </Link>
             <Link
+              href="/recruiter/schools"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Schools
+            </Link>
+            <Link
+              href="/recruiter/class"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Classes
+            </Link>
+            <Link
               href="/recruiter/saved"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
@@ -69,6 +81,12 @@ export default async function RecruiterLayout({
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
               Network
+            </Link>
+            <Link
+              href="/recruiter/firm"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Firm
             </Link>
             <MessageBadge role="recruiter" userId={user.id} />
             <Link

@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       analytics_events: {
@@ -589,6 +564,60 @@ export type Database = {
           },
         ]
       }
+      firms: {
+        Row: {
+          created_at: string | null
+          culture: string | null
+          description: string | null
+          employee_count: string | null
+          firm_type: string | null
+          founded_year: number | null
+          hiring_roles: string[] | null
+          id: string
+          is_visible: boolean | null
+          locations: string[] | null
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          culture?: string | null
+          description?: string | null
+          employee_count?: string | null
+          firm_type?: string | null
+          founded_year?: number | null
+          hiring_roles?: string[] | null
+          id?: string
+          is_visible?: boolean | null
+          locations?: string[] | null
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          culture?: string | null
+          description?: string | null
+          employee_count?: string | null
+          firm_type?: string | null
+          founded_year?: number | null
+          hiring_roles?: string[] | null
+          id?: string
+          is_visible?: boolean | null
+          locations?: string[] | null
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -713,6 +742,7 @@ export type Database = {
           is_banned: boolean | null
           linkedin_url: string | null
           phone: string | null
+          referral_code: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
         }
@@ -731,6 +761,7 @@ export type Database = {
           is_banned?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
@@ -749,6 +780,7 @@ export type Database = {
           is_banned?: boolean | null
           linkedin_url?: string | null
           phone?: string | null
+          referral_code?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
@@ -756,6 +788,54 @@ export type Database = {
           {
             foreignKeyName: "profiles_banned_by_fkey"
             columns: ["banned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          id: string
+          referrer_id: string
+          referred_email: string
+          referred_user_id: string | null
+          status: Database["public"]["Enums"]["referral_status"]
+          signed_up_at: string | null
+          verified_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          referrer_id: string
+          referred_email: string
+          referred_user_id?: string | null
+          status?: Database["public"]["Enums"]["referral_status"]
+          signed_up_at?: string | null
+          verified_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          referrer_id?: string
+          referred_email?: string
+          referred_user_id?: string | null
+          status?: Database["public"]["Enums"]["referral_status"]
+          signed_up_at?: string | null
+          verified_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -811,6 +891,7 @@ export type Database = {
           bio: string | null
           company_website: string | null
           created_at: string | null
+          firm_id: string | null
           firm_name: string
           firm_type: string | null
           id: string
@@ -839,6 +920,7 @@ export type Database = {
           bio?: string | null
           company_website?: string | null
           created_at?: string | null
+          firm_id?: string | null
           firm_name: string
           firm_type?: string | null
           id?: string
@@ -867,6 +949,7 @@ export type Database = {
           bio?: string | null
           company_website?: string | null
           created_at?: string | null
+          firm_id?: string | null
           firm_name?: string
           firm_type?: string | null
           id?: string
@@ -895,6 +978,13 @@ export type Database = {
             columns: ["approved_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiter_profiles_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "firms"
             referencedColumns: ["id"]
           },
           {
@@ -1065,6 +1155,12 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      generate_firm_slug: { Args: { firm_name: string }; Returns: string }
+      generate_referral_code: { Args: Record<PropertyKey, never>; Returns: string }
+      get_referral_stats: {
+        Args: { user_id: string }
+        Returns: Json
+      }
       get_school_candidates: {
         Args: { school_admin_id: string }
         Returns: {
@@ -1118,6 +1214,7 @@ export type Database = {
         | "placed"
         | "rejected"
       education_level: "bachelors" | "masters" | "mba" | "phd" | "professional"
+      referral_status: "pending" | "signed_up" | "verified"
       school_verification_status:
         | "pending_documents"
         | "documents_submitted"
@@ -1250,9 +1347,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       application_status: [
@@ -1281,6 +1375,7 @@ export const Constants = {
         "rejected",
       ],
       education_level: ["bachelors", "masters", "mba", "phd", "professional"],
+      referral_status: ["pending", "signed_up", "verified"],
       school_verification_status: [
         "pending_documents",
         "documents_submitted",

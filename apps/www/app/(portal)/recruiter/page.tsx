@@ -1,17 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { CandidateFilters } from './candidate-filters'
 import { AccessRevoked } from '@/components/access-revoked'
-import { BadgeCheck, Download, Heart } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import type { Database } from '@/lib/types/database.types'
 import { getSavedSearches } from './saved-search-actions'
 import { ExportButton } from './export-button'
 import { getRecommendedCandidates } from '@/lib/recommendations'
 import { RecommendedCandidates } from '@/components/recruiter/recommended-candidates'
 import { getCandidatesInterestedInMyFirm } from '@/app/(portal)/candidate/firm-interests-actions'
+import { CandidateTable } from './candidate-table'
 
 export default async function RecruiterDashboard({
   searchParams,
@@ -180,93 +178,11 @@ export default async function RecruiterDashboard({
 
       <CandidateFilters savedSearches={savedSearches} />
 
-      {/* Candidate Table */}
-      <div className="overflow-hidden rounded-xl border bg-white shadow-sm dark:bg-neutral-900">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b bg-neutral-50 dark:bg-neutral-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium">Name</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">School</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Major</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">GPA</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Grad Year</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Target Roles</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {candidates && candidates.length > 0 ? (
-                candidates.map((candidate) => (
-                  <tr key={candidate.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium flex items-center gap-1.5">
-                          {candidate.profiles?.full_name}
-                          {interestedCandidateIds.includes(candidate.id) && (
-                            <span title="Interested in your firm">
-                              <Heart className="h-3.5 w-3.5 text-pink-500 fill-pink-500" />
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                          {candidate.profiles?.email}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm">{candidate.school_name}</td>
-                    <td className="px-6 py-4 text-sm">{candidate.major}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-sm font-medium text-green-800 dark:bg-green-900/20 dark:text-green-200">
-                        {candidate.gpa.toFixed(2)}
-                        {candidate.gpa_verified && (
-                          <BadgeCheck className="h-3.5 w-3.5 text-green-600" />
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">{candidate.graduation_year}</td>
-                    <td className="px-6 py-4">
-                      {candidate.target_roles && candidate.target_roles.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {candidate.target_roles.slice(0, 2).map((role) => (
-                            <span
-                              key={role}
-                              className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
-                            >
-                              {role}
-                            </span>
-                          ))}
-                          {candidate.target_roles.length > 2 && (
-                            <span className="text-xs text-neutral-600 dark:text-neutral-400">
-                              +{candidate.target_roles.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-sm text-neutral-400">Not specified</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/recruiter/candidates/${candidate.id}`}
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        View Profile
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-neutral-600 dark:text-neutral-400">
-                    No verified candidates found matching your criteria
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Candidate Table with Bulk Selection */}
+      <CandidateTable
+        candidates={candidates || []}
+        interestedCandidateIds={interestedCandidateIds}
+      />
     </div>
   )
 }

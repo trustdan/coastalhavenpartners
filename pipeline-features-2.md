@@ -3,25 +3,25 @@
 ## Progress Tracker
 
 ### Quick Wins
-- [ ] Candidate bookmarking/favorites
-- [ ] Profile view analytics for candidates
+- [x] Candidate bookmarking/favorites
+- [x] Profile view analytics for candidates
 - [ ] Application deadlines with countdown
-- [ ] Dark mode polish
+- [x] Dark mode polish
 
 ### Medium Effort
-- [ ] Recruiter notes on candidates
-- [ ] Candidate status tags (Contacted, Interviewing, Passed, etc.)
-- [ ] Bulk actions (select multiple candidates)
-- [ ] Search history
+- [x] Recruiter notes on candidates
+- [x] Candidate status tags (Contacted, Interviewing, Passed, etc.)
+- [x] Bulk actions (select multiple candidates)
+- [x] Search history
 
 ### Differentiating Features
-- [ ] Mutual interest matching
-- [ ] Cohort/class pages
-- [ ] Recruiter firm profiles
+- [x] Mutual interest matching
+- [x] Cohort/class pages
+- [x] Recruiter firm profiles
 - [ ] Interview prep resources
 
 ### Growth Features
-- [ ] Referral system
+- [x] Referral system
 - [ ] School ambassador program
 - [ ] Waitlist for candidates
 

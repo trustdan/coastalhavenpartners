@@ -8,7 +8,11 @@ import { AccessRevoked } from '@/components/access-revoked'
 import { ProfileCompletion } from '@/components/candidate/profile-completion'
 import { ProfileViewers } from '@/components/candidate/profile-viewers'
 import { FirmInterests } from '@/components/candidate/firm-interests'
+import { RecruitingFirms } from '@/components/candidate/recruiting-firms'
+import { Referrals } from '@/components/candidate/referrals'
 import { getFirmInterests } from './firm-interests-actions'
+import { getReferralCode, getReferralStats, getReferrals } from './referral-actions'
+import { getVisibleFirms } from '@/app/(marketing)/firms/actions'
 import type { Database } from '@/lib/types/database.types'
 import { Building2, Clock, CheckCircle2, XCircle, MessageSquare, UserCheck } from 'lucide-react'
 
@@ -204,6 +208,12 @@ export default async function CandidateDashboard() {
 
       {/* Firm Interests - Express interest in firms */}
       <FirmInterestsSection />
+
+      {/* Recruiting Firms - Firms actively recruiting */}
+      <RecruitingFirmsSection />
+
+      {/* Referrals - Invite classmates */}
+      <ReferralsSection />
 
       {/* Coastal Haven Capital Application Status */}
       <div className={`rounded-xl border p-6 shadow-sm ${
@@ -401,4 +411,21 @@ export default async function CandidateDashboard() {
 async function FirmInterestsSection() {
   const interests = await getFirmInterests()
   return <FirmInterests initialInterests={interests} />
+}
+
+async function RecruitingFirmsSection() {
+  const firms = await getVisibleFirms()
+  return <RecruitingFirms firms={firms} />
+}
+
+async function ReferralsSection() {
+  const [referralCode, stats, referrals] = await Promise.all([
+    getReferralCode(),
+    getReferralStats(),
+    getReferrals()
+  ])
+
+  if (!referralCode) return null
+
+  return <Referrals referralCode={referralCode} initialStats={stats} initialReferrals={referrals} />
 }
