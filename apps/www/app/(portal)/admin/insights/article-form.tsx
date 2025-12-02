@@ -50,7 +50,7 @@ export function ArticleForm({ article, action, isEdit = false }: ArticleFormProp
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin/blog">
+            <Link href="/admin/insights">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Link>
@@ -108,7 +108,7 @@ export function ArticleForm({ article, action, isEdit = false }: ArticleFormProp
                         className="mt-1"
                       />
                       <p className="mt-1 text-xs text-neutral-500">
-                        URL: /blog/{article?.slug}
+                        URL: /insights/{article?.slug}
                       </p>
                     </div>
                   )}

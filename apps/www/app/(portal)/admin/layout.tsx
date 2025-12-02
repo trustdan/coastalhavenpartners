@@ -112,8 +112,8 @@ export default async function AdminLayout({
                 Capital
                 <NotificationBadge count={pendingCapitalApps || 0} />
               </Link>
-              <Link href="/admin/blog" className="text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
-                Blog
+              <Link href="/admin/insights" className="text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
+                Insights
               </Link>
             </div>
           </div>

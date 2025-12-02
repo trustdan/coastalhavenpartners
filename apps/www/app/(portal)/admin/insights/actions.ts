@@ -84,9 +84,9 @@ export async function createArticle(formData: FormData) {
     throw new Error(error.message)
   }
 
-  revalidatePath('/admin/blog')
-  revalidatePath('/blog')
-  redirect('/admin/blog')
+  revalidatePath('/admin/insights')
+  revalidatePath('/insights')
+  redirect('/admin/insights')
 }
 
 export async function updateArticle(id: string, formData: FormData) {
@@ -135,10 +135,10 @@ export async function updateArticle(id: string, formData: FormData) {
     throw new Error(error.message)
   }
 
-  revalidatePath('/admin/blog')
-  revalidatePath('/blog')
-  revalidatePath(`/blog/${slug}`)
-  redirect('/admin/blog')
+  revalidatePath('/admin/insights')
+  revalidatePath('/insights')
+  revalidatePath(`/insights/${slug}`)
+  redirect('/admin/insights')
 }
 
 export async function deleteArticle(id: string) {
@@ -153,6 +153,6 @@ export async function deleteArticle(id: string) {
     throw new Error(error.message)
   }
 
-  revalidatePath('/admin/blog')
-  revalidatePath('/blog')
+  revalidatePath('/admin/insights')
+  revalidatePath('/insights')
 }

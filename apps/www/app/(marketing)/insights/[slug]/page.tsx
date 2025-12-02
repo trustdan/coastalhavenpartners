@@ -111,11 +111,11 @@ export default async function ArticlePage({ params }: PageProps) {
     <article className="mx-auto max-w-4xl px-4 py-16 sm:py-24">
       {/* Back Link */}
       <Link
-        href="/blog"
+        href="/insights"
         className="mb-8 inline-flex items-center text-sm text-neutral-600 hover:text-purple-600 dark:text-neutral-400"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Blog
+        Back to Insights
       </Link>
 
       {/* Header */}
@@ -190,7 +190,7 @@ export default async function ArticlePage({ params }: PageProps) {
             {relatedArticles.map((related) => (
               <Link
                 key={related.slug}
-                href={`/blog/${related.slug}`}
+                href={`/insights/${related.slug}`}
                 className="group block rounded-xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-lg dark:bg-neutral-900"
               >
                 {related.category && (

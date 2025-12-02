@@ -45,8 +45,8 @@ const menuItem = [
   },
   {
     id: 4,
-    label: "Blog",
-    href: "/blog",
+    label: "Insights",
+    href: "/insights",
   },
 ];
 

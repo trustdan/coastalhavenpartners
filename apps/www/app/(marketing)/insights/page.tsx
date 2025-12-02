@@ -4,8 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 export const metadata = constructMetadata({
-  title: 'Blog - Coastal Haven Partners',
-  description: 'Insights, career advice, and industry trends for finance professionals and aspiring candidates.',
+  title: 'Insights - Coastal Haven Partners',
+  description: 'Career advice, industry trends, and recruiting insights for finance professionals and aspiring candidates.',
 })
 
 export const revalidate = 3600 // Revalidate every hour
@@ -45,7 +45,7 @@ export default async function BlogPage() {
           {/* Featured Article */}
           {featuredArticle && (
             <Link
-              href={`/blog/${featuredArticle.slug}`}
+              href={`/insights/${featuredArticle.slug}`}
               className="group block overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-lg dark:bg-neutral-900"
             >
               <div className="grid gap-6 md:grid-cols-2">
@@ -96,7 +96,7 @@ export default async function BlogPage() {
               {remainingArticles.map((article) => (
                 <Link
                   key={article.slug}
-                  href={`/blog/${article.slug}`}
+                  href={`/insights/${article.slug}`}
                   className="group block overflow-hidden rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-lg dark:bg-neutral-900"
                 >
                   {article.cover_image_url ? (
