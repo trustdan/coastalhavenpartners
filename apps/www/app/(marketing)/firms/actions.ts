@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createBuildClient } from '@supabase/supabase-js'
 
 export async function getVisibleFirms() {
   const supabase = await createClient()
@@ -50,7 +51,11 @@ export async function getFirmBySlug(slug: string) {
 }
 
 export async function getAllFirmSlugs() {
-  const supabase = await createClient()
+  // Use direct client for build-time generation (no cookies needed)
+  const supabase = createBuildClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   const { data: firms } = await supabase
     .from('firms')

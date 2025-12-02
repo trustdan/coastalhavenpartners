@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -46,7 +46,7 @@ function DiscordIcon({ className }: { className?: string }) {
   )
 }
 
-export default function CandidateSignupPage() {
+function CandidateSignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
@@ -452,5 +452,17 @@ export default function CandidateSignupPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function CandidateSignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    }>
+      <CandidateSignupForm />
+    </Suspense>
   )
 }

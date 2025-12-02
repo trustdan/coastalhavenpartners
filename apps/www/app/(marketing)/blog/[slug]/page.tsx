@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createBuildClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Link from 'next/link'
@@ -52,7 +53,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export async function generateStaticParams() {
-  const supabase = await createClient()
+  // Use direct client for build-time generation (no cookies needed)
+  const supabase = createBuildClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   const { data: articles } = await supabase
     .from('articles')
