@@ -4,6 +4,20 @@ _150 articles across 10 strategic themes, organized into 15 batches_
 
 ---
 
+## Before You Write Anything
+
+Read the **[Article Writing Gameplan](article-writing-gameplan.md)** first. Every article should follow its principles:
+
+- Short sentences (10-15 words average)
+- Subject + verb openings
+- Strong hooks, not throat-clearing preambles
+- Specific examples, not abstract claims
+- Honest about trade-offs
+
+The gameplan covers structure, sentence craft, voice, and guidance for each article type. Don't start writing until you've internalized it.
+
+---
+
 ## Theme Distribution Summary
 
 | # | Theme | Target Articles | Per Batch (avg) |
@@ -41,12 +55,12 @@ For quick reference:
 
 ## Batch 1 (Articles 1-10) — Foundational Cornerstone Content
 
-- [ ] **001** [T1] Technical Interview Canon: **The Complete Guide to Investment Banking Technical Interviews**
-- [ ] **002** [T1] Technical Interview Canon: **DCF Valuation Explained: A Step-by-Step Guide for Interview Success**
-- [ ] **003** [T2] Firm Profiles & Culture: **Bulge Bracket vs. Elite Boutique vs. Middle Market: Which Path Is Right for You?**
-- [ ] **004** [T3] Recruiting Calendar & Process: **The Investment Banking Recruiting Timeline: A Month-by-Month Guide**
-- [ ] **005** [T4] Non-Traditional Paths: **Breaking Into Investment Banking From a Non-Target School: A Tactical Guide**
-- [ ] **006** [T5] Career Architecture & Exits: **Investment Banking Exit Opportunities: Where Analysts Go After 2 Years**
+- [x] **001** [T1] Technical Interview Canon: **The Complete Guide to Investment Banking Technical Interviews**
+- [x] **002** [T1] Technical Interview Canon: **DCF Valuation Explained: A Step-by-Step Guide for Interview Success**
+- [x] **003** [T2] Firm Profiles & Culture: **Bulge Bracket vs. Elite Boutique vs. Middle Market: Which Path Is Right for You?**
+- [x] **004** [T3] Recruiting Calendar & Process: **The Investment Banking Recruiting Timeline: A Month-by-Month Guide**
+- [x] **005** [T4] Non-Traditional Paths: **Breaking Into Investment Banking From a Non-Target School: A Tactical Guide**
+- [x] **006** [T5] Career Architecture & Exits: **Investment Banking Exit Opportunities: Where Analysts Go After 2 Years**
 - [ ] **007** [T6] DEI in Finance: **Women in Investment Banking: Realities, Challenges, and Strategies for Success**
 - [ ] **008** [T7] Soft Skills Playbook: **How to Network for Finance Jobs: The Complete Guide to Building Relationships That Get You Hired**
 - [ ] **009** [T8] Life in Finance Reality: **What 80-100 Hour Weeks in Investment Banking Actually Look Like**
@@ -286,7 +300,7 @@ For quick reference:
 
 | Batch | Completed | Remaining |
 |-------|-----------|-----------|
-| Batch 1 | 0/10 | 10 |
+| Batch 1 | 6/10 | 4 |
 | Batch 2 | 0/10 | 10 |
 | Batch 3 | 0/10 | 10 |
 | Batch 4 | 0/10 | 10 |
@@ -301,7 +315,7 @@ For quick reference:
 | Batch 13 | 0/10 | 10 |
 | Batch 14 | 0/10 | 10 |
 | Batch 15 | 0/10 | 10 |
-| **TOTAL** | **0/150** | **150** |
+| **TOTAL** | **6/150** | **144** |
 
 ---
 
