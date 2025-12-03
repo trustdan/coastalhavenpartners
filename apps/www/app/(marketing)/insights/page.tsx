@@ -49,20 +49,14 @@ export default async function BlogPage() {
               className="group block overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-lg dark:bg-neutral-900"
             >
               <div className="grid gap-6 md:grid-cols-2">
-                {featuredArticle.cover_image_url ? (
-                  <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                     <Image
-                      src={featuredArticle.cover_image_url}
+                      src={featuredArticle.cover_image_url || `/insights/${featuredArticle.slug}/opengraph-image`}
                       alt={featuredArticle.title}
                       fill
                       className="object-cover transition-transform group-hover:scale-105"
                     />
                   </div>
-                ) : (
-                  <div className="flex aspect-[16/10] items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600">
-                    <span className="text-6xl font-bold text-white/20">CHP</span>
-                  </div>
-                )}
                 <div className="flex flex-col justify-center p-6 md:p-8">
                   {featuredArticle.category && (
                     <span className="mb-2 text-sm font-medium text-purple-600 dark:text-purple-400">
@@ -99,20 +93,14 @@ export default async function BlogPage() {
                   href={`/insights/${article.slug}`}
                   className="group block overflow-hidden rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-lg dark:bg-neutral-900"
                 >
-                  {article.cover_image_url ? (
-                    <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                      <Image
-                        src={article.cover_image_url}
-                        alt={article.title}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex aspect-[16/10] items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600">
-                      <span className="text-4xl font-bold text-white/20">CHP</span>
-                    </div>
-                  )}
+                  <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                    <Image
+                      src={article.cover_image_url || `/insights/${article.slug}/opengraph-image`}
+                      alt={article.title}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
                   <div className="p-5">
                     {article.category && (
                       <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
