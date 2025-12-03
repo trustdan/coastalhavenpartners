@@ -29,7 +29,8 @@
       "Bash(npx supabase:*)",
       "Bash(popd:*)",
       "Bash(git mv:*)",
-      "Bash(npx dotenv:*)"
+      "Bash(npx dotenv:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

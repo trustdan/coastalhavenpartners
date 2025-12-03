@@ -2,13 +2,23 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Calendar, GraduationCap, BadgeCheck, ShieldCheck, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Mail, Calendar, GraduationCap, BadgeCheck, ShieldCheck, MessageSquare, CheckCircle2, Clock } from 'lucide-react'
 import { BookmarkButton } from '@/components/recruiter/bookmark-button'
 import { CandidateNotes } from '@/components/recruiter/candidate-notes'
 import { CandidateStatusSelect } from '@/components/recruiter/candidate-status-select'
 import { InterestedBadge } from '@/components/recruiter/interested-badge'
 import { getBookmarkStatus, getCandidateNotes } from '../../bookmark-actions'
 import { checkCandidateInterest } from '@/app/(portal)/candidate/firm-interests-actions'
+
+type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
+
+const EDUCATION_LEVEL_LABELS: Record<EducationLevel, string> = {
+  bachelors: 'Undergraduate',
+  masters: "Master's",
+  mba: 'MBA',
+  phd: 'PhD',
+  professional: 'Professional (JD, MD)',
+}
 
 export default async function CandidateDetailsPage({
   params,
@@ -65,6 +75,13 @@ export default async function CandidateDetailsPage({
       </div>
     )
   }
+
+  // Fetch all transcripts for this candidate
+  const { data: transcripts } = await supabase
+    .from('candidate_transcripts')
+    .select('*')
+    .eq('candidate_profile_id', id)
+    .order('education_level', { ascending: true })
 
   // Track Profile View
   const { trackEventServer } = await import('@/lib/analytics')
@@ -283,6 +300,7 @@ export default async function CandidateDetailsPage({
           <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
             <h2 className="text-lg font-semibold">Documents</h2>
             <div className="mt-4 space-y-4">
+              {/* Resume */}
               {candidate.resume_url ? (
                 <div className={`flex items-center justify-between rounded-lg border p-4 ${
                   candidate.resume_verified
@@ -313,35 +331,98 @@ export default async function CandidateDetailsPage({
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">No resume uploaded yet.</p>
               )}
 
-              {candidate.transcript_url ? (
-                <div className={`flex items-center justify-between rounded-lg border p-4 ${
-                  candidate.transcript_verified
-                    ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
-                    : ''
-                }`}>
-                  <div className="flex items-center gap-3">
-                    <div className="rounded bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/20">
-                      PDF
-                    </div>
-                    <div>
-                      <p className="flex items-center gap-1.5 font-medium">
-                        Transcript
-                        {candidate.transcript_verified && (
-                          <BadgeCheck className="h-4 w-4 text-green-600" />
-                        )}
-                      </p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {candidate.transcript_verified ? 'Verified' : 'Uploaded'} on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}
-                      </p>
-                    </div>
+              {/* Transcripts */}
+              <div className="pt-2">
+                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Transcripts</h3>
+                {transcripts && transcripts.length > 0 ? (
+                  <div className="space-y-3">
+                    {transcripts.map((transcript) => (
+                      <div
+                        key={transcript.id}
+                        className={`flex items-center justify-between rounded-lg border p-4 ${
+                          transcript.is_verified
+                            ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                            <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {EDUCATION_LEVEL_LABELS[transcript.education_level as EducationLevel] || transcript.education_level}
+                              </span>
+                              {transcript.degree_type && (
+                                <span className="text-sm text-neutral-500">
+                                  ({transcript.degree_type})
+                                </span>
+                              )}
+                              {transcript.is_verified ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Verified
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                  <Clock className="h-3 w-3" />
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-neutral-500">
+                              {transcript.school_name && (
+                                <span>{transcript.school_name}</span>
+                              )}
+                              {transcript.gpa && (
+                                <span>
+                                  GPA: {Number(transcript.gpa).toFixed(2)}
+                                  {transcript.gpa_verified && (
+                                    <CheckCircle2 className="ml-1 inline h-3 w-3 text-green-500" />
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={transcript.transcript_url} target="_blank" rel="noopener noreferrer">View</a>
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={candidate.transcript_url} target="_blank" rel="noopener noreferrer">View</a>
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">No transcript uploaded yet.</p>
-              )}
+                ) : candidate.transcript_url ? (
+                  /* Fallback to legacy single transcript if no new transcripts exist */
+                  <div className={`flex items-center justify-between rounded-lg border p-4 ${
+                    candidate.transcript_verified
+                      ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
+                      : ''
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className="rounded bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/20">
+                        PDF
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-1.5 font-medium">
+                          Transcript
+                          {candidate.transcript_verified && (
+                            <BadgeCheck className="h-4 w-4 text-green-600" />
+                          )}
+                        </p>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                          {candidate.transcript_verified ? 'Verified' : 'Uploaded'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={candidate.transcript_url} target="_blank" rel="noopener noreferrer">View</a>
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">No transcripts uploaded yet.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
