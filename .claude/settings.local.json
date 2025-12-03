@@ -28,7 +28,8 @@
       "Bash(pushd:*)",
       "Bash(npx supabase:*)",
       "Bash(popd:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(npx dotenv:*)"
     ],
     "deny": [],
     "ask": []

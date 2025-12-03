@@ -1,3 +1,14 @@
+---
+title: "Breaking Into Investment Banking From a Non-Target School: A Tactical Guide"
+slug: breaking-into-ib-from-non-target
+excerpt: Non-target recruiting is a numbers game with different rules. This guide provides the tactical playbook to maximize your odds.
+category: recruiting
+tags: [investment-banking, non-target, networking, recruiting]
+status: published
+published_at: 2024-12-01
+author: Coastal Haven Partners
+---
+
 # Breaking Into Investment Banking From a Non-Target School: A Tactical Guide
 
 Every year, students from schools you've never heard of land jobs at Goldman Sachs.

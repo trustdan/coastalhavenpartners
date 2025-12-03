@@ -1,3 +1,14 @@
+---
+title: "Investment Banking Exit Opportunities: Where Analysts Go After 2 Years"
+slug: ib-exit-opportunities
+excerpt: The job is a launching pad. Understanding exit opportunities matters before you start—it affects which bank and group you choose.
+category: career-advice
+tags: [investment-banking, private-equity, exit-opportunities, career-paths]
+status: published
+published_at: 2024-12-03
+author: Coastal Haven Partners
+---
+
 # Investment Banking Exit Opportunities: Where Analysts Go After 2 Years
 
 Nobody plans to be an investment banking analyst forever.

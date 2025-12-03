@@ -1,3 +1,14 @@
+---
+title: "DCF Valuation Explained: A Step-by-Step Guide for Interview Success"
+slug: dcf-valuation-explained
+excerpt: The discounted cash flow model is the foundation of corporate finance. This guide breaks down the DCF step by step for interview mastery.
+category: interview-prep
+tags: [valuation, dcf, investment-banking, interviews]
+status: published
+published_at: 2024-11-20
+author: Coastal Haven Partners
+---
+
 # DCF Valuation Explained: A Step-by-Step Guide for Interview Success
 
 Every valuation interview includes a DCF question. Every single one.

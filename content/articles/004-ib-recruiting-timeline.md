@@ -1,3 +1,14 @@
+---
+title: "The Investment Banking Recruiting Timeline: A Month-by-Month Guide"
+slug: ib-recruiting-timeline
+excerpt: The recruiting timeline has compressed dramatically. This guide maps exactly when things happen and what to do each month.
+category: recruiting
+tags: [investment-banking, recruiting, timeline, internships]
+status: published
+published_at: 2024-11-28
+author: Coastal Haven Partners
+---
+
 # The Investment Banking Recruiting Timeline: A Month-by-Month Guide
 
 Banks are now recruiting sophomores for junior-year internships. Some extend offers before students take their first finance class.

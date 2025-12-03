@@ -1,3 +1,14 @@
+---
+title: The Complete Guide to Investment Banking Technical Interviews
+slug: complete-guide-ib-technical-interviews
+excerpt: Technical interviews separate prepared candidates from everyone else. This guide covers everything you'll face in IB technical interviews.
+category: interview-prep
+tags: [investment-banking, interviews, technicals, valuation]
+status: published
+published_at: 2024-11-15
+author: Coastal Haven Partners
+---
+
 # The Complete Guide to Investment Banking Technical Interviews
 
 Goldman Sachs doesn't hire the smartest candidates. They hire the most prepared ones.

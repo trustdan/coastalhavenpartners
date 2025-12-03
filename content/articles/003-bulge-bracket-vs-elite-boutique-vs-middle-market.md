@@ -1,3 +1,14 @@
+---
+title: "Bulge Bracket vs. Elite Boutique vs. Middle Market: Which Path Is Right for You?"
+slug: bulge-bracket-vs-elite-boutique-vs-middle-market
+excerpt: The bank you choose shapes your career in ways that aren't obvious from recruiting brochures. Here's how to decide which path fits you.
+category: career-advice
+tags: [investment-banking, career-paths, bulge-bracket, boutique]
+status: published
+published_at: 2024-11-25
+author: Coastal Haven Partners
+---
+
 # Bulge Bracket vs. Elite Boutique vs. Middle Market: Which Path Is Right for You?
 
 A Goldman Sachs analyst and a Centerview analyst work similar hours. They learn similar skills. They make similar money.
