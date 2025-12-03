@@ -30,21 +30,26 @@ function DiscordIcon({ className }: { className?: string }) {
 const menuItem = [
   {
     id: 1,
-    label: "For Students",
-    href: "#students",
+    label: "Home",
+    href: "/",
   },
   {
     id: 2,
-    label: "For Recruiters",
-    href: "#recruiters",
+    label: "For Students",
+    href: "/#students",
   },
   {
     id: 3,
-    label: "For Schools",
-    href: "#schools",
+    label: "For Recruiters",
+    href: "/#recruiters",
   },
   {
     id: 4,
+    label: "For Schools",
+    href: "/#schools",
+  },
+  {
+    id: 5,
     label: "Insights",
     href: "/insights",
   },

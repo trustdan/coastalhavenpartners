@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'edge'
+export const revalidate = false // Cache until next deploy
 export const alt = 'Coastal Haven Partners'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
