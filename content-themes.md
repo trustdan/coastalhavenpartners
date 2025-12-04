@@ -85,11 +85,11 @@ For quick reference:
 
 ## Batch 3 (Articles 21-30) — Completing Core Coverage
 
-- [ ] **021** [T1] Technical Interview Canon: **Precedent Transactions Analysis: How to Use M&A Deals to Value Companies**
-- [ ] **022** [T2] Firm Profiles & Culture: **Morgan Stanley Investment Banking: Culture, Groups, and How It Compares to Goldman**
-- [ ] **023** [T2] Firm Profiles & Culture: **Evercore: Inside the Elite Boutique That Rivals the Bulge Brackets**
-- [ ] **024** [T3] Recruiting Calendar & Process: **The Investment Banking Superday: What to Expect and How to Prepare**
-- [ ] **025** [T4] Non-Traditional Paths: **International Students in Finance: Visa Challenges, Sponsorship Realities, and How to Compete**
+- [x] **021** [T1] Technical Interview Canon: **Precedent Transactions Analysis: How to Use M&A Deals to Value Companies**
+- [x] **022** [T2] Firm Profiles & Culture: **Morgan Stanley Investment Banking: Culture, Groups, and How It Compares to Goldman**
+- [x] **023** [T2] Firm Profiles & Culture: **Evercore: Inside the Elite Boutique That Rivals the Bulge Brackets**
+- [x] **024** [T3] Recruiting Calendar & Process: **The Investment Banking Superday: What to Expect and How to Prepare**
+- [x] **025** [T4] Non-Traditional Paths: **International Students in Finance: Visa Challenges, Sponsorship Realities, and How to Compete**
 - [ ] **026** [T5] Career Architecture & Exits: **From Investment Banking to Hedge Funds: Is the Buy-Side Right for You?**
 - [ ] **027** [T6] DEI in Finance: **First-Generation Finance Professionals: Navigating an Industry You Weren't Raised to Understand**
 - [ ] **028** [T8] Life in Finance Reality: **Investment Banking Compensation Explained: Base, Bonus, Stub, and Total Comp by Level**
@@ -302,7 +302,7 @@ For quick reference:
 |-------|-----------|-----------|
 | Batch 1 | 10/10 | 0 |
 | Batch 2 | 10/10 | 0 |
-| Batch 3 | 0/10 | 10 |
+| Batch 3 | 5/10 | 5 |
 | Batch 4 | 0/10 | 10 |
 | Batch 5 | 0/10 | 10 |
 | Batch 6 | 0/10 | 10 |
@@ -315,7 +315,7 @@ For quick reference:
 | Batch 13 | 0/10 | 10 |
 | Batch 14 | 0/10 | 10 |
 | Batch 15 | 0/10 | 10 |
-| **TOTAL** | **20/150** | **130** |
+| **TOTAL** | **25/150** | **125** |
 
 ---
 
