@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       analytics_events: {
@@ -49,6 +74,7 @@ export type Database = {
           firm_id: string | null
           id: string
           internal_notes: string | null
+          job_listing_id: string | null
           outreach_approach: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -64,6 +90,7 @@ export type Database = {
           firm_id?: string | null
           id?: string
           internal_notes?: string | null
+          job_listing_id?: string | null
           outreach_approach: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -79,6 +106,7 @@ export type Database = {
           firm_id?: string | null
           id?: string
           internal_notes?: string | null
+          job_listing_id?: string | null
           outreach_approach?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -93,6 +121,13 @@ export type Database = {
             columns: ["candidate_profile_id"]
             isOneToOne: false
             referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_job_listing_id_fkey"
+            columns: ["job_listing_id"]
+            isOneToOne: false
+            referencedRelation: "job_listings"
             referencedColumns: ["id"]
           },
           {
@@ -434,6 +469,73 @@ export type Database = {
           },
         ]
       }
+      candidate_resumes: {
+        Row: {
+          candidate_profile_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          is_verified: boolean | null
+          label: string
+          resume_url: string
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          candidate_profile_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          label: string
+          resume_url: string
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          candidate_profile_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          label?: string
+          resume_url?: string
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_resumes_candidate_profile_id_fkey"
+            columns: ["candidate_profile_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_resumes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_resumes_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_transcripts: {
         Row: {
           candidate_profile_id: string
@@ -683,6 +785,111 @@ export type Database = {
         }
         Relationships: []
       }
+      job_listings: {
+        Row: {
+          application_count: number
+          application_deadline: string | null
+          application_instructions: string | null
+          closed_at: string | null
+          compensation_range: string | null
+          created_at: string
+          description: string
+          external_url: string | null
+          firm_id: string
+          id: string
+          is_featured: boolean
+          job_type: Database["public"]["Enums"]["job_type"]
+          locations: string[] | null
+          min_gpa: number | null
+          posted_by: string
+          published_at: string | null
+          requirements: string | null
+          responsibilities: string | null
+          slug: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["job_listing_status"]
+          target_grad_years: number[] | null
+          target_roles: string[] | null
+          target_schools: string[] | null
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          application_count?: number
+          application_deadline?: string | null
+          application_instructions?: string | null
+          closed_at?: string | null
+          compensation_range?: string | null
+          created_at?: string
+          description: string
+          external_url?: string | null
+          firm_id: string
+          id?: string
+          is_featured?: boolean
+          job_type: Database["public"]["Enums"]["job_type"]
+          locations?: string[] | null
+          min_gpa?: number | null
+          posted_by: string
+          published_at?: string | null
+          requirements?: string | null
+          responsibilities?: string | null
+          slug: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["job_listing_status"]
+          target_grad_years?: number[] | null
+          target_roles?: string[] | null
+          target_schools?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          application_count?: number
+          application_deadline?: string | null
+          application_instructions?: string | null
+          closed_at?: string | null
+          compensation_range?: string | null
+          created_at?: string
+          description?: string
+          external_url?: string | null
+          firm_id?: string
+          id?: string
+          is_featured?: boolean
+          job_type?: Database["public"]["Enums"]["job_type"]
+          locations?: string[] | null
+          min_gpa?: number | null
+          posted_by?: string
+          published_at?: string | null
+          requirements?: string | null
+          responsibilities?: string | null
+          slug?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["job_listing_status"]
+          target_grad_years?: number[] | null
+          target_roles?: string[] | null
+          target_schools?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_listings_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_listings_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "recruiter_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -908,6 +1115,8 @@ export type Database = {
           bio: string | null
           company_website: string | null
           created_at: string | null
+          email_domain: string | null
+          email_domain_matches_company: boolean | null
           firm_id: string | null
           firm_name: string
           firm_type: string | null
@@ -926,6 +1135,7 @@ export type Database = {
           specialties: string[] | null
           updated_at: string | null
           user_id: string | null
+          verification_notes: string | null
           visible_fields_to_candidates: Json | null
           visible_fields_to_recruiters: Json | null
           visible_fields_to_schools: Json | null
@@ -937,6 +1147,8 @@ export type Database = {
           bio?: string | null
           company_website?: string | null
           created_at?: string | null
+          email_domain?: string | null
+          email_domain_matches_company?: boolean | null
           firm_id?: string | null
           firm_name: string
           firm_type?: string | null
@@ -955,6 +1167,7 @@ export type Database = {
           specialties?: string[] | null
           updated_at?: string | null
           user_id?: string | null
+          verification_notes?: string | null
           visible_fields_to_candidates?: Json | null
           visible_fields_to_recruiters?: Json | null
           visible_fields_to_schools?: Json | null
@@ -966,6 +1179,8 @@ export type Database = {
           bio?: string | null
           company_website?: string | null
           created_at?: string | null
+          email_domain?: string | null
+          email_domain_matches_company?: boolean | null
           firm_id?: string | null
           firm_name?: string
           firm_type?: string | null
@@ -984,6 +1199,7 @@ export type Database = {
           specialties?: string[] | null
           updated_at?: string | null
           user_id?: string | null
+          verification_notes?: string | null
           visible_fields_to_candidates?: Json | null
           visible_fields_to_recruiters?: Json | null
           visible_fields_to_schools?: Json | null
@@ -1202,6 +1418,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_to_job: {
+        Args: {
+          p_cover_letter: string
+          p_job_listing_id: string
+          p_resume_id?: string
+        }
+        Returns: string
+      }
+      check_domain_match: {
+        Args: { email: string; website: string }
+        Returns: boolean
+      }
       create_candidate_profile: {
         Args: {
           p_gpa: number
@@ -1220,7 +1448,12 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      extract_domain: { Args: { input: string }; Returns: string }
       generate_firm_slug: { Args: { firm_name: string }; Returns: string }
+      generate_job_slug: {
+        Args: { p_firm_name: string; p_title: string }
+        Returns: string
+      }
       generate_referral_code: { Args: never; Returns: string }
       get_referral_stats: { Args: { user_id: string }; Returns: Json }
       get_school_candidates: {
@@ -1276,6 +1509,8 @@ export type Database = {
         | "placed"
         | "rejected"
       education_level: "bachelors" | "masters" | "mba" | "phd" | "professional"
+      job_listing_status: "draft" | "active" | "paused" | "closed" | "filled"
+      job_type: "full_time" | "internship" | "summer_analyst" | "off_cycle"
       referral_status: "pending" | "signed_up" | "verified"
       school_verification_status:
         | "pending_documents"
@@ -1409,6 +1644,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status: [
@@ -1437,6 +1675,8 @@ export const Constants = {
         "rejected",
       ],
       education_level: ["bachelors", "masters", "mba", "phd", "professional"],
+      job_listing_status: ["draft", "active", "paused", "closed", "filled"],
+      job_type: ["full_time", "internship", "summer_analyst", "off_cycle"],
       referral_status: ["pending", "signed_up", "verified"],
       school_verification_status: [
         "pending_documents",

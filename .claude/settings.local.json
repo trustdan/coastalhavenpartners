@@ -30,7 +30,8 @@
       "Bash(popd:*)",
       "Bash(git mv:*)",
       "Bash(npx dotenv:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

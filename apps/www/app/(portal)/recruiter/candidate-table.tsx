@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { BadgeCheck, Heart, Square, CheckSquare } from 'lucide-react'
+import { BadgeCheck, Heart, Square, CheckSquare, Lock } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { BulkActionsBar } from './bulk-actions-bar'
 
@@ -31,9 +31,10 @@ type Candidate = {
 interface CandidateTableProps {
   candidates: Candidate[]
   interestedCandidateIds: string[]
+  isRecruiterVerified?: boolean
 }
 
-export function CandidateTable({ candidates, interestedCandidateIds }: CandidateTableProps) {
+export function CandidateTable({ candidates, interestedCandidateIds, isRecruiterVerified = true }: CandidateTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const allSelected = candidates.length > 0 && selectedIds.size === candidates.length
@@ -70,33 +71,46 @@ export function CandidateTable({ candidates, interestedCandidateIds }: Candidate
           <table className="w-full">
             <thead className="border-b bg-neutral-50 dark:bg-neutral-800">
               <tr>
-                <th className="w-12 px-4 py-3">
-                  <button
-                    onClick={toggleSelectAll}
-                    className="flex items-center justify-center text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                    aria-label={allSelected ? 'Deselect all' : 'Select all'}
-                  >
-                    {allSelected ? (
-                      <CheckSquare className="h-5 w-5 text-blue-600" />
-                    ) : someSelected ? (
-                      <div className="relative">
-                        <Square className="h-5 w-5" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="h-2 w-2 bg-blue-600 rounded-sm" />
+                {isRecruiterVerified && (
+                  <th className="w-12 px-4 py-3">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="flex items-center justify-center text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                      aria-label={allSelected ? 'Deselect all' : 'Select all'}
+                    >
+                      {allSelected ? (
+                        <CheckSquare className="h-5 w-5 text-blue-600" />
+                      ) : someSelected ? (
+                        <div className="relative">
+                          <Square className="h-5 w-5" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="h-2 w-2 bg-blue-600 rounded-sm" />
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <Square className="h-5 w-5" />
-                    )}
-                  </button>
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Name</th>
+                      ) : (
+                        <Square className="h-5 w-5" />
+                      )}
+                    </button>
+                  </th>
+                )}
+                {isRecruiterVerified ? (
+                  <th className="px-6 py-3 text-left text-sm font-medium">Name</th>
+                ) : (
+                  <th className="px-6 py-3 text-left text-sm font-medium">
+                    <span className="flex items-center gap-1.5 text-neutral-400">
+                      <Lock className="h-3.5 w-3.5" />
+                      Name Hidden
+                    </span>
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-sm font-medium">School</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">Major</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">GPA</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">Grad Year</th>
                 <th className="px-6 py-3 text-left text-sm font-medium">Target Roles</th>
-                <th className="px-6 py-3 text-left text-sm font-medium">Actions</th>
+                {isRecruiterVerified && (
+                  <th className="px-6 py-3 text-left text-sm font-medium">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -107,32 +121,51 @@ export function CandidateTable({ candidates, interestedCandidateIds }: Candidate
                     <tr
                       key={candidate.id}
                       className={`transition-colors ${
-                        isSelected
+                        isSelected && isRecruiterVerified
                           ? 'bg-blue-50 dark:bg-blue-900/20'
                           : 'hover:bg-neutral-50 dark:hover:bg-neutral-800'
                       }`}
                     >
-                      <td className="w-12 px-4 py-4">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleCandidate(candidate.id)}
-                          aria-label={`Select ${candidate.profiles?.full_name || 'candidate'}`}
-                        />
-                      </td>
+                      {isRecruiterVerified && (
+                        <td className="w-12 px-4 py-4">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleCandidate(candidate.id)}
+                            aria-label={`Select ${candidate.profiles?.full_name || 'candidate'}`}
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4">
-                        <div>
-                          <p className="font-medium flex items-center gap-1.5">
-                            {candidate.profiles?.full_name}
-                            {interestedCandidateIds.includes(candidate.id) && (
-                              <span title="Interested in your firm">
-                                <Heart className="h-3.5 w-3.5 text-pink-500 fill-pink-500" />
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                            {candidate.profiles?.email}
-                          </p>
-                        </div>
+                        {isRecruiterVerified ? (
+                          <div>
+                            <p className="font-medium flex items-center gap-1.5">
+                              {candidate.profiles?.full_name}
+                              {interestedCandidateIds.includes(candidate.id) && (
+                                <span title="Interested in your firm">
+                                  <Heart className="h-3.5 w-3.5 text-pink-500 fill-pink-500" />
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                              {candidate.profiles?.email}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                              <Lock className="h-4 w-4 text-neutral-400" />
+                            </div>
+                            <div>
+                              <p className="text-sm text-neutral-400 italic">Verification required</p>
+                              {interestedCandidateIds.includes(candidate.id) && (
+                                <span className="inline-flex items-center gap-1 text-xs text-pink-500">
+                                  <Heart className="h-3 w-3 fill-pink-500" />
+                                  Interested in your firm
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-sm">{candidate.school_name}</td>
                       <td className="px-6 py-4 text-sm">{candidate.major}</td>
@@ -166,20 +199,22 @@ export function CandidateTable({ candidates, interestedCandidateIds }: Candidate
                           <span className="text-sm text-neutral-400">Not specified</span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
-                        <Link
-                          href={`/recruiter/candidates/${candidate.id}`}
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          View Profile
-                        </Link>
-                      </td>
+                      {isRecruiterVerified && (
+                        <td className="px-6 py-4">
+                          <Link
+                            href={`/recruiter/candidates/${candidate.id}`}
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            View Profile
+                          </Link>
+                        </td>
+                      )}
                     </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-neutral-600 dark:text-neutral-400">
+                  <td colSpan={isRecruiterVerified ? 8 : 6} className="px-6 py-8 text-center text-neutral-600 dark:text-neutral-400">
                     No verified candidates found matching your criteria
                   </td>
                 </tr>
@@ -189,11 +224,13 @@ export function CandidateTable({ candidates, interestedCandidateIds }: Candidate
         </div>
       </div>
 
-      <BulkActionsBar
-        selectedIds={Array.from(selectedIds)}
-        onClear={clearSelection}
-        candidates={candidates.filter(c => selectedIds.has(c.id))}
-      />
+      {isRecruiterVerified && (
+        <BulkActionsBar
+          selectedIds={Array.from(selectedIds)}
+          onClear={clearSelection}
+          candidates={candidates.filter(c => selectedIds.has(c.id))}
+        />
+      )}
     </>
   )
 }

@@ -65,6 +65,18 @@ export default async function CandidateLayout({
               Browse Recruiters
             </Link>
             <Link
+              href="/candidate/jobs"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Browse Jobs
+            </Link>
+            <Link
+              href="/candidate/my-applications"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              My Applications
+            </Link>
+            <Link
               href="/candidate/edit-profile"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >

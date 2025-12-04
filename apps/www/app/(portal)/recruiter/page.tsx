@@ -70,37 +70,12 @@ export default async function RecruiterDashboard({
     return <AccessRevoked userType="recruiter" email={profile?.email} />
   }
 
-  if (!recruiterProfile?.is_approved) {
-    return (
-      <div className="rounded-xl border bg-white p-8 text-center shadow-sm dark:bg-neutral-900">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20">
-          <svg
-            className="h-8 w-8 text-yellow-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-        </div>
-        <h1 className="mt-4 text-2xl font-bold">Pending Approval</h1>
-        <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          Your recruiter account is pending approval from our team. We'll notify you once it's ready.
-        </p>
-        <div className="mt-6 rounded-lg bg-neutral-50 p-4 dark:bg-neutral-900">
-          <p className="text-sm font-medium">What happens next?</p>
-          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Our team will review your application and verify your firm affiliation. This usually takes 24-48 hours.
-          </p>
-        </div>
-      </div>
-    )
+  // Handle case where recruiter profile doesn't exist
+  if (!recruiterProfile) {
+    redirect('/complete-profile/recruiter')
   }
+
+  const isRecruiterVerified = recruiterProfile.is_approved === true
 
   // Fetch saved searches, recommendations, and interested candidates for this recruiter
   const [savedSearches, recommendedCandidates, interestedCandidateIds] = await Promise.all([
@@ -163,25 +138,78 @@ export default async function RecruiterDashboard({
 
   return (
     <div className="space-y-8">
+      {/* Verification Pending Banner */}
+      {!isRecruiterVerified && (
+        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+              <svg
+                className="h-5 w-5 text-yellow-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
+                Account Pending Verification
+              </h2>
+              <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                Your recruiter account is being reviewed by our team. While pending, you can browse the candidate pool with limited visibility.
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg bg-white/50 p-3 dark:bg-neutral-900/50">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">What you can see:</p>
+                  <ul className="mt-1 space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
+                    <li>School names and majors</li>
+                    <li>GPA and graduation year</li>
+                    <li>Target roles and locations</li>
+                    <li>Candidates interested in your firm</li>
+                  </ul>
+                </div>
+                <div className="rounded-lg bg-white/50 p-3 dark:bg-neutral-900/50">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">After verification:</p>
+                  <ul className="mt-1 space-y-1 text-sm text-yellow-700 dark:text-yellow-300">
+                    <li>Candidate names and contact info</li>
+                    <li>Full profile access</li>
+                    <li>Resume and transcript downloads</li>
+                    <li>Direct messaging</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">Candidate Pool</h1>
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">
             {candidates?.length || 0} verified candidates available
+            {!isRecruiterVerified && ' (limited view)'}
           </p>
         </div>
-        <ExportButton />
+        {isRecruiterVerified && <ExportButton />}
       </div>
 
-      {/* Personalized Recommendations */}
-      <RecommendedCandidates candidates={recommendedCandidates} />
+      {/* Personalized Recommendations - only for verified recruiters */}
+      {isRecruiterVerified && <RecommendedCandidates candidates={recommendedCandidates} />}
 
-      <CandidateFilters savedSearches={savedSearches} />
+      <CandidateFilters savedSearches={isRecruiterVerified ? savedSearches : []} />
 
       {/* Candidate Table with Bulk Selection */}
       <CandidateTable
         candidates={candidates || []}
         interestedCandidateIds={interestedCandidateIds}
+        isRecruiterVerified={isRecruiterVerified}
       />
     </div>
   )

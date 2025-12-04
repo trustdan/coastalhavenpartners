@@ -124,11 +124,24 @@ export async function reinstateRecruiter(recruiterId: string) {
   // Reinstate a rejected recruiter (moves them back to pending)
   const { error } = await supabaseAdmin
     .from('recruiter_profiles')
-    .update({ 
+    .update({
       is_rejected: false,
       rejected_at: null,
       rejected_by: null
     })
+    .eq('id', recruiterId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+}
+
+export async function updateVerificationNotes(recruiterId: string, notes: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('recruiter_profiles')
+    .update({ verification_notes: notes })
     .eq('id', recruiterId)
 
   if (error) throw new Error(error.message)

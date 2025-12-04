@@ -59,6 +59,12 @@ export default async function RecruiterLayout({
               Dashboard
             </Link>
             <Link
+              href="/recruiter/jobs"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Jobs
+            </Link>
+            <Link
               href="/recruiter/schools"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >

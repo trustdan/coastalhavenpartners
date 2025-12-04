@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Calendar, GraduationCap, BadgeCheck, ShieldCheck, MessageSquare, CheckCircle2, Clock } from 'lucide-react'
+import { ArrowLeft, Mail, Calendar, GraduationCap, BadgeCheck, ShieldCheck, MessageSquare, CheckCircle2, Clock, FileText, Star } from 'lucide-react'
 import { BookmarkButton } from '@/components/recruiter/bookmark-button'
 import { CandidateNotes } from '@/components/recruiter/candidate-notes'
 import { CandidateStatusSelect } from '@/components/recruiter/candidate-status-select'
@@ -82,6 +82,14 @@ export default async function CandidateDetailsPage({
     .select('*')
     .eq('candidate_profile_id', id)
     .order('education_level', { ascending: true })
+
+  // Fetch all resumes for this candidate
+  const { data: resumes } = await supabase
+    .from('candidate_resumes')
+    .select('*')
+    .eq('candidate_profile_id', id)
+    .order('is_default', { ascending: false })
+    .order('created_at', { ascending: false })
 
   // Track Profile View
   const { trackEventServer } = await import('@/lib/analytics')
@@ -300,36 +308,99 @@ export default async function CandidateDetailsPage({
           <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
             <h2 className="text-lg font-semibold">Documents</h2>
             <div className="mt-4 space-y-4">
-              {/* Resume */}
-              {candidate.resume_url ? (
-                <div className={`flex items-center justify-between rounded-lg border p-4 ${
-                  candidate.resume_verified
-                    ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
-                    : ''
-                }`}>
-                  <div className="flex items-center gap-3">
-                    <div className="rounded bg-red-100 p-2 text-red-600 dark:bg-red-900/20">
-                      PDF
-                    </div>
-                    <div>
-                      <p className="flex items-center gap-1.5 font-medium">
-                        Resume
-                        {candidate.resume_verified && (
-                          <BadgeCheck className="h-4 w-4 text-green-600" />
-                        )}
-                      </p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {candidate.resume_verified ? 'Verified' : 'Uploaded'} on {candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString() : 'Unknown'}
-                      </p>
-                    </div>
+              {/* Resumes */}
+              <div>
+                <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">Resumes</h3>
+                {resumes && resumes.length > 0 ? (
+                  <div className="space-y-3">
+                    {resumes.map((resume) => (
+                      <div
+                        key={resume.id}
+                        className={`flex items-center justify-between rounded-lg border p-4 ${
+                          resume.is_default
+                            ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-900/10'
+                            : resume.is_verified
+                              ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
+                              : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                            resume.is_default
+                              ? 'bg-blue-100 dark:bg-blue-900/30'
+                              : 'bg-neutral-100 dark:bg-neutral-800'
+                          }`}>
+                            <FileText className={`h-5 w-5 ${
+                              resume.is_default
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-neutral-600 dark:text-neutral-400'
+                            }`} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{resume.label}</span>
+                              {resume.is_default && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                  <Star className="h-3 w-3" />
+                                  Default
+                                </span>
+                              )}
+                              {resume.is_verified ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Verified
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                  <Clock className="h-3 w-3" />
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                            {resume.description && (
+                              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                {resume.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={resume.resume_url} target="_blank" rel="noopener noreferrer">View</a>
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">View</a>
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">No resume uploaded yet.</p>
-              )}
+                ) : candidate.resume_url ? (
+                  /* Fallback to legacy single resume if no new resumes exist */
+                  <div className={`flex items-center justify-between rounded-lg border p-4 ${
+                    candidate.resume_verified
+                      ? 'border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10'
+                      : ''
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className="rounded bg-red-100 p-2 text-red-600 dark:bg-red-900/20">
+                        PDF
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-1.5 font-medium">
+                          Resume
+                          {candidate.resume_verified && (
+                            <BadgeCheck className="h-4 w-4 text-green-600" />
+                          )}
+                        </p>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                          {candidate.resume_verified ? 'Verified' : 'Uploaded'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">View</a>
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">No resumes uploaded yet.</p>
+                )}
+              </div>
 
               {/* Transcripts */}
               <div className="pt-2">
