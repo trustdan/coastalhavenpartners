@@ -3,6 +3,33 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types/database.types'
 
+// Fetch existing firms for the signup dropdown
+export async function getExistingFirms() {
+  const supabaseAdmin = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  const { data: firms, error } = await supabaseAdmin
+    .from('firms')
+    .select('id, name, slug, firm_type')
+    .eq('is_visible', true)
+    .order('name')
+
+  if (error) {
+    console.error('Error fetching firms:', error)
+    return []
+  }
+
+  return firms || []
+}
+
 export async function createRecruiterProfile(data: {
   userId: string
   email: string
@@ -11,6 +38,7 @@ export async function createRecruiterProfile(data: {
   firmType: string
   jobTitle: string
   linkedinUrl?: string
+  existingFirmId?: string // If selecting an existing firm, pass its ID
 }) {
   console.log('Creating recruiter profile for:', data.userId)
 
@@ -83,6 +111,8 @@ export async function createRecruiterProfile(data: {
       firm_type: data.firmType,
       job_title: data.jobTitle,
       is_approved: false,
+      // If selecting an existing firm, link directly
+      firm_id: data.existingFirmId || null,
     })
 
   if (error) {

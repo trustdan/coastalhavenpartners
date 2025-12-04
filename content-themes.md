@@ -63,8 +63,8 @@ For quick reference:
 - [x] **006** [T5] Career Architecture & Exits: **Investment Banking Exit Opportunities: Where Analysts Go After 2 Years**
 - [x] **007** [T6] DEI in Finance: **Women in Investment Banking: Realities, Challenges, and Strategies for Success**
 - [x] **008** [T7] Soft Skills Playbook: **How to Network for Finance Jobs: The Complete Guide to Building Relationships That Get You Hired**
-- [ ] **009** [T8] Life in Finance Reality: **What 80-100 Hour Weeks in Investment Banking Actually Look Like**
-- [ ] **010** [T10] Sector & Deal Intelligence: **Finance Industry Sectors Explained: TMT, Healthcare, FIG, and Where to Focus Your Career**
+- [x] **009** [T8] Life in Finance Reality: **What 80-100 Hour Weeks in Investment Banking Actually Look Like**
+- [x] **010** [T10] Sector & Deal Intelligence: **Finance Industry Sectors Explained: TMT, Healthcare, FIG, and Where to Focus Your Career**
 
 ---
 
@@ -300,7 +300,7 @@ For quick reference:
 
 | Batch | Completed | Remaining |
 |-------|-----------|-----------|
-| Batch 1 | 8/10 | 2 |
+| Batch 1 | 10/10 | 0 |
 | Batch 2 | 0/10 | 10 |
 | Batch 3 | 0/10 | 10 |
 | Batch 4 | 0/10 | 10 |
@@ -315,7 +315,7 @@ For quick reference:
 | Batch 13 | 0/10 | 10 |
 | Batch 14 | 0/10 | 10 |
 | Batch 15 | 0/10 | 10 |
-| **TOTAL** | **8/150** | **142** |
+| **TOTAL** | **10/150** | **140** |
 
 ---
 

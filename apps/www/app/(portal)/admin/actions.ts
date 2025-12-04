@@ -41,10 +41,10 @@ async function verifyAdmin() {
 export async function approveRecruiter(recruiterId: string) {
   const { user, supabaseAdmin } = await verifyAdmin()
 
-  // Get recruiter profile for email
+  // Get recruiter profile with firm info
   const { data: recruiterProfile } = await supabaseAdmin
     .from('recruiter_profiles')
-    .select('user_id')
+    .select('user_id, firm_id, firm_name, firm_type, company_website, locations')
     .eq('id', recruiterId)
     .single()
 
@@ -59,13 +59,59 @@ export async function approveRecruiter(recruiterId: string) {
     userProfile = profile
   }
 
-  // Approve recruiter
+  // If recruiter doesn't have a firm_id yet, auto-create the firm
+  let firmId = recruiterProfile?.firm_id
+  if (!firmId && recruiterProfile?.firm_name) {
+    // Generate a slug
+    const baseSlug = recruiterProfile.firm_name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    // Check for slug uniqueness
+    let slug = baseSlug
+    let counter = 0
+    while (true) {
+      const { data: existing } = await supabaseAdmin
+        .from('firms')
+        .select('id')
+        .eq('slug', slug)
+        .single()
+
+      if (!existing) break
+      counter++
+      slug = `${baseSlug}-${counter}`
+    }
+
+    // Create the firm
+    const { data: newFirm, error: firmError } = await supabaseAdmin
+      .from('firms')
+      .insert({
+        name: recruiterProfile.firm_name,
+        slug,
+        website: recruiterProfile.company_website,
+        locations: recruiterProfile.locations,
+        firm_type: recruiterProfile.firm_type,
+        is_visible: true,
+      })
+      .select()
+      .single()
+
+    if (firmError) {
+      console.error('Error creating firm:', firmError)
+    } else {
+      firmId = newFirm.id
+    }
+  }
+
+  // Approve recruiter and link to firm
   const { error } = await supabaseAdmin
     .from('recruiter_profiles')
-    .update({ 
+    .update({
       is_approved: true,
       approved_at: new Date().toISOString(),
-      approved_by: user.id
+      approved_by: user.id,
+      firm_id: firmId, // Link to firm (either existing or newly created)
     })
     .eq('id', recruiterId)
 

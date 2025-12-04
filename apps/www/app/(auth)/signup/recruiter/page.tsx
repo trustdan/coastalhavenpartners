@@ -1,14 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
-import { createRecruiterProfile } from './actions'
+import { createRecruiterProfile, getExistingFirms } from './actions'
+
+interface Firm {
+  id: string
+  name: string
+  slug: string
+  firm_type: string | null
+}
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -52,6 +66,20 @@ export default function RecruiterSignupPage() {
   const [linkedInLoading, setLinkedInLoading] = useState(false)
   const [discordLoading, setDiscordLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Firm selection state
+  const [existingFirms, setExistingFirms] = useState<Firm[]>([])
+  const [selectedFirmId, setSelectedFirmId] = useState<string>('')
+  const [isNewFirm, setIsNewFirm] = useState(false)
+
+  // Fetch existing firms on mount
+  useEffect(() => {
+    async function loadFirms() {
+      const firms = await getExistingFirms()
+      setExistingFirms(firms)
+    }
+    loadFirms()
+  }, [])
 
   async function handleGoogleSignup() {
     const supabase = createClient()
@@ -123,10 +151,35 @@ export default function RecruiterSignupPage() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const fullName = formData.get('fullName') as string
-    const firmName = formData.get('firmName') as string
-    const firmType = formData.get('firmType') as string
     const jobTitle = formData.get('jobTitle') as string
     const linkedinUrl = formData.get('linkedinUrl') as string
+
+    // Determine firm name and type based on selection
+    let firmName: string
+    let firmType: string
+    let existingFirmId: string | undefined
+
+    if (isNewFirm) {
+      // User is entering a new firm
+      firmName = formData.get('newFirmName') as string
+      firmType = formData.get('newFirmType') as string
+      existingFirmId = undefined
+    } else if (selectedFirmId) {
+      // User selected an existing firm
+      const selectedFirm = existingFirms.find(f => f.id === selectedFirmId)
+      if (!selectedFirm) {
+        setError('Please select a firm')
+        setLoading(false)
+        return
+      }
+      firmName = selectedFirm.name
+      firmType = selectedFirm.firm_type || ''
+      existingFirmId = selectedFirm.id
+    } else {
+      setError('Please select a firm or enter a new one')
+      setLoading(false)
+      return
+    }
 
     try {
       // Step 1: Sign up user
@@ -154,6 +207,7 @@ export default function RecruiterSignupPage() {
           firmType,
           jobTitle,
           linkedinUrl,
+          existingFirmId,
         })
 
         // Redirect to email verification page
@@ -285,26 +339,70 @@ export default function RecruiterSignupPage() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="firmName">Firm Name</Label>
-            <Input
-              id="firmName"
-              name="firmName"
-              type="text"
-              required
-              placeholder="Goldman Sachs"
-            />
-          </div>
+          {/* Firm Selection */}
+          <div className="space-y-3">
+            <Label>Firm</Label>
+            {existingFirms.length > 0 && !isNewFirm && (
+              <Select
+                value={selectedFirmId}
+                onValueChange={(value) => {
+                  if (value === '__new__') {
+                    setIsNewFirm(true)
+                    setSelectedFirmId('')
+                  } else {
+                    setSelectedFirmId(value)
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your firm" />
+                </SelectTrigger>
+                <SelectContent>
+                  {existingFirms.map((firm) => (
+                    <SelectItem key={firm.id} value={firm.id}>
+                      {firm.name} {firm.firm_type && `(${firm.firm_type})`}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__new__" className="text-primary font-medium">
+                    + Add a new firm
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
 
-          <div>
-            <Label htmlFor="firmType">Firm Type</Label>
-            <Input
-              id="firmType"
-              name="firmType"
-              type="text"
-              required
-              placeholder="Investment Bank"
-            />
+            {(isNewFirm || existingFirms.length === 0) && (
+              <div className="space-y-3 rounded-lg border p-3 bg-neutral-50 dark:bg-neutral-900">
+                {existingFirms.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsNewFirm(false)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    &larr; Select from existing firms
+                  </button>
+                )}
+                <div>
+                  <Label htmlFor="newFirmName">Firm Name</Label>
+                  <Input
+                    id="newFirmName"
+                    name="newFirmName"
+                    type="text"
+                    required={isNewFirm || existingFirms.length === 0}
+                    placeholder="Goldman Sachs"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="newFirmType">Firm Type</Label>
+                  <Input
+                    id="newFirmType"
+                    name="newFirmType"
+                    type="text"
+                    required={isNewFirm || existingFirms.length === 0}
+                    placeholder="Investment Bank"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
