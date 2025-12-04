@@ -70,7 +70,7 @@ For quick reference:
 
 ## Batch 2 (Articles 11-20) — First-Level Deep Dives
 
-- [ ] **011** [T1] Technical Interview Canon: **Comparable Company Analysis (Comps): How to Value Companies Using Multiples**
+- [x] **011** [T1] Technical Interview Canon: **Comparable Company Analysis (Comps): How to Value Companies Using Multiples**
 - [ ] **012** [T1] Technical Interview Canon: **Accounting for Investment Banking Interviews: The 20 Concepts You Must Know**
 - [ ] **013** [T2] Firm Profiles & Culture: **Goldman Sachs Investment Banking: Culture, Groups, Recruiting, and Career Paths**
 - [ ] **014** [T3] Recruiting Calendar & Process: **Private Equity Recruiting Explained: On-Cycle, Off-Cycle, and How to Navigate Both**
@@ -301,7 +301,7 @@ For quick reference:
 | Batch | Completed | Remaining |
 |-------|-----------|-----------|
 | Batch 1 | 10/10 | 0 |
-| Batch 2 | 0/10 | 10 |
+| Batch 2 | 1/10 | 9 |
 | Batch 3 | 0/10 | 10 |
 | Batch 4 | 0/10 | 10 |
 | Batch 5 | 0/10 | 10 |
@@ -315,7 +315,7 @@ For quick reference:
 | Batch 13 | 0/10 | 10 |
 | Batch 14 | 0/10 | 10 |
 | Batch 15 | 0/10 | 10 |
-| **TOTAL** | **10/150** | **140** |
+| **TOTAL** | **11/150** | **139** |
 
 ---
 
