@@ -90,41 +90,41 @@ For quick reference:
 - [x] **023** [T2] Firm Profiles & Culture: **Evercore: Inside the Elite Boutique That Rivals the Bulge Brackets**
 - [x] **024** [T3] Recruiting Calendar & Process: **The Investment Banking Superday: What to Expect and How to Prepare**
 - [x] **025** [T4] Non-Traditional Paths: **International Students in Finance: Visa Challenges, Sponsorship Realities, and How to Compete**
-- [ ] **026** [T5] Career Architecture & Exits: **From Investment Banking to Hedge Funds: Is the Buy-Side Right for You?**
-- [ ] **027** [T6] DEI in Finance: **First-Generation Finance Professionals: Navigating an Industry You Weren't Raised to Understand**
-- [ ] **028** [T8] Life in Finance Reality: **Investment Banking Compensation Explained: Base, Bonus, Stub, and Total Comp by Level**
-- [ ] **029** [T9] Recruiter & Talent Strategy: **Target School Strategy: How to Prioritize Campus Recruiting Investments**
-- [ ] **030** [T10] Sector & Deal Intelligence: **Healthcare Investment Banking: A Sector Primer Covering Pharma, Biotech, and Services**
+- [x] **026** [T5] Career Architecture & Exits: **From Investment Banking to Hedge Funds: Is the Buy-Side Right for You?**
+- [x] **027** [T6] DEI in Finance: **First-Generation Finance Professionals: Navigating an Industry You Weren't Raised to Understand**
+- [x] **028** [T8] Life in Finance Reality: **Investment Banking Compensation Explained: Base, Bonus, Stub, and Total Comp by Level**
+- [x] **029** [T9] Recruiter & Talent Strategy: **Target School Strategy: How to Prioritize Campus Recruiting Investments**
+- [x] **030** [T10] Sector & Deal Intelligence: **Healthcare Investment Banking: A Sector Primer Covering Pharma, Biotech, and Services**
 
 ---
 
 ## Batch 4 (Articles 31-40) — Technical Foundations & Third-Tier Coverage
 
-- [ ] **031** [T1] Technical Interview Canon: **LBO Modeling Fundamentals: How Private Equity Values Companies**
-- [ ] **032** [T1] Technical Interview Canon: **Merger Models and Accretion/Dilution: The M&A Interview Essential**
-- [ ] **033** [T2] Firm Profiles & Culture: **JPMorgan Investment Banking: Culture, Strengths, and How It Compares**
-- [ ] **034** [T3] Recruiting Calendar & Process: **Hedge Fund Recruiting Demystified: Timelines, Tests, and What Funds Actually Look For**
-- [ ] **035** [T4] Non-Traditional Paths: **Military to Finance: How Veterans Break Into Investment Banking and Private Equity**
-- [ ] **036** [T5] Career Architecture & Exits: **From Investment Banking to Corporate Development: The In-House Alternative**
-- [ ] **037** [T7] Soft Skills Playbook: **The Coffee Chat Playbook: How to Turn 30 Minutes Into a Job Offer**
-- [ ] **038** [T8] Life in Finance Reality: **Mental Health in Finance: Recognizing Burnout and Building Resilience**
-- [ ] **039** [T9] Recruiter & Talent Strategy: **Finance Employer Branding: How to Stand Out in a Competitive Talent Market**
-- [ ] **040** [T10] Sector & Deal Intelligence: **FIG Investment Banking: A Sector Primer Covering Banks, Insurance, and Fintech**
+- [x] **031** [T1] Technical Interview Canon: **LBO Modeling Fundamentals: How Private Equity Values Companies**
+- [x] **032** [T1] Technical Interview Canon: **Merger Models and Accretion/Dilution: The M&A Interview Essential**
+- [x] **033** [T2] Firm Profiles & Culture: **JPMorgan Investment Banking: Culture, Strengths, and How It Compares**
+- [x] **034** [T3] Recruiting Calendar & Process: **Hedge Fund Recruiting Demystified: Timelines, Tests, and What Funds Actually Look For**
+- [x] **035** [T4] Non-Traditional Paths: **Military to Finance: How Veterans Break Into Investment Banking and Private Equity**
+- [x] **036** [T5] Career Architecture & Exits: **From Investment Banking to Corporate Development: The In-House Alternative**
+- [x] **037** [T7] Soft Skills Playbook: **The Coffee Chat Playbook: How to Turn 30 Minutes Into a Job Offer**
+- [x] **038** [T8] Life in Finance Reality: **Mental Health in Finance: Recognizing Burnout and Building Resilience**
+- [x] **039** [T9] Recruiter & Talent Strategy: **Finance Employer Branding: How to Stand Out in a Competitive Talent Market**
+- [x] **040** [T10] Sector & Deal Intelligence: **FIG Investment Banking: A Sector Primer Covering Banks, Insurance, and Fintech**
 
 ---
 
 ## Batch 5 (Articles 41-50) — Expanding Elite Coverage & Buy-Side Recruiting
 
-- [ ] **041** [T1] Technical Interview Canon: **Investment Banking Brain Teasers: How to Solve Quantitative and Logic Puzzles Under Pressure**
-- [ ] **042** [T2] Firm Profiles & Culture: **Lazard: The Elite Boutique Known for Restructuring Excellence**
-- [ ] **043** [T2] Firm Profiles & Culture: **Citigroup Investment Banking: Global Reach, Culture, and Career Paths**
-- [ ] **044** [T3] Recruiting Calendar & Process: **Venture Capital Recruiting: How to Break Into VC From Banking, Consulting, or Startups**
-- [ ] **045** [T5] Career Architecture & Exits: **When to Get Your MBA: Timing Your Graduate Degree for Maximum Career Impact**
-- [ ] **046** [T6] DEI in Finance: **LGBTQ+ Professionals in Finance: Building Authentic Careers in a Traditional Industry**
-- [ ] **047** [T7] Soft Skills Playbook: **Executive Presence in Finance: How to Command a Room Before You Have the Title**
-- [ ] **048** [T8] Life in Finance Reality: **Dating, Relationships, and Family in Finance: Making Personal Life Work With Demanding Hours**
-- [ ] **049** [T9] Recruiter & Talent Strategy: **Candidate Assessment in Finance Recruiting: Evaluating Fit Beyond the Resume**
-- [ ] **050** [T10] Sector & Deal Intelligence: **Industrials Investment Banking: A Sector Primer Covering Manufacturing, Aerospace, and Infrastructure**
+- [x] **041** [T1] Technical Interview Canon: **Investment Banking Brain Teasers: How to Solve Quantitative and Logic Puzzles Under Pressure**
+- [x] **042** [T2] Firm Profiles & Culture: **Lazard: The Elite Boutique Known for Restructuring Excellence**
+- [x] **043** [T2] Firm Profiles & Culture: **Citigroup Investment Banking: Global Reach, Culture, and Career Paths**
+- [x] **044** [T3] Recruiting Calendar & Process: **Venture Capital Recruiting: How to Break Into VC From Banking, Consulting, or Startups**
+- [x] **045** [T5] Career Architecture & Exits: **When to Get Your MBA: Timing Your Graduate Degree for Maximum Career Impact**
+- [x] **046** [T6] DEI in Finance: **LGBTQ+ Professionals in Finance: Building Authentic Careers in a Traditional Industry**
+- [x] **047** [T7] Soft Skills Playbook: **Executive Presence in Finance: How to Command a Room Before You Have the Title**
+- [x] **048** [T8] Life in Finance Reality: **Dating, Relationships, and Family in Finance: Making Personal Life Work With Demanding Hours**
+- [x] **049** [T9] Recruiter & Talent Strategy: **Candidate Assessment in Finance Recruiting: Evaluating Fit Beyond the Resume**
+- [x] **050** [T10] Sector & Deal Intelligence: **Industrials Investment Banking: A Sector Primer Covering Manufacturing, Aerospace, and Infrastructure**
 
 ---
 
@@ -302,9 +302,9 @@ For quick reference:
 |-------|-----------|-----------|
 | Batch 1 | 10/10 | 0 |
 | Batch 2 | 10/10 | 0 |
-| Batch 3 | 5/10 | 5 |
-| Batch 4 | 0/10 | 10 |
-| Batch 5 | 0/10 | 10 |
+| Batch 3 | 10/10 | 0 |
+| Batch 4 | 10/10 | 0 |
+| Batch 5 | 10/10 | 0 |
 | Batch 6 | 0/10 | 10 |
 | Batch 7 | 0/10 | 10 |
 | Batch 8 | 0/10 | 10 |
@@ -315,7 +315,7 @@ For quick reference:
 | Batch 13 | 0/10 | 10 |
 | Batch 14 | 0/10 | 10 |
 | Batch 15 | 0/10 | 10 |
-| **TOTAL** | **25/150** | **125** |
+| **TOTAL** | **50/150** | **100** |
 
 ---
 
@@ -353,4 +353,4 @@ Sector primers (TMT, healthcare, FIG, etc.), deal breakdowns, M&A trends, PE/VC 
 
 ---
 
-_Last updated: 2025-12-02_
+_Last updated: 2025-12-04_
