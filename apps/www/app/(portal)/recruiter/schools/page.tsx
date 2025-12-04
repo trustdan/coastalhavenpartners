@@ -11,6 +11,7 @@ interface SchoolStats {
   candidate_count: number;
   avg_gpa: number;
   top_majors: string[];
+  is_graduate: boolean;
 }
 
 async function getSchoolStats(): Promise<SchoolStats[]> {
@@ -19,52 +20,74 @@ async function getSchoolStats(): Promise<SchoolStats[]> {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Get all verified candidates grouped by school
+  // Get all verified candidates with both undergrad and grad school info
   const { data: candidates, error } = await supabaseAdmin
     .from("candidate_profiles")
-    .select("school_name, gpa, major")
-    .eq("status", "verified")
-    .not("school_name", "is", null);
+    .select("school_name, gpa, major, grad_school, grad_specialty")
+    .eq("status", "verified");
 
   if (error || !candidates) {
     console.error("Error fetching school stats:", error);
     return [];
   }
 
-  // Group by school and calculate stats
+  // Group by school and calculate stats (separate undergrad and grad)
   const schoolMap = new Map<
     string,
-    { gpas: number[]; majors: Map<string, number> }
+    { gpas: number[]; majors: Map<string, number>; is_graduate: boolean }
   >();
 
   for (const candidate of candidates) {
-    const school = candidate.school_name;
-    if (!school) continue;
+    // Process undergraduate school
+    const undergradSchool = candidate.school_name;
+    if (undergradSchool) {
+      const key = `undergrad:${undergradSchool}`;
+      if (!schoolMap.has(key)) {
+        schoolMap.set(key, { gpas: [], majors: new Map(), is_graduate: false });
+      }
 
-    if (!schoolMap.has(school)) {
-      schoolMap.set(school, { gpas: [], majors: new Map() });
+      const stats = schoolMap.get(key)!;
+      if (candidate.gpa) stats.gpas.push(candidate.gpa);
+      if (candidate.major) {
+        stats.majors.set(
+          candidate.major,
+          (stats.majors.get(candidate.major) || 0) + 1
+        );
+      }
     }
 
-    const stats = schoolMap.get(school)!;
-    if (candidate.gpa) stats.gpas.push(candidate.gpa);
-    if (candidate.major) {
-      stats.majors.set(
-        candidate.major,
-        (stats.majors.get(candidate.major) || 0) + 1
-      );
+    // Process graduate school
+    const gradSchool = candidate.grad_school;
+    if (gradSchool) {
+      const key = `grad:${gradSchool}`;
+      if (!schoolMap.has(key)) {
+        schoolMap.set(key, { gpas: [], majors: new Map(), is_graduate: true });
+      }
+
+      const stats = schoolMap.get(key)!;
+      if (candidate.gpa) stats.gpas.push(candidate.gpa);
+      if (candidate.grad_specialty) {
+        stats.majors.set(
+          candidate.grad_specialty,
+          (stats.majors.get(candidate.grad_specialty) || 0) + 1
+        );
+      }
     }
   }
 
   // Convert to array with computed stats
   const schoolStats: SchoolStats[] = [];
 
-  for (const [school_name, stats] of schoolMap) {
+  for (const [key, stats] of schoolMap) {
+    // Extract school name from key (remove prefix)
+    const school_name = key.replace(/^(undergrad|grad):/, "");
+
     const avg_gpa =
       stats.gpas.length > 0
         ? stats.gpas.reduce((a, b) => a + b, 0) / stats.gpas.length
         : 0;
 
-    // Get top 3 majors
+    // Get top 3 majors/specialties
     const sortedMajors = Array.from(stats.majors.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
@@ -75,6 +98,7 @@ async function getSchoolStats(): Promise<SchoolStats[]> {
       candidate_count: stats.gpas.length,
       avg_gpa: Math.round(avg_gpa * 100) / 100,
       top_majors: sortedMajors,
+      is_graduate: stats.is_graduate,
     });
   }
 
@@ -111,7 +135,7 @@ export default async function SchoolsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Browse by School</h1>
         <p className="text-muted-foreground mt-2">
-          Explore candidates organized by their undergraduate institution
+          Explore candidates organized by their academic institutions
         </p>
       </div>
 
@@ -161,19 +185,26 @@ export default async function SchoolsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {schoolStats.map((school) => (
           <Link
-            key={school.school_name}
-            href={`/recruiter/schools/${encodeURIComponent(school.school_name)}`}
+            key={`${school.is_graduate ? 'grad' : 'undergrad'}-${school.school_name}`}
+            href={`/recruiter/schools/${encodeURIComponent(school.school_name)}${school.is_graduate ? '?type=graduate' : ''}`}
           >
             <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                      <GraduationCap className="h-5 w-5 text-primary" />
+                    <div className={`p-2 rounded-lg group-hover:opacity-80 transition-colors ${school.is_graduate ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-primary/10'}`}>
+                      <GraduationCap className={`h-5 w-5 ${school.is_graduate ? 'text-purple-600 dark:text-purple-400' : 'text-primary'}`} />
                     </div>
-                    <CardTitle className="text-base font-semibold leading-tight">
-                      {school.school_name}
-                    </CardTitle>
+                    <div>
+                      <CardTitle className="text-base font-semibold leading-tight">
+                        {school.school_name}
+                      </CardTitle>
+                      {school.is_graduate && (
+                        <Badge variant="secondary" className="mt-1 text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                          Graduate
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardHeader>

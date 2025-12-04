@@ -17,15 +17,17 @@ import { CandidateTable } from "../../candidate-table";
 
 interface PageProps {
   params: Promise<{ school: string }>;
+  searchParams: Promise<{ type?: string }>;
 }
 
-async function getSchoolCandidates(schoolName: string) {
+async function getSchoolCandidates(schoolName: string, isGraduate: boolean) {
   const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { data: candidates, error } = await supabaseAdmin
+  // Build query based on school type
+  let query = supabaseAdmin
     .from("candidate_profiles")
     .select(
       `
@@ -39,6 +41,8 @@ async function getSchoolCandidates(schoolName: string) {
       status,
       undergrad_degree_type,
       grad_degree_type,
+      grad_school,
+      grad_specialty,
       gpa_verified,
       resume_verified,
       transcript_verified,
@@ -48,9 +52,16 @@ async function getSchoolCandidates(schoolName: string) {
       )
     `
     )
-    .eq("status", "verified")
-    .ilike("school_name", schoolName)
-    .order("gpa", { ascending: false });
+    .eq("status", "verified");
+
+  // Filter by school type
+  if (isGraduate) {
+    query = query.ilike("grad_school", schoolName);
+  } else {
+    query = query.ilike("school_name", schoolName);
+  }
+
+  const { data: candidates, error } = await query.order("gpa", { ascending: false });
 
   if (error) {
     console.error("Error fetching school candidates:", error);
@@ -68,11 +79,12 @@ async function getSchoolCandidates(schoolName: string) {
   const avgGpa =
     gpas.length > 0 ? gpas.reduce((a, b) => a + b, 0) / gpas.length : 0;
 
-  // Count majors
+  // Count majors/specialties based on school type
   const majorCounts = new Map<string, number>();
   candidates.forEach((c) => {
-    if (c.major) {
-      majorCounts.set(c.major, (majorCounts.get(c.major) || 0) + 1);
+    const field = isGraduate ? c.grad_specialty : c.major;
+    if (field) {
+      majorCounts.set(field, (majorCounts.get(field) || 0) + 1);
     }
   });
   const topMajors = Array.from(majorCounts.entries())
@@ -126,7 +138,7 @@ async function getInterestedCandidates(recruiterId: string) {
   return interests?.map((i) => i.candidate_id) || [];
 }
 
-export default async function SchoolPage({ params }: PageProps) {
+export default async function SchoolPage({ params, searchParams }: PageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -137,10 +149,12 @@ export default async function SchoolPage({ params }: PageProps) {
   }
 
   const { school } = await params;
+  const { type } = await searchParams;
   const schoolName = decodeURIComponent(school);
+  const isGraduate = type === "graduate";
 
   const [{ candidates, stats }, interestedCandidateIds] = await Promise.all([
-    getSchoolCandidates(schoolName),
+    getSchoolCandidates(schoolName, isGraduate),
     getInterestedCandidates(user.id),
   ]);
 
@@ -160,11 +174,18 @@ export default async function SchoolPage({ params }: PageProps) {
           Back to all schools
         </Link>
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-xl">
-            <GraduationCap className="h-8 w-8 text-primary" />
+          <div className={`p-3 rounded-xl ${isGraduate ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-primary/10'}`}>
+            <GraduationCap className={`h-8 w-8 ${isGraduate ? 'text-purple-600 dark:text-purple-400' : 'text-primary'}`} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{schoolName}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">{schoolName}</h1>
+              {isGraduate && (
+                <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                  Graduate
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground mt-1">
               {stats.totalCandidates} verified{" "}
               {stats.totalCandidates === 1 ? "candidate" : "candidates"} in the
@@ -223,13 +244,13 @@ export default async function SchoolPage({ params }: PageProps) {
         </Card>
       </div>
 
-      {/* Top Majors */}
+      {/* Top Majors/Specialties */}
       {stats.topMajors.length > 0 && (
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              Popular Majors
+              {isGraduate ? "Popular Specialties" : "Popular Majors"}
             </CardTitle>
           </CardHeader>
           <CardContent>

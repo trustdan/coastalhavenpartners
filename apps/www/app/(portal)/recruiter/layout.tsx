@@ -94,6 +94,12 @@ export default async function RecruiterLayout({
             >
               Firm
             </Link>
+            <Link
+              href="/insights"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Insights
+            </Link>
             <MessageBadge role="recruiter" userId={user.id} />
             <Link
               href="/recruiter/settings"
