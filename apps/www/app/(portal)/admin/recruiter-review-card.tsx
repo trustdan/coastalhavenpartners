@@ -110,17 +110,17 @@ export function RecruiterReviewCard({ recruiter }: { recruiter: RecruiterWithPro
         <div className={`rounded-lg border p-4 ${
           domainMatch === true
             ? 'border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20'
-            : domainMatch === false
-            ? 'border-yellow-200 bg-yellow-50 dark:border-yellow-900/50 dark:bg-yellow-900/20'
-            : 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/50'
+            : !recruiter.company_website
+            ? 'border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/50'
+            : 'border-yellow-200 bg-yellow-50 dark:border-yellow-900/50 dark:bg-yellow-900/20'
         }`}>
           <div className="flex items-center gap-2">
             {domainMatch === true ? (
               <CheckCircle2 className="h-5 w-5 text-green-600" />
-            ) : domainMatch === false ? (
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
-            ) : (
+            ) : !recruiter.company_website ? (
               <XCircle className="h-5 w-5 text-neutral-400" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-yellow-600" />
             )}
             <span className="font-medium">Domain Verification</span>
           </div>
@@ -134,7 +134,11 @@ export function RecruiterReviewCard({ recruiter }: { recruiter: RecruiterWithPro
               </p>
             )}
             <p className="mt-1 font-medium">
-              {domainMatch === true ? 'Domains match' : domainMatch === false ? 'Domains do not match' : 'No website provided'}
+              {domainMatch === true
+                ? 'Domains match'
+                : !recruiter.company_website
+                  ? 'Website not provided'
+                  : 'Domains do not match'}
             </p>
           </div>
         </div>

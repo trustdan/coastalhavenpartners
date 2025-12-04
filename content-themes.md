@@ -73,13 +73,13 @@ For quick reference:
 - [x] **011** [T1] Technical Interview Canon: **Comparable Company Analysis (Comps): How to Value Companies Using Multiples**
 - [x] **012** [T1] Technical Interview Canon: **Accounting for Investment Banking Interviews: The 20 Concepts You Must Know**
 - [x] **013** [T2] Firm Profiles & Culture: **Goldman Sachs Investment Banking: Culture, Groups, Recruiting, and Career Paths**
-- [ ] **014** [T3] Recruiting Calendar & Process: **Private Equity Recruiting Explained: On-Cycle, Off-Cycle, and How to Navigate Both**
-- [ ] **015** [T4] Non-Traditional Paths: **Career Changers: How to Break Into Finance From Consulting, Engineering, or Other Fields**
-- [ ] **016** [T5] Career Architecture & Exits: **From Investment Banking to Private Equity: The Complete Transition Guide**
-- [ ] **017** [T6] DEI in Finance: **Black and Hispanic Professionals in Finance: Navigating Challenges and Building Success**
-- [ ] **018** [T7] Soft Skills Playbook: **The Cold Email Playbook: Templates and Tactics for Finance Recruiting Outreach**
-- [ ] **019** [T9] Recruiter & Talent Strategy: **The ROI of Campus Recruiting: A Data-Driven Guide for Finance Firms**
-- [ ] **020** [T10] Sector & Deal Intelligence: **TMT Investment Banking: A Complete Sector Primer for Aspiring Analysts**
+- [x] **014** [T3] Recruiting Calendar & Process: **Private Equity Recruiting Explained: On-Cycle, Off-Cycle, and How to Navigate Both**
+- [x] **015** [T4] Non-Traditional Paths: **Career Changers: How to Break Into Finance From Consulting, Engineering, or Other Fields**
+- [x] **016** [T5] Career Architecture & Exits: **From Investment Banking to Private Equity: The Complete Transition Guide**
+- [x] **017** [T6] DEI in Finance: **Black and Hispanic Professionals in Finance: Navigating Challenges and Building Success**
+- [x] **018** [T7] Soft Skills Playbook: **The Cold Email Playbook: Templates and Tactics for Finance Recruiting Outreach**
+- [x] **019** [T9] Recruiter & Talent Strategy: **The ROI of Campus Recruiting: A Data-Driven Guide for Finance Firms**
+- [x] **020** [T10] Sector & Deal Intelligence: **TMT Investment Banking: A Complete Sector Primer for Aspiring Analysts**
 
 ---
 
@@ -301,7 +301,7 @@ For quick reference:
 | Batch | Completed | Remaining |
 |-------|-----------|-----------|
 | Batch 1 | 10/10 | 0 |
-| Batch 2 | 3/10 | 7 |
+| Batch 2 | 10/10 | 0 |
 | Batch 3 | 0/10 | 10 |
 | Batch 4 | 0/10 | 10 |
 | Batch 5 | 0/10 | 10 |
@@ -315,7 +315,7 @@ For quick reference:
 | Batch 13 | 0/10 | 10 |
 | Batch 14 | 0/10 | 10 |
 | Batch 15 | 0/10 | 10 |
-| **TOTAL** | **13/150** | **137** |
+| **TOTAL** | **20/150** | **130** |
 
 ---
 

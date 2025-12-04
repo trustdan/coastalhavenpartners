@@ -18,7 +18,7 @@ export async function getExistingFirms() {
 
   const { data: firms, error } = await supabaseAdmin
     .from('firms')
-    .select('id, name, slug, firm_type')
+    .select('id, name, slug, firm_type, website')
     .eq('is_visible', true)
     .order('name')
 
@@ -39,6 +39,7 @@ export async function createRecruiterProfile(data: {
   jobTitle: string
   linkedinUrl?: string
   existingFirmId?: string // If selecting an existing firm, pass its ID
+  companyWebsite?: string // Auto-populated from firm website for domain verification
 }) {
   console.log('Creating recruiter profile for:', data.userId)
 
@@ -113,6 +114,8 @@ export async function createRecruiterProfile(data: {
       is_approved: false,
       // If selecting an existing firm, link directly
       firm_id: data.existingFirmId || null,
+      // Store company website for domain verification
+      company_website: data.companyWebsite || null,
     })
 
   if (error) {

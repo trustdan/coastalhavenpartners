@@ -22,6 +22,7 @@ interface Firm {
   name: string
   slug: string
   firm_type: string | null
+  website: string | null
 }
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -158,12 +159,14 @@ export default function RecruiterSignupPage() {
     let firmName: string
     let firmType: string
     let existingFirmId: string | undefined
+    let companyWebsite: string | undefined
 
     if (isNewFirm) {
       // User is entering a new firm
       firmName = formData.get('newFirmName') as string
       firmType = formData.get('newFirmType') as string
       existingFirmId = undefined
+      companyWebsite = undefined
     } else if (selectedFirmId) {
       // User selected an existing firm
       const selectedFirm = existingFirms.find(f => f.id === selectedFirmId)
@@ -175,6 +178,8 @@ export default function RecruiterSignupPage() {
       firmName = selectedFirm.name
       firmType = selectedFirm.firm_type || ''
       existingFirmId = selectedFirm.id
+      // Auto-populate company website from firm for domain verification
+      companyWebsite = selectedFirm.website || undefined
     } else {
       setError('Please select a firm or enter a new one')
       setLoading(false)
@@ -208,6 +213,7 @@ export default function RecruiterSignupPage() {
           jobTitle,
           linkedinUrl,
           existingFirmId,
+          companyWebsite,
         })
 
         // Redirect to email verification page

@@ -436,3 +436,244 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Typora-inspired Prose Styling */
+.prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  line-height: 1.8;
+  font-size: 1.0625rem;
+}
+
+/* Headings with better spacing */
+.prose h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.025em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.prose h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-top: 2.25rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.prose h3 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.015em;
+}
+
+.prose h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Paragraphs */
+.prose p {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* First paragraph after heading - reduce top margin */
+.prose h1 + p,
+.prose h2 + p,
+.prose h3 + p,
+.prose h4 + p {
+  margin-top: 0.75rem;
+}
+
+/* Tables - Typora style */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 0.9375rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.prose thead {
+  background-color: oklch(96% 0 0);
+  border-bottom: 2px solid var(--border);
+}
+
+.dark .prose thead {
+  background-color: oklch(20% 0 0);
+}
+
+.prose th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+}
+
+.prose td {
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.prose tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.prose tbody tr:nth-child(even) {
+  background-color: oklch(98% 0 0);
+}
+
+.dark .prose tbody tr:nth-child(even) {
+  background-color: oklch(12% 0 0);
+}
+
+.prose tbody tr:hover {
+  background-color: oklch(95% 0 0);
+}
+
+.dark .prose tbody tr:hover {
+  background-color: oklch(18% 0 0);
+}
+
+/* Bold text in tables */
+.prose td strong,
+.prose th strong {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+/* Lists */
+.prose ul,
+.prose ol {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding-left: 1.75rem;
+}
+
+.prose li {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0.375rem;
+}
+
+.prose li::marker {
+  color: var(--muted-foreground);
+}
+
+/* Nested lists */
+.prose li > ul,
+.prose li > ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Blockquotes */
+.prose blockquote {
+  margin: 1.75rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 4px solid oklch(65% 0.18 280);
+  background-color: oklch(98% 0 0);
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+}
+
+.dark .prose blockquote {
+  background-color: oklch(15% 0 0);
+  border-left-color: oklch(70% 0.15 280);
+}
+
+.prose blockquote p {
+  margin: 0;
+}
+
+/* Horizontal rules */
+.prose hr {
+  margin: 3rem 0;
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--border) 20%,
+    var(--border) 80%,
+    transparent
+  );
+}
+
+/* Code blocks */
+.prose pre {
+  margin: 1.75rem 0;
+  padding: 1.25rem;
+  background-color: oklch(15% 0 0);
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.dark .prose pre {
+  background-color: oklch(10% 0 0);
+  border: 1px solid oklch(25% 0 0);
+}
+
+/* Inline code */
+.prose code:not(pre code) {
+  padding: 0.2em 0.4em;
+  background-color: oklch(94% 0 0);
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+.dark .prose code:not(pre code) {
+  background-color: oklch(25% 0 0);
+}
+
+/* Links */
+.prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: all 0.15s ease;
+}
+
+.prose a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Images */
+.prose img {
+  margin: 2rem auto;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px oklch(0% 0 0 / 0.1), 0 2px 4px -2px oklch(0% 0 0 / 0.1);
+}
+
+/* Strong/Bold */
+.prose strong {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+/* Time-based entries (for schedules) */
+.prose p strong:first-child {
+  color: oklch(50% 0.15 280);
+}
+
+.dark .prose p strong:first-child {
+  color: oklch(70% 0.15 280);
+}
