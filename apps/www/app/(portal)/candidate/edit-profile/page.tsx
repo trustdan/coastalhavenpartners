@@ -19,6 +19,8 @@ import { validateFieldsForProfanity, FIELD_DISPLAY_NAMES } from '@/lib/profanity
 import Link from 'next/link'
 import { GraduationCap } from 'lucide-react'
 import { MFASettings } from '@/components/auth/mfa-settings'
+import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
+import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
 
 const TARGET_ROLES = [
   'Investment Banking',
@@ -83,6 +85,9 @@ export default function EditProfilePage() {
     resume: true,
     transcript: true,
   })
+
+  // Messaging preferences
+  const [messagingPrefs, setMessagingPrefs] = useState<MessagingPrefsType | null>(null)
 
   const toggleRecruiterField = (field: keyof VisibilityFields) => {
     setRecruiterVisibility(prev => ({ ...prev, [field]: !prev[field] }))
@@ -160,6 +165,10 @@ export default function EditProfilePage() {
       if (extendedData?.visible_fields_to_schools) {
         setSchoolVisibility(extendedData.visible_fields_to_schools as VisibilityFields)
       }
+
+      // Load messaging preferences
+      const prefs = await getMessagingPreferences()
+      setMessagingPrefs(prefs)
 
       setLoading(false)
     }
@@ -651,6 +660,16 @@ export default function EditProfilePage() {
 
             {/* Security Settings */}
             <MFASettings />
+
+            {/* Messaging Preferences */}
+            {messagingPrefs && (
+              <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
+                <MessagingPreferencesForm
+                  userRole="candidate"
+                  initialPreferences={messagingPrefs}
+                />
+              </div>
+            )}
 
             <div className="flex justify-end gap-4 pt-4">
               <Button type="button" variant="outline" asChild>

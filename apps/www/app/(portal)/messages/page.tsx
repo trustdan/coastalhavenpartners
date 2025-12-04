@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import Link from 'next/link'
-import { MessageSquare, User } from 'lucide-react'
-import { startConversation } from './actions'
+import { MessageSquare, User, Building2, GraduationCap, Briefcase } from 'lucide-react'
+import { startConversation, getConversations } from './actions'
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
@@ -20,12 +20,40 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString()
 }
 
+function getRoleIcon(role: string) {
+  switch (role) {
+    case 'recruiter':
+      return <Briefcase className="h-5 w-5" />
+    case 'candidate':
+      return <GraduationCap className="h-5 w-5" />
+    case 'school':
+    case 'school_admin':
+      return <Building2 className="h-5 w-5" />
+    default:
+      return <User className="h-5 w-5" />
+  }
+}
+
+function getRoleLabel(role: string) {
+  switch (role) {
+    case 'recruiter':
+      return 'Recruiter'
+    case 'candidate':
+      return 'Candidate'
+    case 'school':
+    case 'school_admin':
+      return 'Career Services'
+    default:
+      return ''
+  }
+}
+
 export default async function MessagesPage({
   searchParams,
 }: {
   searchParams: Promise<{ start?: string }>
 }) {
-  const { start: candidateIdToMessage } = await searchParams
+  const { start: userIdToMessage } = await searchParams
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -34,9 +62,9 @@ export default async function MessagesPage({
   }
 
   // Handle starting a new conversation
-  if (candidateIdToMessage) {
+  if (userIdToMessage) {
     try {
-      const { conversationId } = await startConversation(candidateIdToMessage)
+      const { conversationId } = await startConversation(userIdToMessage)
       redirect(`/messages/${conversationId}`)
     } catch (error) {
       // Re-throw redirect errors (they're not real errors)
@@ -48,7 +76,7 @@ export default async function MessagesPage({
     }
   }
 
-  // Get user's role and profile
+  // Get user's role
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -59,129 +87,42 @@ export default async function MessagesPage({
     redirect('/login')
   }
 
-  // Get conversations based on role
-  let conversations: any[] = []
+  // Get conversations using the new polymorphic query
+  const conversations = await getConversations()
 
-  if (profile.role === 'recruiter') {
-    const { data: recruiterProfile } = await supabase
-      .from('recruiter_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (recruiterProfile) {
-      const { data } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          last_message_at,
-          candidate:candidate_profiles!candidate_id(
-            id,
-            school_name,
-            user_id
-          )
-        `)
-        .eq('recruiter_id', recruiterProfile.id)
-        .order('last_message_at', { ascending: false })
-
-      // Get candidate names
-      if (data) {
-        const candidateUserIds = data.map(c => c.candidate?.user_id).filter((id): id is string => !!id)
-        const { data: candidateProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', candidateUserIds)
-
-        conversations = data.map(conv => ({
-          ...conv,
-          otherParty: {
-            name: candidateProfiles?.find(p => p.id === conv.candidate?.user_id)?.full_name || 'Unknown',
-            subtitle: conv.candidate?.school_name || ''
-          }
-        }))
-      }
-    }
-  } else if (profile.role === 'candidate') {
-    const { data: candidateProfile } = await supabase
-      .from('candidate_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (candidateProfile) {
-      const { data } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          last_message_at,
-          recruiter:recruiter_profiles!recruiter_id(
-            id,
-            firm_name,
-            user_id
-          )
-        `)
-        .eq('candidate_id', candidateProfile.id)
-        .order('last_message_at', { ascending: false })
-
-      // Get recruiter names
-      if (data) {
-        const recruiterUserIds = data.map(c => c.recruiter?.user_id).filter((id): id is string => !!id)
-        const { data: recruiterProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', recruiterUserIds)
-
-        conversations = data.map(conv => ({
-          ...conv,
-          otherParty: {
-            name: recruiterProfiles?.find(p => p.id === conv.recruiter?.user_id)?.full_name || 'Unknown',
-            subtitle: conv.recruiter?.firm_name || ''
-          }
-        }))
-      }
+  // Build description based on role
+  const getDescription = () => {
+    switch (profile.role) {
+      case 'recruiter':
+        return 'Your conversations with candidates and career services'
+      case 'candidate':
+        return 'Your conversations with recruiters and career services'
+      case 'school_admin':
+        return 'Your conversations with students and recruiters'
+      default:
+        return 'Your conversations'
     }
   }
 
-  // Get unread counts for each conversation
-  const conversationIds = conversations.map(c => c.id)
-  let unreadCounts: Record<string, number> = {}
-
-  if (conversationIds.length > 0) {
-    const { data: unreadMessages } = await supabase
-      .from('messages')
-      .select('conversation_id')
-      .in('conversation_id', conversationIds)
-      .neq('sender_id', user.id)
-      .is('read_at', null)
-
-    if (unreadMessages) {
-      unreadCounts = unreadMessages.reduce((acc, msg) => {
-        acc[msg.conversation_id] = (acc[msg.conversation_id] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
+  const getEmptyStateMessage = () => {
+    switch (profile.role) {
+      case 'recruiter':
+        return 'Start a conversation by messaging a candidate from their profile, or connect with career services partners.'
+      case 'candidate':
+        return 'Recruiters and your career services office can message you here.'
+      case 'school_admin':
+        return 'Message your students or connect with recruiting partners from their profiles.'
+      default:
+        return 'No conversations yet.'
     }
   }
-
-  // Get last message for each conversation
-  const { data: lastMessages } = await supabase
-    .from('messages')
-    .select('conversation_id, content, created_at, sender_id')
-    .in('conversation_id', conversationIds)
-    .order('created_at', { ascending: false })
-
-  const lastMessageByConv: Record<string, any> = {}
-  lastMessages?.forEach(msg => {
-    if (!lastMessageByConv[msg.conversation_id]) {
-      lastMessageByConv[msg.conversation_id] = msg
-    }
-  })
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Messages</h1>
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          Your conversations with {profile.role === 'recruiter' ? 'candidates' : 'recruiters'}
+          {getDescription()}
         </p>
       </div>
 
@@ -190,57 +131,56 @@ export default async function MessagesPage({
           <MessageSquare className="mx-auto h-12 w-12 text-neutral-400" />
           <h2 className="mt-4 text-lg font-semibold">No conversations yet</h2>
           <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-            {profile.role === 'recruiter'
-              ? 'Start a conversation by messaging a candidate from their profile.'
-              : 'Recruiters can message you once they view your profile.'}
+            {getEmptyStateMessage()}
           </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-white shadow-sm dark:bg-neutral-900">
           <div className="divide-y">
-            {conversations.map((conv) => {
-              const unread = unreadCounts[conv.id] || 0
-              const lastMsg = lastMessageByConv[conv.id]
-              const isFromMe = lastMsg?.sender_id === user.id
-
-              return (
-                <Link
-                  key={conv.id}
-                  href={`/messages/${conv.id}`}
-                  className={`flex items-center gap-4 p-4 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
-                    unread > 0 ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                  }`}
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-                    <User className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className={`font-medium truncate ${unread > 0 ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-                        {conv.otherParty.name}
+            {conversations.map((conv) => (
+              <Link
+                key={conv.id}
+                href={`/messages/${conv.id}`}
+                className={`flex items-center gap-4 p-4 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
+                  conv.unreadCount > 0 ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                }`}
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+                  <span className="text-neutral-600 dark:text-neutral-400">
+                    {getRoleIcon(conv.otherParticipant.role)}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className={`font-medium truncate ${conv.unreadCount > 0 ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                        {conv.otherParticipant.name}
                       </p>
-                      <span className="text-xs text-neutral-500 whitespace-nowrap ml-2">
-                        {conv.last_message_at && formatRelativeTime(conv.last_message_at)}
+                      <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                        {getRoleLabel(conv.otherParticipant.role)}
                       </span>
                     </div>
-                    <p className="text-sm text-neutral-500 truncate">
-                      {conv.otherParty.subtitle}
-                    </p>
-                    {lastMsg && (
-                      <p className={`mt-1 text-sm truncate ${unread > 0 ? 'font-medium text-neutral-900 dark:text-neutral-100' : 'text-neutral-600 dark:text-neutral-400'}`}>
-                        {isFromMe && <span className="text-neutral-400">You: </span>}
-                        {lastMsg.content}
-                      </p>
-                    )}
+                    <span className="text-xs text-neutral-500 whitespace-nowrap ml-2">
+                      {conv.lastMessageAt && formatRelativeTime(conv.lastMessageAt)}
+                    </span>
                   </div>
-                  {unread > 0 && (
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
-                      {unread}
-                    </div>
+                  <p className="text-sm text-neutral-500 truncate">
+                    {conv.otherParticipant.subtitle}
+                  </p>
+                  {conv.lastMessage && (
+                    <p className={`mt-1 text-sm truncate ${conv.unreadCount > 0 ? 'font-medium text-neutral-900 dark:text-neutral-100' : 'text-neutral-600 dark:text-neutral-400'}`}>
+                      {conv.lastMessage.isFromMe && <span className="text-neutral-400">You: </span>}
+                      {conv.lastMessage.content}
+                    </p>
                   )}
-                </Link>
-              )
-            })}
+                </div>
+                {conv.unreadCount > 0 && (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
+                    {conv.unreadCount}
+                  </div>
+                )}
+              </Link>
+            ))}
           </div>
         </div>
       )}

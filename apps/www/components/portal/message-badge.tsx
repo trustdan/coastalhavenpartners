@@ -6,56 +6,29 @@ import { MessageSquare } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 interface MessageBadgeProps {
-  role: "recruiter" | "candidate"
+  role: "recruiter" | "candidate" | "school"
   userId: string
 }
 
-export function MessageBadge({ role, userId }: MessageBadgeProps) {
+export function MessageBadge({ userId }: MessageBadgeProps) {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
       const supabase = createClient()
 
-      // Get profile ID based on role
-      let conversationIds: string[] = []
+      // Get all conversation IDs where user is a participant
+      const { data: participations } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("user_id", userId)
 
-      if (role === "recruiter") {
-        const { data: recruiterProfile } = await supabase
-          .from("recruiter_profiles")
-          .select("id")
-          .eq("user_id", userId)
-          .single()
-
-        if (recruiterProfile) {
-          const { data: conversations } = await supabase
-            .from("conversations")
-            .select("id")
-            .eq("recruiter_id", recruiterProfile.id)
-
-          conversationIds = conversations?.map((c) => c.id) || []
-        }
-      } else {
-        const { data: candidateProfile } = await supabase
-          .from("candidate_profiles")
-          .select("id")
-          .eq("user_id", userId)
-          .single()
-
-        if (candidateProfile) {
-          const { data: conversations } = await supabase
-            .from("conversations")
-            .select("id")
-            .eq("candidate_id", candidateProfile.id)
-
-          conversationIds = conversations?.map((c) => c.id) || []
-        }
-      }
-
-      if (conversationIds.length === 0) {
+      if (!participations || participations.length === 0) {
         setUnreadCount(0)
         return
       }
+
+      const conversationIds = participations.map((p) => p.conversation_id)
 
       // Count unread messages
       const { count } = await supabase
@@ -75,7 +48,7 @@ export function MessageBadge({ role, userId }: MessageBadgeProps) {
     const interval = setInterval(fetchUnreadCount, 10000)
 
     return () => clearInterval(interval)
-  }, [role, userId])
+  }, [userId])
 
   return (
     <Link

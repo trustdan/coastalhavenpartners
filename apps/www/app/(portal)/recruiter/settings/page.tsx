@@ -13,6 +13,8 @@ import { toast } from 'sonner'
 import { ArrowLeft, Loader2, Eye, Users, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { MFASettings } from '@/components/auth/mfa-settings'
+import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
+import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
 
 type VisibilityFields = {
   full_name: boolean
@@ -37,6 +39,7 @@ export default function RecruiterSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [recruiterProfile, setRecruiterProfile] = useState<any>(null)
   const [baseProfile, setBaseProfile] = useState<any>(null)
+  const [messagingPrefs, setMessagingPrefs] = useState<MessagingPrefsType | null>(null)
 
   // Master toggles
   const [visibleToCandidates, setVisibleToCandidates] = useState(false)
@@ -132,6 +135,10 @@ export default function RecruiterSettingsPage() {
           setSchoolVisibility(recruiterData.visible_fields_to_schools as VisibilityFields)
         }
       }
+
+      // Load messaging preferences
+      const prefs = await getMessagingPreferences()
+      setMessagingPrefs(prefs)
 
       setLoading(false)
     }
@@ -400,6 +407,16 @@ export default function RecruiterSettingsPage() {
 
         {/* Security Settings */}
         <MFASettings />
+
+        {/* Messaging Preferences */}
+        {messagingPrefs && (
+          <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
+            <MessagingPreferencesForm
+              userRole="recruiter"
+              initialPreferences={messagingPrefs}
+            />
+          </div>
+        )}
 
         {/* Visibility Controls */}
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">

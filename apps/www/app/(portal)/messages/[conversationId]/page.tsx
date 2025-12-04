@@ -1,10 +1,38 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User } from 'lucide-react'
+import { ArrowLeft, User, Building2, GraduationCap, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MessageThread } from './message-thread'
 import { markMessagesAsRead } from '../actions'
+
+function getRoleIcon(role: string) {
+  switch (role) {
+    case 'recruiter':
+      return <Briefcase className="h-5 w-5" />
+    case 'candidate':
+      return <GraduationCap className="h-5 w-5" />
+    case 'school':
+    case 'school_admin':
+      return <Building2 className="h-5 w-5" />
+    default:
+      return <User className="h-5 w-5" />
+  }
+}
+
+function getRoleLabel(role: string) {
+  switch (role) {
+    case 'recruiter':
+      return 'Recruiter'
+    case 'candidate':
+      return 'Candidate'
+    case 'school':
+    case 'school_admin':
+      return 'Career Services'
+    default:
+      return ''
+  }
+}
 
 export default async function ConversationPage({
   params,
@@ -19,67 +47,73 @@ export default async function ConversationPage({
     redirect('/login')
   }
 
-  // Get user's profile
-  const { data: profile } = await supabase
+  // Verify user is a participant in this conversation
+  const { data: myParticipation } = await supabase
+    .from('conversation_participants')
+    .select('id, participant_type')
+    .eq('conversation_id', conversationId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!myParticipation) {
+    redirect('/messages')
+  }
+
+  // Get the other participant(s)
+  const { data: otherParticipants } = await supabase
+    .from('conversation_participants')
+    .select('user_id, participant_type, profile_id')
+    .eq('conversation_id', conversationId)
+    .neq('user_id', user.id)
+
+  if (!otherParticipants || otherParticipants.length === 0) {
+    redirect('/messages')
+  }
+
+  // Get the other party's info (assuming 1:1 conversation)
+  const otherParticipant = otherParticipants[0]
+
+  // Get the other party's name
+  const { data: otherProfile } = await supabase
     .from('profiles')
-    .select('role')
-    .eq('id', user.id)
+    .select('full_name')
+    .eq('id', otherParticipant.user_id)
     .maybeSingle()
 
-  if (!profile) {
-    redirect('/login')
-  }
-
-  // Get conversation with participants
-  const { data: conversation } = await supabase
-    .from('conversations')
-    .select(`
-      id,
-      recruiter:recruiter_profiles!recruiter_id(
-        id,
-        firm_name,
-        user_id
-      ),
-      candidate:candidate_profiles!candidate_id(
-        id,
-        school_name,
-        user_id
-      )
-    `)
-    .eq('id', conversationId)
-    .maybeSingle()
-
-  if (!conversation) {
-    redirect('/messages')
-  }
-
-  // Verify user is part of this conversation
-  const isRecruiter = conversation.recruiter?.user_id === user.id
-  const isCandidate = conversation.candidate?.user_id === user.id
-
-  if (!isRecruiter && !isCandidate) {
-    redirect('/messages')
-  }
-
-  // Get other party's name
-  const otherUserId = isRecruiter
-    ? conversation.candidate?.user_id
-    : conversation.recruiter?.user_id
-
-  let otherPartyName = 'Unknown'
+  let otherPartyName = otherProfile?.full_name || 'Unknown'
   let otherPartySubtitle = ''
 
-  if (otherUserId) {
-    const { data: otherProfile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', otherUserId)
-      .maybeSingle()
-
-    otherPartyName = otherProfile?.full_name || 'Unknown'
-    otherPartySubtitle = isRecruiter
-      ? conversation.candidate?.school_name || ''
-      : conversation.recruiter?.firm_name || ''
+  // Get role-specific subtitle
+  switch (otherParticipant.participant_type) {
+    case 'candidate': {
+      const { data } = await supabase
+        .from('candidate_profiles')
+        .select('school_name')
+        .eq('id', otherParticipant.profile_id)
+        .maybeSingle()
+      otherPartySubtitle = data?.school_name || ''
+      break
+    }
+    case 'recruiter': {
+      const { data } = await supabase
+        .from('recruiter_profiles')
+        .select('firm_name')
+        .eq('id', otherParticipant.profile_id)
+        .maybeSingle()
+      otherPartySubtitle = data?.firm_name || ''
+      break
+    }
+    case 'school': {
+      const { data } = await supabase
+        .from('school_profiles')
+        .select('school_name, department_name')
+        .eq('id', otherParticipant.profile_id)
+        .maybeSingle()
+      otherPartySubtitle = data?.department_name
+        ? `${data.school_name} - ${data.department_name}`
+        : data?.school_name || ''
+      break
+    }
   }
 
   // Get messages
@@ -113,10 +147,17 @@ export default async function ConversationPage({
         </Button>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-            <User className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+            <span className="text-neutral-600 dark:text-neutral-400">
+              {getRoleIcon(otherParticipant.participant_type)}
+            </span>
           </div>
           <div>
-            <h1 className="font-semibold">{otherPartyName}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-semibold">{otherPartyName}</h1>
+              <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                {getRoleLabel(otherParticipant.participant_type)}
+              </span>
+            </div>
             {otherPartySubtitle && (
               <p className="text-sm text-neutral-500">{otherPartySubtitle}</p>
             )}

@@ -36,9 +36,35 @@ export default async function MessagesLayout({
     redirect('/login')
   }
 
-  // Determine dashboard link based on role
-  const dashboardPath = profile.role === 'recruiter' ? '/recruiter' : '/candidate'
-  const settingsPath = profile.role === 'recruiter' ? '/recruiter/settings' : '/candidate/settings'
+  // Determine paths based on role
+  const getDashboardPath = () => {
+    switch (profile.role) {
+      case 'recruiter':
+        return '/recruiter'
+      case 'candidate':
+        return '/candidate'
+      case 'school_admin':
+        return '/school'
+      default:
+        return '/'
+    }
+  }
+
+  const getSettingsPath = () => {
+    switch (profile.role) {
+      case 'recruiter':
+        return '/recruiter/settings'
+      case 'candidate':
+        return '/candidate/settings'
+      case 'school_admin':
+        return '/school/settings'
+      default:
+        return '/'
+    }
+  }
+
+  const dashboardPath = getDashboardPath()
+  const settingsPath = getSettingsPath()
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
@@ -62,7 +88,7 @@ export default async function MessagesLayout({
                 Network
               </Link>
             )}
-            <MessageBadge role={profile.role as 'recruiter' | 'candidate'} userId={user.id} />
+            <MessageBadge role={profile.role as 'recruiter' | 'candidate' | 'school'} userId={user.id} />
             <Link
               href={settingsPath}
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"

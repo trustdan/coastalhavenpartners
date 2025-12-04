@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       analytics_events: {
@@ -609,27 +584,62 @@ export type Database = {
           },
         ]
       }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          id: string
+          joined_at: string | null
+          participant_type: Database["public"]["Enums"]["conversation_participant_type"]
+          profile_id: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          joined_at?: string | null
+          participant_type: Database["public"]["Enums"]["conversation_participant_type"]
+          profile_id: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          joined_at?: string | null
+          participant_type?: Database["public"]["Enums"]["conversation_participant_type"]
+          profile_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
-          candidate_id: string
+          candidate_id: string | null
           created_at: string | null
           id: string
           last_message_at: string | null
-          recruiter_id: string
+          recruiter_id: string | null
         }
         Insert: {
-          candidate_id: string
+          candidate_id?: string | null
           created_at?: string | null
           id?: string
           last_message_at?: string | null
-          recruiter_id: string
+          recruiter_id?: string | null
         }
         Update: {
-          candidate_id?: string
+          candidate_id?: string | null
           created_at?: string | null
           id?: string
           last_message_at?: string | null
-          recruiter_id?: string
+          recruiter_id?: string | null
         }
         Relationships: [
           {
@@ -931,6 +941,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      messaging_preferences: {
+        Row: {
+          allow_messages_from_candidates: boolean
+          allow_messages_from_recruiters: boolean
+          allow_messages_from_schools: boolean
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allow_messages_from_candidates?: boolean
+          allow_messages_from_recruiters?: boolean
+          allow_messages_from_schools?: boolean
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allow_messages_from_candidates?: boolean
+          allow_messages_from_recruiters?: boolean
+          allow_messages_from_schools?: boolean
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       moderation_actions: {
         Row: {
@@ -1426,6 +1466,10 @@ export type Database = {
         }
         Returns: string
       }
+      can_user_message: {
+        Args: { recipient_user_id: string; sender_user_id: string }
+        Returns: boolean
+      }
       check_domain_match: {
         Args: { email: string; website: string }
         Returns: boolean
@@ -1449,6 +1493,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       extract_domain: { Args: { input: string }; Returns: string }
+      find_conversation_between_users: {
+        Args: { user_a: string; user_b: string }
+        Returns: string
+      }
       generate_firm_slug: { Args: { firm_name: string }; Returns: string }
       generate_job_slug: {
         Args: { p_firm_name: string; p_title: string }
@@ -1484,6 +1532,10 @@ export type Database = {
         Returns: Json
       }
       is_admin: { Args: never; Returns: boolean }
+      is_user_verified_for_messaging: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       application_status:
@@ -1508,6 +1560,7 @@ export type Database = {
         | "active"
         | "placed"
         | "rejected"
+      conversation_participant_type: "candidate" | "recruiter" | "school"
       education_level: "bachelors" | "masters" | "mba" | "phd" | "professional"
       job_listing_status: "draft" | "active" | "paused" | "closed" | "filled"
       job_type: "full_time" | "internship" | "summer_analyst" | "off_cycle"
@@ -1644,9 +1697,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       application_status: [
@@ -1674,6 +1724,7 @@ export const Constants = {
         "placed",
         "rejected",
       ],
+      conversation_participant_type: ["candidate", "recruiter", "school"],
       education_level: ["bachelors", "masters", "mba", "phd", "professional"],
       job_listing_status: ["draft", "active", "paused", "closed", "filled"],
       job_type: ["full_time", "internship", "summer_analyst", "off_cycle"],

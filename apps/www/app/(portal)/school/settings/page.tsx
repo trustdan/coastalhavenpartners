@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { MFASettings } from '@/components/auth/mfa-settings'
+import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
+import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
 
 export default function SchoolSettingsPage() {
   const router = useRouter()
@@ -18,6 +20,7 @@ export default function SchoolSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [schoolProfile, setSchoolProfile] = useState<any>(null)
   const [baseProfile, setBaseProfile] = useState<any>(null)
+  const [messagingPrefs, setMessagingPrefs] = useState<MessagingPrefsType | null>(null)
 
   useEffect(() => {
     async function loadProfile() {
@@ -46,6 +49,10 @@ export default function SchoolSettingsPage() {
       if (schoolData) {
         setSchoolProfile(schoolData)
       }
+
+      // Load messaging preferences
+      const prefs = await getMessagingPreferences()
+      setMessagingPrefs(prefs)
 
       setLoading(false)
     }
@@ -199,6 +206,16 @@ export default function SchoolSettingsPage() {
 
         {/* Security Settings */}
         <MFASettings />
+
+        {/* Messaging Preferences */}
+        {messagingPrefs && (
+          <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
+            <MessagingPreferencesForm
+              userRole="school_admin"
+              initialPreferences={messagingPrefs}
+            />
+          </div>
+        )}
 
         {/* Approval Status */}
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
