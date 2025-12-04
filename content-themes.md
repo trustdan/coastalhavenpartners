@@ -130,61 +130,61 @@ For quick reference:
 
 ## Batch 6 (Articles 51-60) — Completing Big 5 BBs & Sector Expansion
 
-- [ ] **051** [T1] Technical Interview Canon: **Credit Analysis for Investment Banking: Understanding Debt, Leverage, and Credit Metrics**
-- [ ] **052** [T1] Technical Interview Canon: **The Investment Banking Case Study: Frameworks for Live Modeling Tests and Take-Home Assignments**
-- [ ] **053** [T2] Firm Profiles & Culture: **Bank of America Investment Banking: Culture, Strengths, and How It Compares to Peers**
-- [ ] **054** [T3] Recruiting Calendar & Process: **MBA Recruiting for Investment Banking: Timelines, Associate Programs, and How to Stand Out**
-- [ ] **055** [T4] Non-Traditional Paths: **Breaking Into Finance After 30: A Guide for Late Career Starters**
-- [ ] **056** [T5] Career Architecture & Exits: **From Investment Banking to Venture Capital: Making the Jump to Early-Stage Investing**
-- [ ] **057** [T6] DEI in Finance: **Evaluating DEI Programs: How to Tell Which Firms Actually Walk the Talk**
-- [ ] **058** [T9] Recruiter & Talent Strategy: **Compensation Benchmarking for Finance Recruiting: Setting Competitive Offers That Win Talent**
-- [ ] **059** [T10] Sector & Deal Intelligence: **Consumer and Retail Investment Banking: A Sector Primer From CPG to E-Commerce**
-- [ ] **060** [T10] Sector & Deal Intelligence: **Energy Investment Banking: Oil & Gas, Renewables, and the Transition Trade**
+- [x] **051** [T1] Technical Interview Canon: **Credit Analysis for Investment Banking: Understanding Debt, Leverage, and Credit Metrics**
+- [x] **052** [T1] Technical Interview Canon: **The Investment Banking Case Study: Frameworks for Live Modeling Tests and Take-Home Assignments**
+- [x] **053** [T2] Firm Profiles & Culture: **Bank of America Investment Banking: Culture, Strengths, and How It Compares to Peers**
+- [x] **054** [T3] Recruiting Calendar & Process: **MBA Recruiting for Investment Banking: Timelines, Associate Programs, and How to Stand Out**
+- [x] **055** [T4] Non-Traditional Paths: **Breaking Into Finance After 30: A Guide for Late Career Starters**
+- [x] **056** [T5] Career Architecture & Exits: **From Investment Banking to Venture Capital: Making the Jump to Early-Stage Investing**
+- [x] **057** [T6] DEI in Finance: **Evaluating DEI Programs: How to Tell Which Firms Actually Walk the Talk**
+- [x] **058** [T9] Recruiter & Talent Strategy: **Compensation Benchmarking for Finance Recruiting: Setting Competitive Offers That Win Talent**
+- [x] **059** [T10] Sector & Deal Intelligence: **Consumer and Retail Investment Banking: A Sector Primer From CPG to E-Commerce**
+- [x] **060** [T10] Sector & Deal Intelligence: **Energy Investment Banking: Oil & Gas, Renewables, and the Transition Trade**
 
 ---
 
 ## Batch 7 (Articles 61-70) — Sector Technicals & Career Progression
 
-- [ ] **061** [T1] Technical Interview Canon: **TMT Technical Interview Deep Dive: SaaS Metrics, Software Valuations, and Sector-Specific Questions**
-- [ ] **062** [T2] Firm Profiles & Culture: **Centerview Partners: The Boutique That Advises on the Biggest Deals**
-- [ ] **063** [T3] Recruiting Calendar & Process: **Evaluating and Negotiating Multiple Offers: How to Make the Right Decision**
-- [ ] **064** [T4] Non-Traditional Paths: **Return-to-Work Programs in Finance: How to Re-Enter After a Career Break**
-- [ ] **065** [T5] Career Architecture & Exits: **The Private Equity Career Path: From Associate to Partner and What It Takes**
-- [ ] **066** [T6] DEI in Finance: **Women in Private Equity: Unique Challenges Beyond Investment Banking**
-- [ ] **067** [T7] Soft Skills Playbook: **Managing Up in Finance: How to Work Effectively With Senior Bankers and Partners**
-- [ ] **068** [T8] Life in Finance Reality: **Work-Life Balance in Finance: How Top Performers Actually Make It Work**
-- [ ] **069** [T10] Sector & Deal Intelligence: **Real Estate Investment Banking: A Sector Primer Covering REITs, Development, and Capital Markets**
-- [ ] **070** [T10] Sector & Deal Intelligence: **Anatomy of a Mega-Deal: Breaking Down a $50B+ M&A Transaction Step by Step**
+- [x] **061** [T1] Technical Interview Canon: **TMT Technical Interview Deep Dive: SaaS Metrics, Software Valuations, and Sector-Specific Questions**
+- [x] **062** [T2] Firm Profiles & Culture: **Centerview Partners: The Boutique That Advises on the Biggest Deals**
+- [x] **063** [T3] Recruiting Calendar & Process: **Evaluating and Negotiating Multiple Offers: How to Make the Right Decision**
+- [x] **064** [T4] Non-Traditional Paths: **Return-to-Work Programs in Finance: How to Re-Enter After a Career Break**
+- [x] **065** [T5] Career Architecture & Exits: **The Private Equity Career Path: From Associate to Partner and What It Takes**
+- [x] **066** [T6] DEI in Finance: **Women in Private Equity: Unique Challenges Beyond Investment Banking**
+- [x] **067** [T7] Soft Skills Playbook: **Managing Up in Finance: How to Work Effectively With Senior Bankers and Partners**
+- [x] **068** [T8] Life in Finance Reality: **Work-Life Balance in Finance: How Top Performers Actually Make It Work**
+- [x] **069** [T10] Sector & Deal Intelligence: **Real Estate Investment Banking: A Sector Primer Covering REITs, Development, and Capital Markets**
+- [x] **070** [T10] Sector & Deal Intelligence: **Anatomy of a Mega-Deal: Breaking Down a $50B+ M&A Transaction Step by Step**
 
 ---
 
 ## Batch 8 (Articles 71-80) — Industry Technicals & Elite Boutique Completion
 
-- [ ] **071** [T1] Technical Interview Canon: **Healthcare Technical Interview Deep Dive: Pharma Metrics, Biotech Valuations, and Sector-Specific Questions**
-- [ ] **072** [T1] Technical Interview Canon: **FIG Technical Interview Deep Dive: Bank Valuations, Insurance Metrics, and Financial Services Questions**
-- [ ] **073** [T2] Firm Profiles & Culture: **PJT Partners: The Restructuring Powerhouse Built by Blackstone Alumni**
-- [ ] **074** [T3] Recruiting Calendar & Process: **Lateral Recruiting in Finance: How to Move Between Firms at the Same Level**
-- [ ] **075** [T4] Non-Traditional Paths: **From Athlete to Analyst: How Former College and Pro Athletes Break Into Finance**
-- [ ] **076** [T5] Career Architecture & Exits: **The Hedge Fund Career Path: From Analyst to Portfolio Manager and Beyond**
-- [ ] **077** [T6] DEI in Finance: **Being an Ally in Finance: How to Support Underrepresented Colleagues**
-- [ ] **078** [T7] Soft Skills Playbook: **Communication Skills in Finance: How to Write, Present, and Speak Like a Senior Banker**
-- [ ] **079** [T9] Recruiter & Talent Strategy: **Diversity Recruiting Best Practices: Building Pipelines That Actually Work**
-- [ ] **080** [T10] Sector & Deal Intelligence: **M&A Market Trends: Understanding Deal Cycles, Valuations, and What Drives Activity**
+- [x] **071** [T1] Technical Interview Canon: **Healthcare Technical Interview Deep Dive: Pharma Metrics, Biotech Valuations, and Sector-Specific Questions**
+- [x] **072** [T1] Technical Interview Canon: **FIG Technical Interview Deep Dive: Bank Valuations, Insurance Metrics, and Financial Services Questions**
+- [x] **073** [T2] Firm Profiles & Culture: **PJT Partners: The Restructuring Powerhouse Built by Blackstone Alumni**
+- [x] **074** [T3] Recruiting Calendar & Process: **Lateral Recruiting in Finance: How to Move Between Firms at the Same Level**
+- [x] **075** [T4] Non-Traditional Paths: **From Athlete to Analyst: How Former College and Pro Athletes Break Into Finance**
+- [x] **076** [T5] Career Architecture & Exits: **The Hedge Fund Career Path: From Analyst to Portfolio Manager and Beyond**
+- [x] **077** [T6] DEI in Finance: **Being an Ally in Finance: How to Support Underrepresented Colleagues**
+- [x] **078** [T7] Soft Skills Playbook: **Communication Skills in Finance: How to Write, Present, and Speak Like a Senior Banker**
+- [x] **079** [T9] Recruiter & Talent Strategy: **Diversity Recruiting Best Practices: Building Pipelines That Actually Work**
+- [x] **080** [T10] Sector & Deal Intelligence: **M&A Market Trends: Understanding Deal Cycles, Valuations, and What Drives Activity**
 
 ---
 
 ## Batch 9 (Articles 81-90) — Restructuring Focus & Middle-Market Entry
 
-- [ ] **081** [T1] Technical Interview Canon: **Restructuring Technical Interviews: Distressed Debt, Bankruptcy, and Turnaround Questions**
-- [ ] **082** [T2] Firm Profiles & Culture: **Moelis & Company: The Founder-Led Elite Boutique With Global Ambitions**
-- [ ] **083** [T2] Firm Profiles & Culture: **Houlihan Lokey: The Middle-Market Powerhouse and Restructuring Leader**
-- [ ] **084** [T3] Recruiting Calendar & Process: **International Finance Recruiting: How US, UK, and Asia Differ in Process and Culture**
-- [ ] **085** [T5] Career Architecture & Exits: **The Venture Capital Career Path: From Associate to General Partner**
-- [ ] **086** [T6] DEI in Finance: **The Business Case for Diversity: Why Diverse Teams Outperform in Finance**
-- [ ] **087** [T8] Life in Finance Reality: **Physical Health in Finance: How to Stay Fit When You're Always at Your Desk**
-- [ ] **088** [T9] Recruiter & Talent Strategy: **Retention Strategies in Finance: How Firms Keep Top Talent From Walking**
-- [ ] **089** [T10] Sector & Deal Intelligence: **Private Equity Market Cycles: Understanding Fundraising, Deployment, and Exit Timing**
-- [ ] **090** [T10] Sector & Deal Intelligence: **Anatomy of a Leveraged Buyout: Breaking Down a PE Deal From Start to Exit**
+- [x] **081** [T1] Technical Interview Canon: **Restructuring Technical Interviews: Distressed Debt, Bankruptcy, and Turnaround Questions**
+- [x] **082** [T2] Firm Profiles & Culture: **Moelis & Company: The Founder-Led Elite Boutique With Global Ambitions**
+- [x] **083** [T2] Firm Profiles & Culture: **Houlihan Lokey: The Middle-Market Powerhouse and Restructuring Leader**
+- [x] **084** [T3] Recruiting Calendar & Process: **International Finance Recruiting: How US, UK, and Asia Differ in Process and Culture**
+- [x] **085** [T5] Career Architecture & Exits: **The Venture Capital Career Path: From Associate to General Partner**
+- [x] **086** [T6] DEI in Finance: **The Business Case for Diversity: Why Diverse Teams Outperform in Finance**
+- [x] **087** [T8] Life in Finance Reality: **Physical Health in Finance: How to Stay Fit When You're Always at Your Desk**
+- [x] **088** [T9] Recruiter & Talent Strategy: **Retention Strategies in Finance: How Firms Keep Top Talent From Walking**
+- [x] **089** [T10] Sector & Deal Intelligence: **Private Equity Market Cycles: Understanding Fundraising, Deployment, and Exit Timing**
+- [x] **090** [T10] Sector & Deal Intelligence: **Anatomy of a Leveraged Buyout: Breaking Down a PE Deal From Start to Exit**
 
 ---
 
@@ -305,17 +305,17 @@ For quick reference:
 | Batch 3 | 10/10 | 0 |
 | Batch 4 | 10/10 | 0 |
 | Batch 5 | 10/10 | 0 |
-| Batch 6 | 0/10 | 10 |
-| Batch 7 | 0/10 | 10 |
-| Batch 8 | 0/10 | 10 |
-| Batch 9 | 0/10 | 10 |
+| Batch 6 | 10/10 | 0 |
+| Batch 7 | 10/10 | 0 |
+| Batch 8 | 10/10 | 0 |
+| Batch 9 | 10/10 | 0 |
 | Batch 10 | 0/10 | 10 |
 | Batch 11 | 0/10 | 10 |
 | Batch 12 | 0/10 | 10 |
 | Batch 13 | 0/10 | 10 |
 | Batch 14 | 0/10 | 10 |
 | Batch 15 | 0/10 | 10 |
-| **TOTAL** | **50/150** | **100** |
+| **TOTAL** | **90/150** | **60** |
 
 ---
 
