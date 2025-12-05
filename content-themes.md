@@ -190,91 +190,91 @@ For quick reference:
 
 ## Batch 10 (Articles 91-100) — Mega-Fund PE & Halfway Milestone
 
-- [ ] **091** [T1] Technical Interview Canon: **Advanced LBO Modeling: Paper LBOs, Sensitivity Analysis, and What Interviewers Really Want**
-- [ ] **092** [T1] Technical Interview Canon: **Energy and Industrials Technical Interview Guide: Sector-Specific Metrics and Questions**
-- [ ] **093** [T2] Firm Profiles & Culture: **KKR: Inside the Mega-Fund That Pioneered the Leveraged Buyout**
-- [ ] **094** [T3] Recruiting Calendar & Process: **From Analyst to Associate: How to Get Promoted Instead of Exiting**
-- [ ] **095** [T4] Non-Traditional Paths: **PhDs in Finance: How to Leverage Your Research Background for Wall Street**
-- [ ] **096** [T5] Career Architecture & Exits: **From Private Equity to Operating Roles: Making the Jump to Portfolio Companies**
-- [ ] **097** [T7] Soft Skills Playbook: **Building Your Personal Brand in Finance: Reputation, Visibility, and Long-Term Career Capital**
-- [ ] **098** [T8] Life in Finance Reality: **Finance Across Cities: Comparing Careers in New York, San Francisco, London, and Hong Kong**
-- [ ] **099** [T9] Recruiter & Talent Strategy: **Lateral Hiring Strategy: How to Recruit Experienced Professionals From Competitors**
-- [ ] **100** [T10] Sector & Deal Intelligence: **AI in Finance: How Technology Is Transforming Investment Banking, PE, and Hedge Funds**
+- [x] **091** [T1] Technical Interview Canon: **Advanced LBO Modeling: Paper LBOs, Sensitivity Analysis, and What Interviewers Really Want**
+- [x] **092** [T1] Technical Interview Canon: **Energy and Industrials Technical Interview Guide: Sector-Specific Metrics and Questions**
+- [x] **093** [T2] Firm Profiles & Culture: **KKR: Inside the Mega-Fund That Pioneered the Leveraged Buyout**
+- [x] **094** [T3] Recruiting Calendar & Process: **From Analyst to Associate: How to Get Promoted Instead of Exiting**
+- [x] **095** [T4] Non-Traditional Paths: **PhDs in Finance: How to Leverage Your Research Background for Wall Street**
+- [x] **096** [T5] Career Architecture & Exits: **From Private Equity to Operating Roles: Making the Jump to Portfolio Companies**
+- [x] **097** [T7] Soft Skills Playbook: **Building Your Personal Brand in Finance: Reputation, Visibility, and Long-Term Career Capital**
+- [x] **098** [T8] Life in Finance Reality: **Finance Across Cities: Comparing Careers in New York, San Francisco, London, and Hong Kong**
+- [x] **099** [T9] Recruiter & Talent Strategy: **Lateral Hiring Strategy: How to Recruit Experienced Professionals From Competitors**
+- [x] **100** [T10] Sector & Deal Intelligence: **AI in Finance: How Technology Is Transforming Investment Banking, PE, and Hedge Funds**
 
 ---
 
 ## Batch 11 (Articles 101-110) — PE Deep Dives & Career Maturity
 
-- [ ] **101** [T1] Technical Interview Canon: **The Private Equity Case Study: How to Ace Modeling Tests and Investment Memos**
-- [ ] **102** [T2] Firm Profiles & Culture: **Blackstone: Inside the World's Largest Alternative Asset Manager**
-- [ ] **103** [T3] Recruiting Calendar & Process: **Summer Intern Conversion: How to Turn Your Internship Into a Full-Time Offer**
-- [ ] **104** [T4] Non-Traditional Paths: **Entrepreneurs in Finance: How Founders and Startup Veterans Break Into Wall Street**
-- [ ] **105** [T5] Career Architecture & Exits: **Long-Term Wealth Building in Finance: How Careers in IB, PE, and HF Create Millionaires**
-- [ ] **106** [T6] DEI in Finance: **Asian Professionals in Finance: Navigating the Model Minority Myth and Bamboo Ceiling**
-- [ ] **107** [T7] Soft Skills Playbook: **Confidence and Imposter Syndrome in Finance: How to Believe You Belong**
-- [ ] **108** [T8] Life in Finance Reality: **Burnout in Finance: How to Recognize, Prevent, and Recover From Career Exhaustion**
-- [ ] **109** [T9] Recruiter & Talent Strategy: **Training Interviewers: How to Build a Team That Evaluates Candidates Fairly and Effectively**
-- [ ] **110** [T10] Sector & Deal Intelligence: **ESG and Sustainable Finance: Career Opportunities in the Green Transition**
+- [x] **101** [T1] Technical Interview Canon: **The Private Equity Case Study: How to Ace Modeling Tests and Investment Memos**
+- [x] **102** [T2] Firm Profiles & Culture: **Blackstone: Inside the World's Largest Alternative Asset Manager**
+- [x] **103** [T3] Recruiting Calendar & Process: **Summer Intern Conversion: How to Turn Your Internship Into a Full-Time Offer**
+- [x] **104** [T4] Non-Traditional Paths: **Entrepreneurs in Finance: How Founders and Startup Veterans Break Into Wall Street**
+- [x] **105** [T5] Career Architecture & Exits: **Long-Term Wealth Building in Finance: How Careers in IB, PE, and HF Create Millionaires**
+- [x] **106** [T6] DEI in Finance: **Asian Professionals in Finance: Navigating the Model Minority Myth and Bamboo Ceiling**
+- [x] **107** [T7] Soft Skills Playbook: **Confidence and Imposter Syndrome in Finance: How to Believe You Belong**
+- [x] **108** [T8] Life in Finance Reality: **Burnout in Finance: How to Recognize, Prevent, and Recover From Career Exhaustion**
+- [x] **109** [T9] Recruiter & Talent Strategy: **Training Interviewers: How to Build a Team That Evaluates Candidates Fairly and Effectively**
+- [x] **110** [T10] Sector & Deal Intelligence: **ESG and Sustainable Finance: Career Opportunities in the Green Transition**
 
 ---
 
 ## Batch 12 (Articles 111-120) — Behavioral Skills & Market Cycles
 
-- [ ] **111** [T1] Technical Interview Canon: **Behavioral Interview Mastery: How to Ace the "Fit" Questions That Make or Break Offers**
-- [ ] **112** [T1] Technical Interview Canon: **Quick Math for Finance Interviews: Mental Calculation Shortcuts and Estimation Techniques**
-- [ ] **113** [T2] Firm Profiles & Culture: **Apollo Global Management: The Contrarian Mega-Fund Known for Credit and Distressed Investing**
-- [ ] **114** [T3] Recruiting Calendar & Process: **When Recruiting Goes Wrong: How to Handle Reneges, Failed Interviews, and Starting Over**
-- [ ] **115** [T4] Non-Traditional Paths: **From Teaching to Finance: How Educators Make the Career Pivot to Wall Street**
-- [ ] **116** [T5] Career Architecture & Exits: **From Finance to Startups: How Bankers and Investors Become Founders and Operators**
-- [ ] **117** [T6] DEI in Finance: **Disability in Finance: Navigating Accommodations, Disclosure, and Career Success**
-- [ ] **118** [T9] Recruiter & Talent Strategy: **Building Team Culture in Finance: How Firms Create Environments Where Talent Thrives**
-- [ ] **119** [T10] Sector & Deal Intelligence: **Venture Capital Market Cycles: Understanding Fundraising Booms, Corrections, and Deployment Patterns**
-- [ ] **120** [T10] Sector & Deal Intelligence: **Anatomy of a Growth Equity Deal: Breaking Down a Late-Stage Investment From Sourcing to Exit**
+- [x] **111** [T1] Technical Interview Canon: **Behavioral Interview Mastery: How to Ace the "Fit" Questions That Make or Break Offers**
+- [x] **112** [T1] Technical Interview Canon: **Quick Math for Finance Interviews: Mental Calculation Shortcuts and Estimation Techniques**
+- [x] **113** [T2] Firm Profiles & Culture: **Apollo Global Management: The Contrarian Mega-Fund Known for Credit and Distressed Investing**
+- [x] **114** [T3] Recruiting Calendar & Process: **When Recruiting Goes Wrong: How to Handle Reneges, Failed Interviews, and Starting Over**
+- [x] **115** [T4] Non-Traditional Paths: **From Teaching to Finance: How Educators Make the Career Pivot to Wall Street**
+- [x] **116** [T5] Career Architecture & Exits: **From Finance to Startups: How Bankers and Investors Become Founders and Operators**
+- [x] **117** [T6] DEI in Finance: **Disability in Finance: Navigating Accommodations, Disclosure, and Career Success**
+- [x] **118** [T9] Recruiter & Talent Strategy: **Building Team Culture in Finance: How Firms Create Environments Where Talent Thrives**
+- [x] **119** [T10] Sector & Deal Intelligence: **Venture Capital Market Cycles: Understanding Fundraising Booms, Corrections, and Deployment Patterns**
+- [x] **120** [T10] Sector & Deal Intelligence: **Anatomy of a Growth Equity Deal: Breaking Down a Late-Stage Investment From Sourcing to Exit**
 
 ---
 
 ## Batch 13 (Articles 121-130) — Consumer Technicals & Career Longevity
 
-- [ ] **121** [T1] Technical Interview Canon: **Consumer and Retail Technical Interview Guide: Sector-Specific Metrics and Valuation Questions**
-- [ ] **122** [T2] Firm Profiles & Culture: **Carlyle Group: Inside the Washington-Connected Mega-Fund With Global Reach**
-- [ ] **123** [T2] Firm Profiles & Culture: **Qatalyst Partners: The Tech M&A Boutique That Advises Silicon Valley's Biggest Deals**
-- [ ] **124** [T3] Recruiting Calendar & Process: **Final Round Preparation: How to Convert Callbacks Into Offers**
-- [ ] **125** [T5] Career Architecture & Exits: **The Managing Director Path: Building a Long-Term Career in Investment Banking**
-- [ ] **126** [T7] Soft Skills Playbook: **Finding and Leveraging Mentors in Finance: How to Build Relationships That Accelerate Your Career**
-- [ ] **127** [T8] Life in Finance Reality: **Social Life in Finance: Maintaining Friendships and Building Community Despite the Hours**
-- [ ] **128** [T9] Recruiter & Talent Strategy: **Onboarding Excellence: How to Set New Hires Up for Success in Finance**
-- [ ] **129** [T10] Sector & Deal Intelligence: **Infrastructure Investing: The Growing Asset Class Attracting PE and Sovereign Wealth**
-- [ ] **130** [T10] Sector & Deal Intelligence: **Cross-Border M&A: How International Deals Differ and What Makes Them Work**
+- [x] **121** [T1] Technical Interview Canon: **Consumer and Retail Technical Interview Guide: Sector-Specific Metrics and Valuation Questions**
+- [x] **122** [T2] Firm Profiles & Culture: **Carlyle Group: Inside the Washington-Connected Mega-Fund With Global Reach**
+- [x] **123** [T2] Firm Profiles & Culture: **Qatalyst Partners: The Tech M&A Boutique That Advises Silicon Valley's Biggest Deals**
+- [x] **124** [T3] Recruiting Calendar & Process: **Final Round Preparation: How to Convert Callbacks Into Offers**
+- [x] **125** [T5] Career Architecture & Exits: **The Managing Director Path: Building a Long-Term Career in Investment Banking**
+- [x] **126** [T7] Soft Skills Playbook: **Finding and Leveraging Mentors in Finance: How to Build Relationships That Accelerate Your Career**
+- [x] **127** [T8] Life in Finance Reality: **Social Life in Finance: Maintaining Friendships and Building Community Despite the Hours**
+- [x] **128** [T9] Recruiter & Talent Strategy: **Onboarding Excellence: How to Set New Hires Up for Success in Finance**
+- [x] **129** [T10] Sector & Deal Intelligence: **Infrastructure Investing: The Growing Asset Class Attracting PE and Sovereign Wealth**
+- [x] **130** [T10] Sector & Deal Intelligence: **Cross-Border M&A: How International Deals Differ and What Makes Them Work**
 
 ---
 
 ## Batch 14 (Articles 131-140) — Valuation Foundations & First-Year Survival
 
-- [ ] **131** [T1] Technical Interview Canon: **WACC and Cost of Capital: The Foundation of Every DCF Model**
-- [ ] **132** [T1] Technical Interview Canon: **Sum of the Parts Valuation: When to Use SOTP and How to Build It**
-- [ ] **133** [T2] Firm Profiles & Culture: **TPG: The Diversified Mega-Fund From Restructuring Roots to Global Growth**
-- [ ] **134** [T3] Recruiting Calendar & Process: **Boutique vs. Bulge Bracket Recruiting: How the Processes Differ and What to Expect**
-- [ ] **135** [T4] Non-Traditional Paths: **From Law to Finance: How Attorneys Make the Transition to Investment Banking and Private Equity**
-- [ ] **136** [T5] Career Architecture & Exits: **From Investment Banking to Asset Management: The Traditional Buy-Side Alternative**
-- [ ] **137** [T6] DEI in Finance: **Parents and Caregivers in Finance: Navigating Family Responsibilities in a Demanding Industry**
-- [ ] **138** [T6] DEI in Finance: **Socioeconomic Diversity in Finance: How Background Shapes Experience and How Firms Can Do Better**
-- [ ] **139** [T7] Soft Skills Playbook: **Time Management in Finance: How Top Performers Prioritize When Everything Is Urgent**
-- [ ] **140** [T8] Life in Finance Reality: **The First Year in Finance: What to Expect and How to Survive Your Analyst or Associate Debut**
+- [x] **131** [T1] Technical Interview Canon: **WACC and Cost of Capital: The Foundation of Every DCF Model**
+- [x] **132** [T1] Technical Interview Canon: **Sum of the Parts Valuation: When to Use SOTP and How to Build It**
+- [x] **133** [T2] Firm Profiles & Culture: **TPG: The Diversified Mega-Fund From Restructuring Roots to Global Growth**
+- [x] **134** [T3] Recruiting Calendar & Process: **Boutique vs. Bulge Bracket Recruiting: How the Processes Differ and What to Expect**
+- [x] **135** [T4] Non-Traditional Paths: **From Law to Finance: How Attorneys Make the Transition to Investment Banking and Private Equity**
+- [x] **136** [T5] Career Architecture & Exits: **From Investment Banking to Asset Management: The Traditional Buy-Side Alternative**
+- [x] **137** [T6] DEI in Finance: **Parents and Caregivers in Finance: Navigating Family Responsibilities in a Demanding Industry**
+- [x] **138** [T6] DEI in Finance: **Socioeconomic Diversity in Finance: How Background Shapes Experience and How Firms Can Do Better**
+- [x] **139** [T7] Soft Skills Playbook: **Time Management in Finance: How Top Performers Prioritize When Everything Is Urgent**
+- [x] **140** [T8] Life in Finance Reality: **The First Year in Finance: What to Expect and How to Survive Your Analyst or Associate Debut**
 
 ---
 
 ## Batch 15 (Articles 141-150) — Capstone Content & Series Completion
 
-- [ ] **141** [T1] Technical Interview Canon: **Real Estate Technical Interview Guide: REIT Metrics, Cap Rates, and Property Valuations**
-- [ ] **142** [T1] Technical Interview Canon: **Enterprise Value vs. Equity Value: The Interview Question That Trips Up Most Candidates**
-- [ ] **143** [T1] Technical Interview Canon: **Walk Me Through a DCF: How to Deliver the Perfect Answer to Finance's Most Common Question**
-- [ ] **144** [T2] Firm Profiles & Culture: **Silver Lake: The Technology-Focused PE Giant Behind Dell, Airbnb, and Twitter**
-- [ ] **145** [T2] Firm Profiles & Culture: **Jefferies: The Independent Investment Bank Punching Above Its Weight**
-- [ ] **146** [T2] Firm Profiles & Culture: **Perella Weinberg Partners: The Advisory-Focused Boutique Founded by Industry Veterans**
-- [ ] **147** [T3] Recruiting Calendar & Process: **Diversity Program Recruiting: How SEO, MLT, and Sponsors Shape Finance Career Trajectories**
-- [ ] **148** [T4] Non-Traditional Paths: **From Big 4 Accounting to Investment Banking: How CPAs and Auditors Make the Transition**
-- [ ] **149** [T5] Career Architecture & Exits: **The CFO Track: How Finance Professionals Rise to Lead Corporate Finance Functions**
-- [ ] **150** [T9] Recruiter & Talent Strategy: **Recruiting Technology and ATS: How Firms Use Software to Source, Screen, and Select Candidates**
+- [x] **141** [T1] Technical Interview Canon: **Real Estate Technical Interview Guide: REIT Metrics, Cap Rates, and Property Valuations**
+- [x] **142** [T1] Technical Interview Canon: **Enterprise Value vs. Equity Value: The Interview Question That Trips Up Most Candidates**
+- [x] **143** [T1] Technical Interview Canon: **Walk Me Through a DCF: How to Deliver the Perfect Answer to Finance's Most Common Question**
+- [x] **144** [T2] Firm Profiles & Culture: **Silver Lake: The Technology-Focused PE Giant Behind Dell, Airbnb, and Twitter**
+- [x] **145** [T2] Firm Profiles & Culture: **Jefferies: The Independent Investment Bank Punching Above Its Weight**
+- [x] **146** [T2] Firm Profiles & Culture: **Perella Weinberg Partners: The Advisory-Focused Boutique Founded by Industry Veterans**
+- [x] **147** [T3] Recruiting Calendar & Process: **Diversity Program Recruiting: How SEO, MLT, and Sponsors Shape Finance Career Trajectories**
+- [x] **148** [T4] Non-Traditional Paths: **From Big 4 Accounting to Investment Banking: How CPAs and Auditors Make the Transition**
+- [x] **149** [T5] Career Architecture & Exits: **The CFO Track: How Finance Professionals Rise to Lead Corporate Finance Functions**
+- [x] **150** [T9] Recruiter & Talent Strategy: **Recruiting Technology and ATS: How Firms Use Software to Source, Screen, and Select Candidates**
 
 ---
 
@@ -309,13 +309,13 @@ For quick reference:
 | Batch 7 | 10/10 | 0 |
 | Batch 8 | 10/10 | 0 |
 | Batch 9 | 10/10 | 0 |
-| Batch 10 | 0/10 | 10 |
-| Batch 11 | 0/10 | 10 |
-| Batch 12 | 0/10 | 10 |
-| Batch 13 | 0/10 | 10 |
-| Batch 14 | 0/10 | 10 |
-| Batch 15 | 0/10 | 10 |
-| **TOTAL** | **90/150** | **60** |
+| Batch 10 | 10/10 | 0 |
+| Batch 11 | 10/10 | 0 |
+| Batch 12 | 10/10 | 0 |
+| Batch 13 | 10/10 | 0 |
+| Batch 14 | 10/10 | 0 |
+| Batch 15 | 10/10 | 0 |
+| **TOTAL** | **150/150** | **0** |
 
 ---
 
