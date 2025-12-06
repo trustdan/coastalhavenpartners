@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Bell, BellOff, Loader2 } from 'lucide-react'
+import { Bell, BellOff, Loader2, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface NotificationSettingsProps {
@@ -202,30 +202,69 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
         </div>
       )}
 
-      {/* Master Toggle */}
+      {/* Delivery Methods */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b">
-          <div className="space-y-0.5">
-            <Label htmlFor="push_enabled" className="text-base font-medium">
-              Push Notifications
-            </Label>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Receive notifications on this device
-            </p>
+        <div>
+          <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-4">
+            Delivery Methods
+          </h3>
+          <div className="space-y-4">
+            {/* Push Notifications Toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                  <Bell className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label htmlFor="push_enabled" className="text-sm font-medium">
+                    Push Notifications
+                  </Label>
+                  <p className="text-xs text-neutral-500">
+                    Real-time alerts on this device
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="push_enabled"
+                checked={prefs.push_enabled}
+                onCheckedChange={(checked) => updatePreference('push_enabled', checked)}
+                disabled={saving || browserPermission !== 'granted'}
+              />
+            </div>
+
+            {/* Email Notifications Toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/30">
+                  <Mail className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label htmlFor="email_enabled" className="text-sm font-medium">
+                    Email Notifications
+                  </Label>
+                  <p className="text-xs text-neutral-500">
+                    Updates sent to your email
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="email_enabled"
+                checked={prefs.email_enabled}
+                onCheckedChange={(checked) => updatePreference('email_enabled', checked)}
+                disabled={saving}
+              />
+            </div>
           </div>
-          <Switch
-            id="push_enabled"
-            checked={prefs.push_enabled}
-            onCheckedChange={(checked) => updatePreference('push_enabled', checked)}
-            disabled={saving || browserPermission !== 'granted'}
-          />
         </div>
 
         {/* Notification Types based on role */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-            Notification Types
+        <div className="space-y-4 pt-2 border-t">
+          <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300 pt-4">
+            What to Notify You About
           </h3>
+          <p className="text-xs text-neutral-500 -mt-2">
+            These settings apply to both push and email notifications
+          </p>
 
           {/* Candidate notifications */}
           {userRole === 'candidate' && (
@@ -243,7 +282,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_profile_views"
                   checked={prefs.notify_profile_views}
                   onCheckedChange={(checked) => updatePreference('notify_profile_views', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -260,7 +299,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_messages"
                   checked={prefs.notify_messages}
                   onCheckedChange={(checked) => updatePreference('notify_messages', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -277,7 +316,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_job_matches"
                   checked={prefs.notify_job_matches}
                   onCheckedChange={(checked) => updatePreference('notify_job_matches', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -294,7 +333,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_deadline_reminders"
                   checked={prefs.notify_deadline_reminders}
                   onCheckedChange={(checked) => updatePreference('notify_deadline_reminders', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
             </>
@@ -316,7 +355,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_messages"
                   checked={prefs.notify_messages}
                   onCheckedChange={(checked) => updatePreference('notify_messages', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -333,7 +372,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_new_candidates"
                   checked={prefs.notify_new_candidates}
                   onCheckedChange={(checked) => updatePreference('notify_new_candidates', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -350,7 +389,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_candidate_interest"
                   checked={prefs.notify_candidate_interest}
                   onCheckedChange={(checked) => updatePreference('notify_candidate_interest', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -367,7 +406,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_saved_search_matches"
                   checked={prefs.notify_saved_search_matches}
                   onCheckedChange={(checked) => updatePreference('notify_saved_search_matches', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
             </>
@@ -389,7 +428,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_messages"
                   checked={prefs.notify_messages}
                   onCheckedChange={(checked) => updatePreference('notify_messages', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -406,7 +445,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_verification_requests"
                   checked={prefs.notify_verification_requests}
                   onCheckedChange={(checked) => updatePreference('notify_verification_requests', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
 
@@ -423,7 +462,7 @@ export function NotificationSettings({ userRole }: NotificationSettingsProps) {
                   id="notify_student_placements"
                   checked={prefs.notify_student_placements}
                   onCheckedChange={(checked) => updatePreference('notify_student_placements', checked)}
-                  disabled={saving || !prefs.push_enabled}
+                  disabled={saving || (!prefs.push_enabled && !prefs.email_enabled)}
                 />
               </div>
             </>

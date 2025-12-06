@@ -1,5 +1,15 @@
 import webpush from 'web-push'
 import { createClient } from '@/lib/supabase/server'
+import {
+  emailProfileView,
+  emailNewMessage,
+  emailJobMatch,
+  emailDeadlineReminder,
+  emailNewCandidateMatch,
+  emailCandidateInterest,
+  emailVerificationRequest,
+  emailStudentPlacement,
+} from '@/lib/email'
 
 // Configure web-push with VAPID keys
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
@@ -183,13 +193,20 @@ export async function notifyProfileView(
   recruiterFirm?: string
 ) {
   const firmText = recruiterFirm ? ` from ${recruiterFirm}` : ''
-  return sendPushNotification({
+
+  // Send push notification
+  const pushResult = await sendPushNotification({
     userId: candidateUserId,
     type: 'profile_view',
     title: 'Profile Viewed',
     body: `${recruiterName}${firmText} viewed your profile`,
     url: '/candidate',
   })
+
+  // Send email notification (fire and forget)
+  emailProfileView(candidateUserId, recruiterName, recruiterFirm).catch(console.error)
+
+  return pushResult
 }
 
 /**
@@ -200,7 +217,8 @@ export async function notifyNewMessage(
   senderName: string,
   messagePreview?: string
 ) {
-  return sendPushNotification({
+  // Send push notification
+  const pushResult = await sendPushNotification({
     userId: recipientUserId,
     type: 'message',
     title: 'New Message',
@@ -209,6 +227,11 @@ export async function notifyNewMessage(
       : `${senderName} sent you a message`,
     url: '/messages',
   })
+
+  // Send email notification (fire and forget)
+  emailNewMessage(recipientUserId, senderName, messagePreview).catch(console.error)
+
+  return pushResult
 }
 
 /**
@@ -219,13 +242,19 @@ export async function notifyJobMatch(
   jobTitle: string,
   firmName: string
 ) {
-  return sendPushNotification({
+  // Send push notification
+  const pushResult = await sendPushNotification({
     userId: candidateUserId,
     type: 'job_match',
     title: 'New Job Match',
     body: `${jobTitle} at ${firmName} matches your profile`,
     url: '/candidate/jobs',
   })
+
+  // Send email notification (fire and forget)
+  emailJobMatch(candidateUserId, jobTitle, firmName).catch(console.error)
+
+  return pushResult
 }
 
 /**
@@ -234,16 +263,24 @@ export async function notifyJobMatch(
 export async function notifyDeadlineReminder(
   candidateUserId: string,
   jobTitle: string,
+  firmName: string,
   daysUntilDeadline: number
 ) {
   const timeText = daysUntilDeadline === 1 ? 'tomorrow' : `in ${daysUntilDeadline} days`
-  return sendPushNotification({
+
+  // Send push notification
+  const pushResult = await sendPushNotification({
     userId: candidateUserId,
     type: 'deadline_reminder',
     title: 'Deadline Reminder',
     body: `Application for ${jobTitle} closes ${timeText}`,
     url: '/candidate/jobs',
   })
+
+  // Send email notification (fire and forget)
+  emailDeadlineReminder(candidateUserId, jobTitle, firmName, daysUntilDeadline).catch(console.error)
+
+  return pushResult
 }
 
 /**
@@ -254,7 +291,8 @@ export async function notifyNewCandidateMatch(
   candidateName: string,
   searchName?: string
 ) {
-  return sendPushNotification({
+  // Send push notification
+  const pushResult = await sendPushNotification({
     userId: recruiterUserId,
     type: 'saved_search_match',
     title: 'New Candidate Match',
@@ -263,6 +301,11 @@ export async function notifyNewCandidateMatch(
       : `${candidateName} matches your saved search criteria`,
     url: '/recruiter',
   })
+
+  // Send email notification (fire and forget)
+  emailNewCandidateMatch(recruiterUserId, candidateName, searchName).catch(console.error)
+
+  return pushResult
 }
 
 /**
@@ -273,7 +316,8 @@ export async function notifyCandidateInterest(
   candidateName: string,
   jobTitle?: string
 ) {
-  return sendPushNotification({
+  // Send push notification
+  const pushResult = await sendPushNotification({
     userId: recruiterUserId,
     type: 'candidate_interest',
     title: 'Candidate Interest',
@@ -282,4 +326,55 @@ export async function notifyCandidateInterest(
       : `${candidateName} expressed interest in your firm`,
     url: '/recruiter',
   })
+
+  // Send email notification (fire and forget)
+  emailCandidateInterest(recruiterUserId, candidateName, jobTitle).catch(console.error)
+
+  return pushResult
+}
+
+/**
+ * Send notification to school when a student requests verification
+ */
+export async function notifyVerificationRequest(
+  schoolUserId: string,
+  studentName: string
+) {
+  // Send push notification
+  const pushResult = await sendPushNotification({
+    userId: schoolUserId,
+    type: 'verification_request',
+    title: 'Verification Request',
+    body: `${studentName} needs transcript verification`,
+    url: '/school',
+  })
+
+  // Send email notification (fire and forget)
+  emailVerificationRequest(schoolUserId, studentName).catch(console.error)
+
+  return pushResult
+}
+
+/**
+ * Send notification to school when a student accepts an offer
+ */
+export async function notifyStudentPlacement(
+  schoolUserId: string,
+  studentName: string,
+  firmName: string,
+  jobTitle: string
+) {
+  // Send push notification
+  const pushResult = await sendPushNotification({
+    userId: schoolUserId,
+    type: 'student_placement',
+    title: 'Student Placement',
+    body: `${studentName} accepted ${jobTitle} at ${firmName}`,
+    url: '/school',
+  })
+
+  // Send email notification (fire and forget)
+  emailStudentPlacement(schoolUserId, studentName, firmName, jobTitle).catch(console.error)
+
+  return pushResult
 }

@@ -7,9 +7,9 @@ import { createClient as createServerClient } from '@supabase/supabase-js'
 // In production, it must be present for emails to work.
 export const resend = new Resend(process.env.RESEND_API_KEY || 're_123')
 
-// TODO: Update this after verifying your domain in Resend dashboard
-// Example: 'Coastal Haven <notifications@coastalhavenpartners.com>'
-export const FROM_EMAIL = 'Coastal Haven <onboarding@resend.dev>'
+// Domain verified in Resend - using send subdomain for SPF/DKIM compliance
+export const FROM_EMAIL = 'Coastal Haven Partners <notifications@send.coastalhavenpartners.com>'
+export const REPLY_TO = 'support@coastalhavenpartners.com'
 
 // Helper to get all admin emails
 export async function getAdminEmails() {
