@@ -21,8 +21,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Loader2, Upload, Plus, Trash2, FileText, CheckCircle2, Clock, ExternalLink, GraduationCap } from 'lucide-react'
+import { Loader2, Upload, Plus, Trash2, FileText, CheckCircle2, Clock, ExternalLink, GraduationCap, Bot } from 'lucide-react'
 import { toast } from 'sonner'
+import { triggerTranscriptVerification } from '@/app/(portal)/candidate/actions'
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
 
@@ -159,6 +160,22 @@ export function TranscriptManager() {
 
       setTranscripts([newTranscript, ...transcripts])
       toast.success('Transcript uploaded successfully')
+
+      // Trigger auto-verification in the background if GPA was provided
+      if (newTranscript.gpa) {
+        triggerTranscriptVerification(newTranscript.id)
+          .then((result) => {
+            if (result.success && !('skipped' in result)) {
+              toast.info('GPA verification started', {
+                description: 'We\'ll verify your GPA automatically',
+                icon: <Bot className="h-4 w-4" />,
+              })
+            }
+          })
+          .catch(() => {
+            // Silent fail - verification will happen on admin review
+          })
+      }
 
       // Reset form
       setDialogOpen(false)

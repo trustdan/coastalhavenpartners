@@ -99,3 +99,68 @@ export async function completeCandidateProfile(data: {
   return { success: true }
 }
 
+/**
+ * Trigger automatic GPA verification for a transcript
+ * Can be called by candidates after uploading a transcript
+ */
+export async function triggerTranscriptVerification(transcriptId: string) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  // Use admin client to verify ownership and trigger verification
+  const supabaseAdmin = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  // Verify the transcript belongs to this user
+  const { data: transcript, error: transcriptError } = await supabaseAdmin
+    .from('candidate_transcripts')
+    .select('id, candidate_profile_id, user_id, gpa')
+    .eq('id', transcriptId)
+    .single()
+
+  if (transcriptError || !transcript) {
+    return { success: false, error: 'Transcript not found' }
+  }
+
+  if (transcript.user_id !== user.id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  // Only verify if transcript has a GPA entered
+  if (transcript.gpa === null) {
+    return { success: true, skipped: true, reason: 'No GPA entered' }
+  }
+
+  // Trigger verification in the background (don't wait for it)
+  // This allows the user to continue while verification runs
+  try {
+    const { verifyTranscript } = await import('@/lib/transcript-verification')
+
+    // Run verification asynchronously - don't await
+    verifyTranscript(transcript.candidate_profile_id, transcriptId)
+      .then((result) => {
+        console.log('[Auto-Verify] Completed for transcript', transcriptId, result.status)
+      })
+      .catch((error) => {
+        console.error('[Auto-Verify] Failed for transcript', transcriptId, error)
+      })
+
+    return { success: true, message: 'Verification started' }
+  } catch (error) {
+    console.error('[Auto-Verify] Error starting verification:', error)
+    return { success: false, error: 'Failed to start verification' }
+  }
+}
+

@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Mail, Linkedin, FileText, GraduationCap, AlertTriangle, Loader2 } from "lucide-react"
+import { Mail, Linkedin, FileText, GraduationCap, AlertTriangle, Loader2, CheckCircle2, Clock, XCircle } from "lucide-react"
 import { verifyCandidate, rejectCandidate, revokeCandidate, reinstateCandidate } from "../actions"
 
 interface CandidateProfile {
@@ -33,6 +33,7 @@ interface Candidate {
   rejected_at: string | null
   resume_url: string | null
   transcript_url: string | null
+  gpa_verification_status: string | null
   profiles: CandidateProfile | null
 }
 
@@ -87,7 +88,31 @@ export function CandidateRow({ candidate, variant }: CandidateRowProps) {
         </td>
         <td className="px-6 py-4 text-sm">{candidate.school_name}</td>
         <td className="px-6 py-4 text-sm">{candidate.major}</td>
-        <td className="px-6 py-4 text-sm">{candidate.gpa.toFixed(2)}</td>
+        <td className="px-6 py-4 text-sm">
+          <div className="flex items-center gap-1.5">
+            {candidate.gpa.toFixed(2)}
+            {candidate.gpa_verification_status === 'verified' && (
+              <span title="GPA Verified">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              </span>
+            )}
+            {candidate.gpa_verification_status === 'flagged' && (
+              <span title="GPA Flagged for Review">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              </span>
+            )}
+            {candidate.gpa_verification_status === 'rejected' && (
+              <span title="GPA Verification Rejected">
+                <XCircle className="h-4 w-4 text-red-500" />
+              </span>
+            )}
+            {(candidate.gpa_verification_status === 'pending' || candidate.gpa_verification_status === null) && (
+              <span title="GPA Pending Verification">
+                <Clock className="h-4 w-4 text-neutral-400" />
+              </span>
+            )}
+          </div>
+        </td>
 
         {/* Conditional column based on variant */}
         {variant === "verified" && (

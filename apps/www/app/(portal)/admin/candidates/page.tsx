@@ -39,7 +39,7 @@ export default async function AdminCandidatesPage() {
   // Fetch all candidates (using admin client to bypass RLS)
   const { data: candidates } = await supabaseAdmin
     .from('candidate_profiles')
-    .select('id, user_id, school_name, major, gpa, graduation_year, status, is_rejected, rejected_at, resume_url, transcript_url')
+    .select('id, user_id, school_name, major, gpa, graduation_year, status, is_rejected, rejected_at, resume_url, transcript_url, gpa_verification_status')
     .order('created_at', { ascending: false })
 
   // Fetch profiles separately to avoid RLS join issues

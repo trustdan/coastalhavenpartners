@@ -39,45 +39,50 @@ export async function extractGPAFromText(
 TRANSCRIPT TEXT:
 ${truncatedText}
 
-CRITICAL INSTRUCTIONS:
-1. MULTI-COLUMN LAYOUTS: Many transcripts have TWO COLUMNS of text. When converted to text, columns may be interleaved. The RIGHT column typically contains LATER/MORE RECENT semesters than the left column. You MUST analyze ALL semester data to find the truly final one.
+CRITICAL INSTRUCTIONS FOR FINDING THE FINAL GPA:
 
-2. USE CREDIT HOURS TO FIND THE FINAL SEMESTER:
-   - Look for cumulative credit hours (HE, Hours Earned, Credit Hours, Total Credits, Cumulative Hours)
+1. PROXIMITY TO "END OF TRANSCRIPT" IS THE STRONGEST INDICATOR:
+   - Search the text for "End of Transcript", "Degree Awarded", or "Degree Conferred"
+   - The cumulative GPA NEAREST to these phrases is the FINAL GPA
+   - This is the most reliable way to identify the final GPA
+
+2. TWO-COLUMN LAYOUTS (text may be interleaved):
+   - Many transcripts have TWO COLUMNS - when extracted as text, data from both columns gets mixed
+   - You may see what looks like "earlier" semesters appearing AFTER "later" ones in the text
+   - IGNORE text order - use credit hours and proximity to "End of Transcript" instead
+
+3. USE CREDIT HOURS TO VERIFY:
+   - Look for cumulative credit hours (HE, Hours Earned, Credit Hours, Total Credits)
    - Credits ALWAYS increase each semester
    - The HIGHEST cumulative credit count = the FINAL semester
-   - Example: If you see entries with 56 HE and 88 HE, the 88 HE is the FINAL semester
+   - Example: You see "Cumulative: 56 HE, GPA 2.99" and "Cumulative: 88 HE, GPA 3.17"
+     → The CORRECT answer is 3.17 (88 HE is higher, so it's the final semester)
 
-3. Find the cumulative GPA associated with the HIGHEST credit count - that is the FINAL GPA
+4. DECISION PRIORITY:
+   a) First: Find "End of Transcript" or "Degree Awarded" - the nearest cumulative GPA wins
+   b) Second: Compare ALL credit hour counts - highest credit count wins
+   c) Do NOT assume text order = chronological order
 
-4. Look for these markers that indicate the end of the transcript:
-   - "End of Transcript"
-   - "Degree Awarded"
-   - "Degree Conferred"
-   - Final semester before these markers
+5. DO NOT use:
+   - Semester GPAs (term-only GPAs, not cumulative)
+   - Intermediate cumulative GPAs with LOWER credit counts
+   - The first cumulative GPA you find (it's probably not the final one)
 
-5. Look for labels: "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
+6. GPA scale is usually 4.0, but could be 5.0 or 100-point
 
-6. DO NOT use:
-   - Semester GPAs (term-only GPAs)
-   - Intermediate cumulative GPAs from earlier semesters
-   - Any cumulative GPA that does NOT have the highest credit count
-
-7. GPA scale is usually 4.0, but could be 5.0 or 100-point
-
-8. Rate your confidence:
-   - "high" if GPA has the highest credit count and is near "End of Transcript" or "Degree Awarded"
+7. Rate your confidence:
+   - "high" if GPA is nearest to "End of Transcript" AND has the highest credit count
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
-   - "low" if uncertain or could not find a clearly labeled cumulative GPA
+   - "low" if uncertain
 
-IMPORTANT: Respond with ONLY valid JSON - no prose, no explanation outside the JSON. Start your response with { and end with }.
+IMPORTANT: Respond with ONLY valid JSON. Start with { and end with }.
 
 Format:
 {
-  "gpa": 3.75,
+  "gpa": 3.17,
   "scale": "4.0",
   "confidence": "high",
-  "reasoning": "Found final cumulative GPA of 3.75 with 88 HE (highest credit count), near 'Degree Awarded'"
+  "reasoning": "Found final cumulative GPA of 3.17 with 88 HE (highest credit count), nearest to 'Degree Awarded' and 'End of Transcript'"
 }
 
 If you cannot find a cumulative GPA:
@@ -85,7 +90,7 @@ If you cannot find a cumulative GPA:
   "gpa": null,
   "scale": null,
   "confidence": "low",
-  "reasoning": "Could not locate cumulative GPA in transcript. [Explain what you found or why it was unclear]"
+  "reasoning": "Could not locate cumulative GPA in transcript. [Explain what you found]"
 }`,
       },
     ],
@@ -197,45 +202,51 @@ export async function extractGPAFromDocument(
             type: 'text' as const,
             text: `You are a GPA extraction assistant. Your ONLY job is to find the final cumulative GPA and return a JSON response. Do NOT explain your reasoning in prose - put all reasoning in the JSON "reasoning" field.
 
-CRITICAL INSTRUCTIONS:
-1. MULTI-COLUMN LAYOUTS: Many transcripts have TWO COLUMNS. The RIGHT column typically contains LATER/MORE RECENT semesters than the left column. You MUST check BOTH columns thoroughly.
+CRITICAL INSTRUCTIONS FOR TWO-COLUMN TRANSCRIPTS:
 
-2. USE CREDIT HOURS TO FIND THE FINAL SEMESTER:
+1. ALWAYS CHECK THE RIGHT COLUMN FIRST!
+   - Many transcripts have TWO COLUMNS side by side
+   - The RIGHT column contains LATER/MORE RECENT semesters
+   - The BOTTOM-RIGHT of the document is where the FINAL semester usually appears
+   - Even if the left column goes lower on the page, the RIGHT column has the newer data
+
+2. PROXIMITY TO "END OF TRANSCRIPT" IS THE STRONGEST INDICATOR:
+   - Find where it says "End of Transcript", "Degree Awarded", or "Degree Conferred"
+   - The cumulative GPA NEAREST to these words is the FINAL GPA
+   - This GPA is almost always in the RIGHT column, near the bottom
+
+3. USE CREDIT HOURS TO VERIFY:
    - Look for cumulative credit hours (HE, Hours Earned, Credit Hours, Total Credits)
    - Credits ALWAYS increase each semester
    - The HIGHEST cumulative credit count = the FINAL semester
-   - Example: If left column shows 56 HE and right column shows 88 HE, the 88 HE is the FINAL semester
+   - Example: Left column shows 56 HE with 2.99 GPA, Right column shows 88 HE with 3.17 GPA
+     → The CORRECT answer is 3.17 (88 HE is higher, so it's the final semester)
 
-3. Find the cumulative GPA associated with the HIGHEST credit count - that is the FINAL GPA
+4. DECISION PRIORITY:
+   a) First: Find "End of Transcript" or "Degree Awarded" - the nearest cumulative GPA wins
+   b) Second: Compare credit hours - highest credit count wins
+   c) Third: Right column beats left column when in doubt
 
-4. Look for these markers that indicate the end of the transcript:
-   - "End of Transcript"
-   - "Degree Awarded"
-   - "Degree Conferred"
-   - Final semester before these markers
-
-5. Look for labels: "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
-
-6. DO NOT use:
-   - Semester GPAs
-   - Intermediate cumulative GPAs from earlier semesters
+5. DO NOT use:
+   - Semester GPAs (term-only GPAs, not cumulative)
+   - Intermediate cumulative GPAs from earlier semesters (lower credit counts)
    - GPAs from the left column if the right column has higher credit hours
 
-7. GPA scale is usually 4.0, but could be 5.0 or 100-point
+6. GPA scale is usually 4.0, but could be 5.0 or 100-point
 
-8. Rate your confidence:
-   - "high" if GPA has the highest credit count and is near "End of Transcript" or "Degree Awarded"
+7. Rate your confidence:
+   - "high" if GPA is nearest to "End of Transcript" AND has the highest credit count
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain
 
-IMPORTANT: Respond with ONLY valid JSON - no prose, no explanation outside the JSON. Start your response with { and end with }.
+IMPORTANT: Respond with ONLY valid JSON. Start with { and end with }.
 
 Format:
 {
-  "gpa": 3.75,
+  "gpa": 3.17,
   "scale": "4.0",
   "confidence": "high",
-  "reasoning": "Found final cumulative GPA of 3.75 in the last semester section (Spring 2024), near 'Degree Awarded'"
+  "reasoning": "Found final cumulative GPA of 3.17 with 88 HE (highest credit count) in right column, directly above 'Degree Awarded' and 'End of Transcript'"
 }
 
 If you cannot find a cumulative GPA:
@@ -243,7 +254,7 @@ If you cannot find a cumulative GPA:
   "gpa": null,
   "scale": null,
   "confidence": "low",
-  "reasoning": "Could not locate cumulative GPA in transcript. [Explain what you found or why it was unclear]"
+  "reasoning": "Could not locate cumulative GPA in transcript. [Explain what you found]"
 }`,
           },
         ],
