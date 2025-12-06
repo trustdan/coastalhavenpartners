@@ -136,7 +136,13 @@ export function constructMetadata({
       images: [image],
       creator: "@coastalhaven",
     },
-    icons: "/favicon.ico",
+    icons: {
+      icon: "/favicon.ico",
+      shortcut: "/favicon.ico",
+      apple: [
+        { url: "/api/icon/180", sizes: "180x180", type: "image/png" },
+      ],
+    },
     metadataBase: new URL(baseUrl),
     ...(canonicalPath && {
       alternates: {

@@ -38,6 +38,43 @@ const TARGET_ROLES = [
   'Fintech',
 ]
 
+// Recognized scheduling providers
+const SCHEDULING_PROVIDERS = [
+  'calendly.com',
+  'cal.com',
+  'outlook.office365.com',
+  'outlook.office.com',
+  'book.ms',
+  'hubspot.com',
+  'tidycal.com',
+  'savvycal.com',
+  'acuityscheduling.com',
+]
+
+function validateSchedulingUrl(url: string): { isValid: boolean; warning: string | null } {
+  if (!url) return { isValid: true, warning: null }
+
+  try {
+    const parsedUrl = new URL(url)
+    const hostname = parsedUrl.hostname.toLowerCase()
+
+    const isRecognized = SCHEDULING_PROVIDERS.some(provider =>
+      hostname === provider || hostname.endsWith('.' + provider)
+    )
+
+    if (!isRecognized) {
+      return {
+        isValid: true,
+        warning: 'Unrecognized scheduling provider. Supported: Calendly, Cal.com, Microsoft Bookings, HubSpot, TidyCal, SavvyCal, Acuity'
+      }
+    }
+
+    return { isValid: true, warning: null }
+  } catch {
+    return { isValid: false, warning: 'Please enter a valid URL' }
+  }
+}
+
 type VisibilityFields = {
   linkedin_url: boolean
   email: boolean
@@ -53,6 +90,7 @@ export default function EditProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [linkedinUrl, setLinkedinUrl] = useState<string>('')
   const [schedulingUrl, setSchedulingUrl] = useState<string>('')
+  const [schedulingUrlWarning, setSchedulingUrlWarning] = useState<string | null>(null)
   const [bio, setBio] = useState<string>('')
   const [bioLength, setBioLength] = useState(0)
   const [targetRoles, setTargetRoles] = useState<string[]>([])
@@ -320,12 +358,25 @@ export default function EditProfilePage() {
                   id="schedulingUrl"
                   name="schedulingUrl"
                   type="url"
-                  defaultValue={schedulingUrl}
+                  value={schedulingUrl}
+                  onChange={(e) => {
+                    const url = e.target.value
+                    setSchedulingUrl(url)
+                    const { warning } = validateSchedulingUrl(url)
+                    setSchedulingUrlWarning(warning)
+                  }}
                   placeholder="https://calendly.com/yourname"
+                  className={schedulingUrlWarning ? 'border-amber-500' : ''}
                 />
-                <p className="text-xs text-neutral-500">
-                  Recruiters can use this to schedule interviews with you directly
-                </p>
+                {schedulingUrlWarning ? (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    {schedulingUrlWarning}
+                  </p>
+                ) : (
+                  <p className="text-xs text-neutral-500">
+                    Recruiters can use this to schedule interviews with you directly
+                  </p>
+                )}
               </div>
             </div>
             {/* Undergraduate Education Section */}
