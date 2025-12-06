@@ -3,7 +3,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { VerificationCard } from './verification-card'
 import { AutoVerificationCard } from './auto-verification-card'
-import { BulkVerifyButton } from './bulk-verify-button'
+import { BulkVerifyButton, ReprocessFlaggedButton } from './bulk-verify-button'
 import type { Database } from '@/lib/types/database.types'
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
@@ -202,7 +202,10 @@ export default async function AdminVerificationPage() {
             Review and verify candidate documents
           </p>
         </div>
-        <BulkVerifyButton />
+        <div className="flex gap-2">
+          <ReprocessFlaggedButton />
+          <BulkVerifyButton />
+        </div>
       </div>
 
       {/* Stats */}

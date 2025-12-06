@@ -323,7 +323,8 @@ export async function bulkVerifyTranscripts(limit = 50): Promise<{
 
   const toProcess = pendingTranscripts.filter(t => {
     const existing = existingMap.get(t.id)
-    // Process if no existing verification OR if previous attempt errored
+    // Process if no existing verification OR if previous attempt errored/pending
+    // Does NOT include 'flagged' - use reprocessFlaggedTranscripts for that
     return !existing || existing === 'error' || existing === 'pending'
   })
 
@@ -427,4 +428,56 @@ export async function getVerificationStats() {
   })
 
   return stats
+}
+
+// Reprocess only flagged transcripts (after code fixes)
+export async function reprocessFlaggedTranscripts(limit = 50): Promise<{
+  processed: number
+  results: Array<{
+    candidateId: string
+    transcriptId: string
+    result: VerificationResult
+  }>
+}> {
+  const supabase = getAdminClient()
+
+  // Get flagged verifications
+  const { data: flaggedVerifications, error } = await supabase
+    .from('transcript_verifications')
+    .select('transcript_id, candidate_profile_id')
+    .eq('status', 'flagged')
+    .limit(limit)
+
+  if (error || !flaggedVerifications || flaggedVerifications.length === 0) {
+    return { processed: 0, results: [] }
+  }
+
+  const results: Array<{
+    candidateId: string
+    transcriptId: string
+    result: VerificationResult
+  }> = []
+
+  for (const verification of flaggedVerifications) {
+    if (!verification.transcript_id || !verification.candidate_profile_id) continue
+
+    const result = await verifyTranscript(
+      verification.candidate_profile_id,
+      verification.transcript_id
+    )
+
+    results.push({
+      candidateId: verification.candidate_profile_id,
+      transcriptId: verification.transcript_id,
+      result,
+    })
+
+    // Small delay to avoid rate limits
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  return {
+    processed: results.length,
+    results,
+  }
 }

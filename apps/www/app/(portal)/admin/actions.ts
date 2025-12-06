@@ -577,6 +577,16 @@ export async function bulkAutoVerifyTranscripts(limit = 50) {
   return result
 }
 
+export async function reprocessFlaggedTranscripts(limit = 50) {
+  await verifyAdmin()
+
+  const { reprocessFlaggedTranscripts } = await import('@/lib/transcript-verification')
+  const result = await reprocessFlaggedTranscripts(limit)
+
+  revalidatePath('/admin/verification')
+  return result
+}
+
 export async function getAutoVerificationQueue() {
   await verifyAdmin()
 
