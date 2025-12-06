@@ -7,10 +7,12 @@ import { CompleteProfileForm } from './complete-profile-form'
 import { AccessRevoked } from '@/components/access-revoked'
 import { ProfileCompletion } from '@/components/candidate/profile-completion'
 import { ProfileViewers } from '@/components/candidate/profile-viewers'
+import { UpcomingDeadlines } from '@/components/candidate/upcoming-deadlines'
 import { FirmInterests } from '@/components/candidate/firm-interests'
 import { RecruitingFirms } from '@/components/candidate/recruiting-firms'
 import { Referrals } from '@/components/candidate/referrals'
 import { getFirmInterests } from './firm-interests-actions'
+import { getUpcomingDeadlines } from './deadline-actions'
 import { getReferralCode, getReferralStats, getReferrals } from './referral-actions'
 import { getVisibleFirms } from '@/app/(marketing)/firms/actions'
 import type { Database } from '@/lib/types/database.types'
@@ -205,6 +207,9 @@ export default async function CandidateDashboard() {
 
       {/* Profile Viewers - Shows which firms viewed the profile */}
       <ProfileViewers userId={user.id} />
+
+      {/* Upcoming Deadlines - Job application deadlines */}
+      <UpcomingDeadlinesSection />
 
       {/* Firm Interests - Express interest in firms */}
       <FirmInterestsSection />
@@ -406,6 +411,11 @@ export default async function CandidateDashboard() {
       )}
     </div>
   )
+}
+
+async function UpcomingDeadlinesSection() {
+  const deadlines = await getUpcomingDeadlines(5)
+  return <UpcomingDeadlines deadlines={deadlines} />
 }
 
 async function FirmInterestsSection() {
