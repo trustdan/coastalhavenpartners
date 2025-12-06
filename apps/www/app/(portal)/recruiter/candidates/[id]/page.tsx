@@ -97,6 +97,24 @@ export default async function CandidateDetailsPage({
     recruiter_firm: recruiterProfile.firm_name
   }, candidate.user_id || undefined)
 
+  // Send push notification to candidate (fire and forget - don't block page load)
+  if (candidate.user_id) {
+    import('@/lib/push-notifications').then(async ({ notifyProfileView }) => {
+      // Get recruiter's name for the notification
+      const { data: recruiterUser } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      notifyProfileView(
+        candidate.user_id!,
+        recruiterUser?.full_name || 'A recruiter',
+        recruiterProfile.firm_name
+      ).catch(console.error)
+    }).catch(console.error)
+  }
+
   // Get bookmark status, notes, and interest status
   const [{ isBookmarked, status: bookmarkStatus }, candidateNotes, isInterestedInFirm] = await Promise.all([
     getBookmarkStatus(id),

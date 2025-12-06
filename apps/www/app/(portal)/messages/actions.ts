@@ -307,6 +307,37 @@ export async function sendMessage(conversationId: string, content: string) {
 
   if (error) throw new Error(error.message)
 
+  // Send push notification to the other participant (fire and forget)
+  ;(async () => {
+    try {
+      // Get the other participant
+      const { data: otherParticipant } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .neq('user_id', user.id)
+        .single()
+
+      if (otherParticipant?.user_id) {
+        // Get sender's name
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single()
+
+        const { notifyNewMessage } = await import('@/lib/push-notifications')
+        await notifyNewMessage(
+          otherParticipant.user_id,
+          senderProfile?.full_name || 'Someone',
+          content.trim()
+        )
+      }
+    } catch (err) {
+      console.error('Error sending message notification:', err)
+    }
+  })()
+
   revalidatePath(`/messages/${conversationId}`)
   revalidatePath('/messages')
 }

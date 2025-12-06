@@ -20,6 +20,7 @@ import Link from 'next/link'
 import { GraduationCap } from 'lucide-react'
 import { MFASettings } from '@/components/auth/mfa-settings'
 import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
+import { NotificationSettings } from '@/components/settings/notification-settings'
 import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
 
 const TARGET_ROLES = [
@@ -670,6 +671,9 @@ export default function EditProfilePage() {
                 />
               </div>
             )}
+
+            {/* Notification Settings */}
+            <NotificationSettings userRole="candidate" />
 
             <div className="flex justify-end gap-4 pt-4">
               <Button type="button" variant="outline" asChild>

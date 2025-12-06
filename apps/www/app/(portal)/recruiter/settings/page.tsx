@@ -14,6 +14,7 @@ import { ArrowLeft, Loader2, Eye, Users, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { MFASettings } from '@/components/auth/mfa-settings'
 import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
+import { NotificationSettings } from '@/components/settings/notification-settings'
 import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
 
 type VisibilityFields = {
@@ -417,6 +418,9 @@ export default function RecruiterSettingsPage() {
             />
           </div>
         )}
+
+        {/* Notification Settings */}
+        <NotificationSettings userRole="recruiter" />
 
         {/* Visibility Controls */}
         <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
