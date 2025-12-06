@@ -7,13 +7,15 @@ import {
   GraduationCap,
   CheckCircle2,
   XCircle,
-  Sparkles,
   Shield,
   Target,
   Zap,
+  Sparkles,
   Heart,
   Globe,
   ArrowRight,
+  Send,
+  BarChart3,
 } from "lucide-react";
 
 export const metadata = constructMetadata({
@@ -22,29 +24,62 @@ export const metadata = constructMetadata({
     "Learn why Coastal Haven Partners is the premier talent network connecting elite finance students with top investment banks, PE firms, and hedge funds.",
 });
 
-function ProblemCard({
+function ComparisonBox({
   icon: Icon,
+  iconColor,
   title,
-  description,
+  before,
+  after,
 }: {
   icon: React.ElementType;
+  iconColor: string;
   title: string;
-  description: string;
+  before: { title: string; items: string[] };
+  after: { title: string; items: string[] };
 }) {
   return (
-    <div className="flex gap-4 p-4 rounded-lg bg-red-50/50 dark:bg-red-900/10 border border-red-200/50 dark:border-red-800/30">
-      <div className="flex-shrink-0">
-        <XCircle className="h-6 w-6 text-red-500" />
+    <div className="rounded-2xl border bg-white dark:bg-neutral-900 overflow-hidden shadow-sm">
+      <div className="p-6 border-b bg-neutral-50 dark:bg-neutral-800/50">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconColor}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
       </div>
-      <div>
-        <h4 className="font-semibold text-red-900 dark:text-red-300">{title}</h4>
-        <p className="mt-1 text-sm text-red-700/80 dark:text-red-400/80">{description}</p>
+      <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-200 dark:divide-neutral-700">
+        <div className="p-6">
+          <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">
+            {before.title}
+          </p>
+          <ul className="space-y-2">
+            {before.items.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                <XCircle className="h-4 w-4 text-neutral-400 mt-0.5 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="p-6 bg-blue-50/30 dark:bg-blue-900/10">
+          <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-3">
+            {after.title}
+          </p>
+          <ul className="space-y-2">
+            {after.items.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
 }
 
-function SolutionCard({
+function FeatureCard({
   icon: Icon,
   title,
   description,
@@ -54,34 +89,16 @@ function SolutionCard({
   description: string;
 }) {
   return (
-    <div className="flex gap-4 p-4 rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-200/50 dark:border-green-800/30">
+    <div className="flex gap-4 p-5 rounded-xl border bg-white dark:bg-neutral-900">
       <div className="flex-shrink-0">
-        <CheckCircle2 className="h-6 w-6 text-green-500" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
+          <Icon className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+        </div>
       </div>
       <div>
-        <h4 className="font-semibold text-green-900 dark:text-green-300">{title}</h4>
-        <p className="mt-1 text-sm text-green-700/80 dark:text-green-400/80">{description}</p>
+        <h4 className="font-semibold">{title}</h4>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
       </div>
-    </div>
-  );
-}
-
-function ValueCard({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-        <Icon className="h-6 w-6" />
-      </div>
-      <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">{description}</p>
     </div>
   );
 }
@@ -100,164 +117,94 @@ export default function AboutPage() {
         </p>
       </div>
 
-      {/* The Problem Section */}
+      {/* How We Fix Recruiting */}
       <section className="mb-20">
         <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold">The Recruiting Problem</h2>
+          <h2 className="text-2xl md:text-3xl font-bold">How We Fix Finance Recruiting</h2>
           <p className="mt-3 text-neutral-600 dark:text-neutral-400">
-            Traditional finance recruiting is broken for everyone involved
+            Traditional recruiting is broken. Here's what we do differently.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Students Column */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <GraduationCap className="h-5 w-5 text-purple-500" />
-              <h3 className="font-semibold text-lg">For Students</h3>
-            </div>
-            <ProblemCard
-              icon={XCircle}
-              title="Limited Visibility"
-              description="Top talent at non-target schools gets overlooked by recruiters who only visit the same 10 campuses"
-            />
-            <ProblemCard
-              icon={XCircle}
-              title="Networking Roulette"
-              description="Success depends on who you know, not what you know—cold emails go unanswered"
-            />
-            <ProblemCard
-              icon={XCircle}
-              title="Application Black Holes"
-              description="You apply to 50 firms and hear back from none. No feedback, no visibility"
-            />
-          </div>
+        <div className="space-y-6">
+          <ComparisonBox
+            icon={GraduationCap}
+            iconColor="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+            title="For Students"
+            before={{
+              title: "The old way",
+              items: [
+                "Top talent at non-target schools gets overlooked",
+                "Success depends on who you know, not what you know",
+                "Apply to 50 firms, hear back from none",
+              ],
+            }}
+            after={{
+              title: "With Coastal Haven",
+              items: [
+                "Recruiters discover you by GPA, skills, and interests",
+                "Verified credentials build instant trust",
+                "Direct messaging with recruiters—no gatekeepers",
+              ],
+            }}
+          />
 
-          {/* Recruiters Column */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Building2 className="h-5 w-5 text-blue-500" />
-              <h3 className="font-semibold text-lg">For Recruiters</h3>
-            </div>
-            <ProblemCard
-              icon={XCircle}
-              title="Resume Overload"
-              description="Thousands of applications, no way to filter for quality without manual review"
-            />
-            <ProblemCard
-              icon={XCircle}
-              title="Target School Tunnel Vision"
-              description="You know great talent exists everywhere, but you don't have time to find it"
-            />
-            <ProblemCard
-              icon={XCircle}
-              title="Outdated Information"
-              description="LinkedIn profiles are stale, resumes are PDFs from last year, transcripts are unverified"
-            />
-          </div>
+          <ComparisonBox
+            icon={Building2}
+            iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+            title="For Recruiters"
+            before={{
+              title: "The old way",
+              items: [
+                "Thousands of applications, no way to filter for quality",
+                "Great talent exists everywhere, but no time to find it",
+                "LinkedIn profiles are stale, transcripts are unverified",
+              ],
+            }}
+            after={{
+              title: "With Coastal Haven",
+              items: [
+                "Pre-verified candidates with real GPAs and transcripts",
+                "Powerful filters to find talent from any school",
+                "Bulk outreach campaigns with personalized templates",
+              ],
+            }}
+          />
 
-          {/* Schools Column */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="h-5 w-5 text-green-500" />
-              <h3 className="font-semibold text-lg">For Career Services</h3>
+          <div className="rounded-2xl border bg-white dark:bg-neutral-900 overflow-hidden shadow-sm">
+            <div className="p-6 border-b bg-neutral-50 dark:bg-neutral-800/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                  <Users className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-semibold">For Career Services</h3>
+              </div>
             </div>
-            <ProblemCard
-              icon={XCircle}
-              title="No Visibility"
-              description="You can't see which firms are engaging with your students or who's getting interviews"
-            />
-            <ProblemCard
-              icon={XCircle}
-              title="Manual Tracking"
-              description="Placement data lives in spreadsheets, updated manually (if at all)"
-            />
-            <ProblemCard
-              icon={XCircle}
-              title="Recruiter Access"
-              description="No efficient way to connect your students with the right recruiters at scale"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* The Solution Section */}
-      <section className="mb-20">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold">Our Solution</h2>
-          <p className="mt-3 text-neutral-600 dark:text-neutral-400">
-            A verified talent network that creates value for all sides
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Students Column */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <GraduationCap className="h-5 w-5 text-purple-500" />
-              <h3 className="font-semibold text-lg">For Students</h3>
+            <div className="p-6">
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
+                  <BarChart3 className="h-8 w-8 mx-auto text-green-500 mb-3" />
+                  <h4 className="font-medium mb-1">Real-Time Analytics</h4>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    See which firms engage with your students and track placement rates
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
+                  <Target className="h-8 w-8 mx-auto text-green-500 mb-3" />
+                  <h4 className="font-medium mb-1">Student Tracking</h4>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    Monitor profiles, verification status, and recruiter engagement
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
+                  <Globe className="h-8 w-8 mx-auto text-green-500 mb-3" />
+                  <h4 className="font-medium mb-1">Recruiter Directory</h4>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    Connect students with verified recruiters who want to hire from your school
+                  </p>
+                </div>
+              </div>
             </div>
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Get Discovered"
-              description="Recruiters search for candidates by GPA, school, target roles, and more—your profile does the networking"
-            />
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Verified Credentials"
-              description="Your GPA and transcripts are verified, building trust with recruiters instantly"
-            />
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Direct Access"
-              description="Message recruiters directly, schedule interviews, and track who's viewed your profile"
-            />
-          </div>
-
-          {/* Recruiters Column */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Building2 className="h-5 w-5 text-blue-500" />
-              <h3 className="font-semibold text-lg">For Recruiters</h3>
-            </div>
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Quality Over Quantity"
-              description="Pre-verified candidates with real GPAs, transcripts, and active job interests"
-            />
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Beyond Target Schools"
-              description="Find exceptional talent from any school using powerful filters and saved searches"
-            />
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Streamlined Outreach"
-              description="Save candidates, take notes, track status, and message directly from one platform"
-            />
-          </div>
-
-          {/* Schools Column */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="h-5 w-5 text-green-500" />
-              <h3 className="font-semibold text-lg">For Career Services</h3>
-            </div>
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Real-Time Analytics"
-              description="See which firms engage with your students, placement rates by firm type, and more"
-            />
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Student Success Tracking"
-              description="Monitor student profiles, verification status, and recruiter engagement in one dashboard"
-            />
-            <SolutionCard
-              icon={CheckCircle2}
-              title="Recruiter Directory"
-              description="Connect your students with verified recruiters who want to hire from your school"
-            />
           </div>
         </div>
       </section>
@@ -271,123 +218,109 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <ValueCard
+        <div className="grid md:grid-cols-2 gap-4">
+          <FeatureCard
             icon={Shield}
             title="Verified Everything"
-            description="GPAs verified against transcripts. Recruiters verified against firm emails. No fake profiles, no inflated numbers."
+            description="GPAs verified against transcripts. Recruiters verified against firm emails. No fake profiles."
           />
-          <ValueCard
+          <FeatureCard
             icon={Target}
             title="Finance-First Design"
-            description="Built for IB, PE, HF, and VC recruiting. We understand target roles, deal experience, and what matters."
+            description="Built for IB, PE, HF, and VC recruiting. We understand what matters in finance."
           />
-          <ValueCard
+          <FeatureCard
+            icon={Send}
+            title="Campaign Outreach"
+            description="Recruiters can send personalized messages to multiple candidates at once using smart templates."
+          />
+          <FeatureCard
             icon={Zap}
             title="Two-Way Discovery"
             description="Students express interest in firms. Recruiters discover students. Mutual interest surfaces the best matches."
           />
-          <ValueCard
+          <FeatureCard
             icon={Sparkles}
             title="Always Current"
-            description="No stale profiles. Candidates update their status, GPAs refresh each semester, and engagement is tracked in real-time."
+            description="No stale profiles. GPAs refresh each semester. Engagement tracked in real-time."
           />
-          <ValueCard
-            icon={Globe}
-            title="Beyond Target Schools"
-            description="Great talent exists everywhere. We make it findable, regardless of school pedigree."
-          />
-          <ValueCard
+          <FeatureCard
             icon={Heart}
-            title="Student-Friendly"
-            description="Free for students. No paywall between you and your career. Recruiters pay because you're worth it."
+            title="Free for Students"
+            description="No paywall between you and your career. Recruiters pay because you're worth it."
           />
         </div>
       </section>
 
-      {/* Comparison Section */}
+      {/* Quick Comparison */}
       <section className="mb-20">
         <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-bold">How We Compare</h2>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="overflow-x-auto rounded-xl border">
+          <table className="w-full border-collapse bg-white dark:bg-neutral-900">
             <thead>
-              <tr className="border-b-2">
+              <tr className="border-b bg-neutral-50 dark:bg-neutral-800/50">
                 <th className="text-left p-4 font-semibold">Feature</th>
-                <th className="p-4 font-semibold text-center">LinkedIn</th>
-                <th className="p-4 font-semibold text-center">Handshake</th>
-                <th className="p-4 font-semibold text-center bg-blue-50 dark:bg-blue-900/20 rounded-t-lg">
+                <th className="p-4 font-medium text-center text-neutral-500">LinkedIn</th>
+                <th className="p-4 font-medium text-center text-neutral-500">Handshake</th>
+                <th className="p-4 font-semibold text-center text-blue-600 dark:text-blue-400">
                   Coastal Haven
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               <tr>
                 <td className="p-4 text-neutral-600 dark:text-neutral-400">GPA Verification</td>
-                <td className="p-4 text-center text-red-500">
-                  <XCircle className="h-5 w-5 mx-auto" />
-                </td>
-                <td className="p-4 text-center text-red-500">
-                  <XCircle className="h-5 w-5 mx-auto" />
-                </td>
-                <td className="p-4 text-center text-green-500 bg-blue-50/50 dark:bg-blue-900/10">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-center text-neutral-400">No</td>
+                <td className="p-4 text-center text-neutral-400">No</td>
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-blue-500" />
                 </td>
               </tr>
               <tr>
                 <td className="p-4 text-neutral-600 dark:text-neutral-400">Finance-Specific Filters</td>
-                <td className="p-4 text-center text-red-500">
-                  <XCircle className="h-5 w-5 mx-auto" />
-                </td>
-                <td className="p-4 text-center text-yellow-500">Limited</td>
-                <td className="p-4 text-center text-green-500 bg-blue-50/50 dark:bg-blue-900/10">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-center text-neutral-400">No</td>
+                <td className="p-4 text-center text-neutral-400">Limited</td>
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-blue-500" />
                 </td>
               </tr>
               <tr>
-                <td className="p-4 text-neutral-600 dark:text-neutral-400">Direct Messaging</td>
-                <td className="p-4 text-center text-yellow-500">Paid</td>
-                <td className="p-4 text-center text-green-500">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
-                </td>
-                <td className="p-4 text-center text-green-500 bg-blue-50/50 dark:bg-blue-900/10">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-neutral-600 dark:text-neutral-400">Bulk Campaign Outreach</td>
+                <td className="p-4 text-center text-neutral-400">Paid</td>
+                <td className="p-4 text-center text-neutral-400">No</td>
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-blue-500" />
                 </td>
               </tr>
               <tr>
                 <td className="p-4 text-neutral-600 dark:text-neutral-400">School Analytics</td>
-                <td className="p-4 text-center text-red-500">
-                  <XCircle className="h-5 w-5 mx-auto" />
-                </td>
-                <td className="p-4 text-center text-yellow-500">Basic</td>
-                <td className="p-4 text-center text-green-500 bg-blue-50/50 dark:bg-blue-900/10">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-center text-neutral-400">No</td>
+                <td className="p-4 text-center text-neutral-400">Basic</td>
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-blue-500" />
                 </td>
               </tr>
               <tr>
                 <td className="p-4 text-neutral-600 dark:text-neutral-400">Mutual Interest Matching</td>
-                <td className="p-4 text-center text-red-500">
-                  <XCircle className="h-5 w-5 mx-auto" />
-                </td>
-                <td className="p-4 text-center text-red-500">
-                  <XCircle className="h-5 w-5 mx-auto" />
-                </td>
-                <td className="p-4 text-center text-green-500 bg-blue-50/50 dark:bg-blue-900/10">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-center text-neutral-400">No</td>
+                <td className="p-4 text-center text-neutral-400">No</td>
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-blue-500" />
                 </td>
               </tr>
               <tr>
                 <td className="p-4 text-neutral-600 dark:text-neutral-400">Free for Students</td>
-                <td className="p-4 text-center text-green-500">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-neutral-400" />
                 </td>
-                <td className="p-4 text-center text-green-500">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-neutral-400" />
                 </td>
-                <td className="p-4 text-center text-green-500 bg-blue-50/50 dark:bg-blue-900/10">
-                  <CheckCircle2 className="h-5 w-5 mx-auto" />
+                <td className="p-4 text-center">
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-blue-500" />
                 </td>
               </tr>
             </tbody>
