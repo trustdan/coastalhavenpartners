@@ -196,6 +196,19 @@ export default function HelpPage() {
                 description="Reach out to candidates directly through the platform"
               />
             </div>
+
+            <div className="mt-4 rounded-lg bg-amber-50 p-4 dark:bg-amber-900/20">
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-amber-800 dark:text-amber-200">Account Verification Required</h4>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    Recruiter accounts require verification before accessing candidate profiles. Our team reviews your
+                    work email domain, LinkedIn profile, and firm affiliation. Approval typically takes 24-48 hours.
+                  </p>
+                </div>
+              </div>
+            </div>
           </Section>
 
           {/* For Schools */}
@@ -303,6 +316,23 @@ export default function HelpPage() {
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
                   Recruiter and career services accounts are typically reviewed within 24-48 hours.
                   Candidate accounts are active immediately but document verification may take longer.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium">How are recruiters verified?</h4>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                  Our team verifies recruiter accounts using multiple methods: (1) work email domain verification -
+                  we check that your email domain matches your company&apos;s website, (2) LinkedIn profile review
+                  to confirm your professional identity, and (3) firm affiliation verification to ensure you represent
+                  a legitimate finance organization. This multi-factor approach protects candidates from fraudulent outreach.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium">Why do I need to use my work email?</h4>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                  Using your work email (e.g., jane@goldmansachs.com) helps us verify your affiliation with your
+                  firm automatically. When your email domain matches the company website, it speeds up the approval
+                  process and adds an extra layer of trust to your profile.
                 </p>
               </div>
               <div>
