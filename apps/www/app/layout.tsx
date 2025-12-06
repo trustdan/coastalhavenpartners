@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Inter as FontSans } from "next/font/google";
 import Script from "next/script";
+import type { Viewport } from "next";
 import "./globals.css";
 
 const fontSans = FontSans({
@@ -12,10 +13,33 @@ const fontSans = FontSans({
   variable: "--font-sans",
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata = constructMetadata({
   title: "Coastal Haven Partners | Elite Finance Talent Network",
   description:
     "The network connecting top finance students with investment banks, PE firms, and hedge funds. Create your profile and get discovered by elite recruiters.",
+  // PWA metadata
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Coastal Haven",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 });
 
 export default function RootLayout({

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MFAPromptBanner } from '@/components/auth/mfa-prompt-banner'
 import { PortalNavExtras } from '@/components/portal/nav-extras'
+import { NotificationPrompt } from '@/components/notification-prompt'
 
 export default async function SchoolLayout({
   children,
@@ -102,6 +103,7 @@ export default async function SchoolLayout({
         </div>
       </nav>
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <NotificationPrompt userType="school" />
     </div>
   )
 }

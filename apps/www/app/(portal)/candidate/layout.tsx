@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { MFAPromptBanner } from '@/components/auth/mfa-prompt-banner'
 import { PortalNavExtras } from '@/components/portal/nav-extras'
 import { MessageBadge } from '@/components/portal/message-badge'
+import { NotificationPrompt } from '@/components/notification-prompt'
 
 export default async function CandidateLayout({
   children,
@@ -96,6 +97,7 @@ export default async function CandidateLayout({
         </div>
       </nav>
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <NotificationPrompt userType="candidate" />
     </div>
   )
 }
