@@ -34,19 +34,23 @@ export async function extractGPAFromText(
     messages: [
       {
         role: 'user',
-        content: `You are analyzing a college transcript to extract the student's cumulative GPA.
+        content: `You are analyzing a college transcript to extract the student's FINAL cumulative GPA.
 
 TRANSCRIPT TEXT:
 ${truncatedText}
 
-INSTRUCTIONS:
-1. Find the CUMULATIVE GPA (not semester GPA, not major GPA, not term GPA)
-2. Look for labels like "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA"
-3. Identify the GPA scale (usually 4.0, but could be 5.0 or 100-point)
-4. If multiple GPAs are shown, prefer "Cumulative GPA" or "Overall GPA" over semester/term GPAs
-5. Rate your confidence:
-   - "high" if GPA is clearly labeled as cumulative/overall
-   - "medium" if you had to infer it's the cumulative GPA
+CRITICAL INSTRUCTIONS:
+1. Find the FINAL CUMULATIVE GPA - this is the LAST cumulative GPA shown chronologically in the document
+2. Transcripts often show cumulative GPA after EACH semester - you need the VERY LAST one (most recent)
+3. Look for labels like "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
+4. Scan the ENTIRE text to find the chronologically LAST cumulative GPA
+5. The final cumulative GPA is usually near the end of the transcript, often near "Degree Awarded" or "End of Transcript"
+6. DO NOT use semester GPAs or intermediate cumulative GPAs from earlier semesters
+7. USE CUMULATIVE CREDITS/HOURS AS A GUIDE: Credit hours (HE, Hours Earned, Total Credits) increase each semester. The HIGHEST cumulative credit count indicates the final semester - that's where the final GPA will be.
+8. Identify the GPA scale (usually 4.0, but could be 5.0 or 100-point)
+9. Rate your confidence:
+   - "high" if GPA is clearly the final cumulative (last one chronologically, highest credit count, near degree completion)
+   - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain or could not find a clearly labeled cumulative GPA
 
 Respond with ONLY valid JSON in this exact format:
@@ -54,7 +58,7 @@ Respond with ONLY valid JSON in this exact format:
   "gpa": 3.75,
   "scale": "4.0",
   "confidence": "high",
-  "reasoning": "Found clearly labeled 'Cumulative GPA: 3.75' in the academic summary section"
+  "reasoning": "Found final cumulative GPA of 3.75 in the last semester section (Spring 2024), near 'Degree Awarded'"
 }
 
 If you cannot find a cumulative GPA, respond with:
@@ -168,16 +172,20 @@ export async function extractGPAFromDocument(
               },
           {
             type: 'text' as const,
-            text: `You are analyzing a college transcript document to extract the student's cumulative GPA.
+            text: `You are analyzing a college transcript document to extract the student's FINAL cumulative GPA.
 
-INSTRUCTIONS:
-1. Find the CUMULATIVE GPA (not semester GPA, not major GPA, not term GPA)
-2. Look for labels like "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Total GPA"
-3. Identify the GPA scale (usually 4.0, but could be 5.0 or 100-point)
-4. If multiple GPAs are shown, prefer "Cumulative GPA" or "Overall GPA" over semester/term GPAs
-5. Rate your confidence:
-   - "high" if GPA is clearly labeled as cumulative/overall
-   - "medium" if you had to infer it's the cumulative GPA
+CRITICAL INSTRUCTIONS:
+1. Find the FINAL CUMULATIVE GPA - this is the LAST cumulative GPA shown chronologically in the document
+2. Transcripts often show cumulative GPA after EACH semester - you need the VERY LAST one (most recent)
+3. Look for labels like "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
+4. If the transcript has multiple columns or sections, scan the ENTIRE document to find the chronologically LAST cumulative GPA
+5. The final cumulative GPA is usually near the end of the transcript, often near "Degree Awarded" or "End of Transcript"
+6. DO NOT use semester GPAs or intermediate cumulative GPAs from earlier semesters
+7. USE CUMULATIVE CREDITS/HOURS AS A GUIDE: Credit hours (HE, Hours Earned, Total Credits) increase each semester. The HIGHEST cumulative credit count indicates the final semester - that's where the final GPA will be.
+8. Identify the GPA scale (usually 4.0, but could be 5.0 or 100-point)
+9. Rate your confidence:
+   - "high" if GPA is clearly the final cumulative (last one chronologically, highest credit count, near degree completion)
+   - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain or could not find a clearly labeled cumulative GPA
 
 Respond with ONLY valid JSON in this exact format:
@@ -185,7 +193,7 @@ Respond with ONLY valid JSON in this exact format:
   "gpa": 3.75,
   "scale": "4.0",
   "confidence": "high",
-  "reasoning": "Found clearly labeled 'Cumulative GPA: 3.75' in the academic summary section"
+  "reasoning": "Found final cumulative GPA of 3.75 in the last semester section (Spring 2024), near 'Degree Awarded'"
 }
 
 If you cannot find a cumulative GPA, respond with:

@@ -38,10 +38,14 @@ export async function verifyTranscript(
 ): Promise<VerificationResult> {
   const supabase = getAdminClient()
 
+  // Very visible log to confirm new code is running
+  console.log('========== TRANSCRIPT VERIFICATION v2 ==========')
   console.log('[Verification] Starting transcript verification', {
     candidateProfileId,
     transcriptId,
     hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    hasGoogleProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
+    hasFormParserId: !!process.env.GOOGLE_DOCUMENT_AI_FORM_PARSER_ID,
   })
 
   try {
