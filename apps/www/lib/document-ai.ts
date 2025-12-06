@@ -125,8 +125,17 @@ export async function extractGPAWithFormParser(
   const location = process.env.GOOGLE_DOCUMENT_AI_LOCATION || 'us'
   const formParserProcessorId = process.env.GOOGLE_DOCUMENT_AI_FORM_PARSER_ID
 
+  console.log('[Form Parser] Starting extraction', {
+    projectId: projectId ? 'SET' : 'NOT SET',
+    formParserProcessorId: formParserProcessorId ? 'SET' : 'NOT SET',
+    location,
+    mimeType,
+    fileSize: fileBuffer.length,
+  })
+
   // If no Form Parser processor configured, return null to trigger fallback
   if (!projectId || !formParserProcessorId) {
+    console.log('[Form Parser] SKIPPED - processor not configured')
     return {
       gpa: null,
       scale: null,
@@ -147,6 +156,7 @@ export async function extractGPAWithFormParser(
   }
 
   try {
+    console.log('[Form Parser] Calling Google Document AI...')
     const [result] = await documentClient.processDocument(request)
     const { document } = result
 
@@ -154,6 +164,25 @@ export async function extractGPAWithFormParser(
 
     // Look for GPA in entities (Form Parser extracts key-value pairs as entities)
     const entities = document?.entities || []
+    const pages = document?.pages || []
+    const formFieldCount = pages.reduce((sum, p) => sum + (p.formFields?.length || 0), 0)
+
+    console.log('[Form Parser] API Response received', {
+      textLength: rawText.length,
+      entityCount: entities.length,
+      pageCount: pages.length,
+      formFieldCount,
+      hasText: rawText.length > 0,
+    })
+
+    // Log first few entities for debugging
+    if (entities.length > 0) {
+      console.log('[Form Parser] Entities found:', entities.slice(0, 5).map(e => ({
+        type: e.type,
+        mentionText: e.mentionText?.substring(0, 50),
+        confidence: e.confidence,
+      })))
+    }
 
     let bestGpaMatch: {
       value: number
@@ -203,7 +232,6 @@ export async function extractGPAWithFormParser(
     }
 
     // Also check form fields (key-value pairs)
-    const pages = document?.pages || []
     for (const page of pages) {
       const formFields = page.formFields || []
 
@@ -259,6 +287,14 @@ export async function extractGPAWithFormParser(
         scale = '100'
       }
 
+      console.log('[Form Parser] SUCCESS - GPA found', {
+        gpa: bestGpaMatch.value,
+        scale,
+        confidence,
+        fieldName: bestGpaMatch.fieldName,
+        isCumulative: bestGpaMatch.isCumulative,
+      })
+
       return {
         gpa: bestGpaMatch.value,
         scale,
@@ -269,6 +305,12 @@ export async function extractGPAWithFormParser(
     }
 
     // No GPA found via Form Parser
+    console.log('[Form Parser] NO GPA FOUND - will trigger fallback', {
+      textLength: rawText.length,
+      hadEntities: entities.length > 0,
+      hadFormFields: formFieldCount > 0,
+    })
+
     return {
       gpa: null,
       scale: null,
@@ -279,6 +321,11 @@ export async function extractGPAWithFormParser(
 
   } catch (error) {
     // Form Parser failed, return null to trigger fallback
+    console.error('[Form Parser] ERROR', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    })
+
     return {
       gpa: null,
       scale: null,

@@ -38,6 +38,12 @@ export async function verifyTranscript(
 ): Promise<VerificationResult> {
   const supabase = getAdminClient()
 
+  console.log('[Verification] Starting transcript verification', {
+    candidateProfileId,
+    transcriptId,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+  })
+
   try {
     // 1. Get candidate's entered GPA from the transcript record
     const { data: transcript, error: transcriptError } = await supabase
@@ -109,10 +115,19 @@ export async function verifyTranscript(
     let extractionMethod: 'form_parser' | 'claude' | 'none' = 'none'
     let extractedText = ''
 
+    console.log('[Verification] Step 4: Calling Form Parser...')
     const formParserResult = await extractGPAWithFormParser(fileBuffer, mimeType)
+
+    console.log('[Verification] Form Parser result', {
+      gpa: formParserResult.gpa,
+      confidence: formParserResult.confidence,
+      textLength: formParserResult.rawText?.length || 0,
+      reasoning: formParserResult.reasoning,
+    })
 
     // Use Form Parser result if it found a GPA with decent confidence
     if (formParserResult.gpa !== null && formParserResult.confidence !== 'low') {
+      console.log('[Verification] Using Form Parser result (good confidence)')
       gpaResult = {
         gpa: formParserResult.gpa,
         scale: formParserResult.scale,
@@ -123,30 +138,40 @@ export async function verifyTranscript(
       extractedText = formParserResult.rawText
     } else {
       // 5. Fall back to Claude for complex/non-standard formats
+      console.log('[Verification] Step 5: Form Parser insufficient, trying fallbacks...')
+
       // First, try to get the text (either from Form Parser or via OCR)
       if (formParserResult.rawText && formParserResult.rawText.length > 100) {
         extractedText = formParserResult.rawText
+        console.log('[Verification] Using text from Form Parser', { textLength: extractedText.length })
       } else {
         // Use Document OCR if Form Parser didn't return text (OCR is optional)
+        console.log('[Verification] Trying OCR fallback...')
         const ocrResult = await extractTextFromDocument(fileBuffer, mimeType)
         extractedText = ocrResult.text || formParserResult.rawText || ''
+        console.log('[Verification] OCR result', { textLength: extractedText.length })
       }
 
       // Try Claude with extracted text first, then fall back to direct document analysis
       if (extractedText && extractedText.length >= 100 && process.env.ANTHROPIC_API_KEY) {
         // Use Claude with extracted text
+        console.log('[Verification] Using Claude TEXT analysis...')
         const claudeResult = await extractGPAFromText(extractedText)
         gpaResult = claudeResult
         extractionMethod = 'claude'
+        console.log('[Verification] Claude text result', { gpa: claudeResult.gpa, confidence: claudeResult.confidence })
       } else if (process.env.ANTHROPIC_API_KEY) {
         // Text extraction failed - use Claude's vision to analyze document directly
+        console.log('[Verification] Using Claude VISION analysis (text extraction failed)...')
         const visionResult = await extractGPAFromDocument(fileBuffer, mimeType)
         gpaResult = visionResult
         extractionMethod = 'claude'
         // Store note that we used vision analysis
         gpaResult.reasoning = `[Vision Analysis] ${gpaResult.reasoning}`
+        console.log('[Verification] Claude vision result', { gpa: visionResult.gpa, confidence: visionResult.confidence })
       } else if (formParserResult.gpa !== null) {
         // Use Form Parser result even if low confidence
+        console.log('[Verification] Using low-confidence Form Parser result (Claude not configured)')
         gpaResult = {
           gpa: formParserResult.gpa,
           scale: formParserResult.scale,
@@ -156,6 +181,11 @@ export async function verifyTranscript(
         extractionMethod = 'form_parser'
       } else {
         // No GPA found and Claude not configured - flag for manual review
+        console.log('[Verification] FAILED - No extraction method available', {
+          hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+          extractedTextLength: extractedText.length,
+          formParserGpa: formParserResult.gpa,
+        })
         gpaResult = {
           gpa: null,
           scale: null,
@@ -243,6 +273,16 @@ export async function verifyTranscript(
       .update({ gpa_verification_status: candidateStatus })
       .eq('id', candidateProfileId)
 
+    console.log('[Verification] COMPLETE', {
+      status,
+      extractionMethod,
+      extractedGpa: gpaResult.gpa,
+      enteredGpa,
+      gpaMatch,
+      gpaDifference,
+      confidence: gpaResult.confidence,
+    })
+
     return {
       success: true,
       status,
@@ -254,6 +294,11 @@ export async function verifyTranscript(
     }
 
   } catch (error) {
+    console.error('[Verification] ERROR', {
+      candidateProfileId,
+      transcriptId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    })
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
     // Store error for debugging
