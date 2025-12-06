@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { UNDERGRAD_DEGREES, GRADUATE_DEGREES } from '@/components/ui/degree-type-select'
-import { Bookmark, ChevronDown, Trash2, Loader2, Heart, History, X } from 'lucide-react'
+import { Bookmark, ChevronDown, Trash2, Loader2, Heart, History, X, FileText, GraduationCap, Calendar, User, Target, MapPin } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { saveSearch, deleteSearch, type SearchFilters, type SavedSearchResult } from './saved-search-actions'
 
@@ -55,6 +55,13 @@ function generateSearchLabel(filters: SearchFilters): string {
   if (filters.targetRole) parts.push(filters.targetRole)
   if (filters.undergradDegree) parts.push(filters.undergradDegree)
   if (filters.gradDegree) parts.push(filters.gradDegree)
+  // Profile completion filters
+  if (filters.hasResume === 'true') parts.push('Has Resume')
+  if (filters.hasTranscript === 'true') parts.push('Has Transcript')
+  if (filters.hasCalendar === 'true') parts.push('Has Calendar')
+  if (filters.hasBio === 'true') parts.push('Has Bio')
+  if (filters.hasTargetRoles === 'true') parts.push('Has Roles')
+  if (filters.hasLocations === 'true') parts.push('Has Locations')
   return parts.length > 0 ? parts.join(', ') : 'All candidates'
 }
 
@@ -152,6 +159,12 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
       targetRole: searchParams.get('targetRole') || undefined,
       undergradDegree: searchParams.get('undergradDegree') || undefined,
       gradDegree: searchParams.get('gradDegree') || undefined,
+      hasResume: searchParams.get('hasResume') || undefined,
+      hasTranscript: searchParams.get('hasTranscript') || undefined,
+      hasCalendar: searchParams.get('hasCalendar') || undefined,
+      hasBio: searchParams.get('hasBio') || undefined,
+      hasTargetRoles: searchParams.get('hasTargetRoles') || undefined,
+      hasLocations: searchParams.get('hasLocations') || undefined,
     }
 
     const hasFilters = Object.values(filters).some(v => v)
@@ -173,7 +186,10 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
   const hasActiveFilters = searchParams.get('gpa') || searchParams.get('major') ||
     searchParams.get('school') || searchParams.get('gradYear') ||
     searchParams.get('targetRole') || searchParams.get('undergradDegree') ||
-    searchParams.get('gradDegree') || searchParams.get('interestedInFirm')
+    searchParams.get('gradDegree') || searchParams.get('interestedInFirm') ||
+    searchParams.get('hasResume') || searchParams.get('hasTranscript') ||
+    searchParams.get('hasCalendar') || searchParams.get('hasBio') ||
+    searchParams.get('hasTargetRoles') || searchParams.get('hasLocations')
 
   const getCurrentFilters = (): SearchFilters => ({
     gpa: searchParams.get('gpa') || undefined,
@@ -183,6 +199,12 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
     targetRole: searchParams.get('targetRole') || undefined,
     undergradDegree: searchParams.get('undergradDegree') || undefined,
     gradDegree: searchParams.get('gradDegree') || undefined,
+    hasResume: searchParams.get('hasResume') || undefined,
+    hasTranscript: searchParams.get('hasTranscript') || undefined,
+    hasCalendar: searchParams.get('hasCalendar') || undefined,
+    hasBio: searchParams.get('hasBio') || undefined,
+    hasTargetRoles: searchParams.get('hasTargetRoles') || undefined,
+    hasLocations: searchParams.get('hasLocations') || undefined,
   })
 
   const createQueryString = useCallback(
@@ -343,8 +365,8 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
         </div>
       </div>
 
-      {/* Interest Filter */}
-      <div className="mt-4 flex items-center gap-6">
+      {/* Interest Filter & Profile Completion Filters */}
+      <div className="mt-4 space-y-3">
         <div className="flex items-center gap-2">
           <Checkbox
             id="interestedInFirm"
@@ -358,6 +380,101 @@ export function CandidateFilters({ savedSearches = [] }: CandidateFiltersProps) 
             <Heart className="h-4 w-4 text-pink-500 fill-pink-500" />
             Interested in my firm
           </Label>
+        </div>
+
+        {/* Profile Completion Filters */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <span className="text-sm font-medium text-neutral-500">Profile completion:</span>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="hasResume"
+              checked={searchParams.get('hasResume') === 'true'}
+              onCheckedChange={(checked) => updateFilter('hasResume', checked ? 'true' : '')}
+            />
+            <Label
+              htmlFor="hasResume"
+              className="flex items-center gap-1.5 cursor-pointer text-sm"
+            >
+              <FileText className="h-4 w-4 text-blue-500" />
+              Resume
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="hasTranscript"
+              checked={searchParams.get('hasTranscript') === 'true'}
+              onCheckedChange={(checked) => updateFilter('hasTranscript', checked ? 'true' : '')}
+            />
+            <Label
+              htmlFor="hasTranscript"
+              className="flex items-center gap-1.5 cursor-pointer text-sm"
+            >
+              <GraduationCap className="h-4 w-4 text-green-500" />
+              Transcript
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="hasCalendar"
+              checked={searchParams.get('hasCalendar') === 'true'}
+              onCheckedChange={(checked) => updateFilter('hasCalendar', checked ? 'true' : '')}
+            />
+            <Label
+              htmlFor="hasCalendar"
+              className="flex items-center gap-1.5 cursor-pointer text-sm"
+            >
+              <Calendar className="h-4 w-4 text-purple-500" />
+              Calendar Link
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="hasBio"
+              checked={searchParams.get('hasBio') === 'true'}
+              onCheckedChange={(checked) => updateFilter('hasBio', checked ? 'true' : '')}
+            />
+            <Label
+              htmlFor="hasBio"
+              className="flex items-center gap-1.5 cursor-pointer text-sm"
+            >
+              <User className="h-4 w-4 text-orange-500" />
+              Bio
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="hasTargetRoles"
+              checked={searchParams.get('hasTargetRoles') === 'true'}
+              onCheckedChange={(checked) => updateFilter('hasTargetRoles', checked ? 'true' : '')}
+            />
+            <Label
+              htmlFor="hasTargetRoles"
+              className="flex items-center gap-1.5 cursor-pointer text-sm"
+            >
+              <Target className="h-4 w-4 text-red-500" />
+              Target Roles
+            </Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="hasLocations"
+              checked={searchParams.get('hasLocations') === 'true'}
+              onCheckedChange={(checked) => updateFilter('hasLocations', checked ? 'true' : '')}
+            />
+            <Label
+              htmlFor="hasLocations"
+              className="flex items-center gap-1.5 cursor-pointer text-sm"
+            >
+              <MapPin className="h-4 w-4 text-teal-500" />
+              Locations
+            </Label>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { extractTextFromDocument, extractGPAWithFormParser } from './document-ai'
-import { extractGPAFromText } from './gpa-extractor'
+import { extractGPAFromText, extractGPAFromDocument } from './gpa-extractor'
 
 // GPA comparison tolerance - allows for minor rounding differences
 const GPA_TOLERANCE = 0.05
@@ -123,7 +123,7 @@ export async function verifyTranscript(
       extractedText = formParserResult.rawText
     } else {
       // 5. Fall back to Claude for complex/non-standard formats
-      // First, get the text (either from Form Parser or via OCR)
+      // First, try to get the text (either from Form Parser or via OCR)
       if (formParserResult.rawText && formParserResult.rawText.length > 100) {
         extractedText = formParserResult.rawText
       } else {
@@ -132,29 +132,35 @@ export async function verifyTranscript(
         extractedText = ocrResult.text || formParserResult.rawText || ''
       }
 
-      // If we have text, try Claude; otherwise flag for manual review
+      // Try Claude with extracted text first, then fall back to direct document analysis
       if (extractedText && extractedText.length >= 100 && process.env.ANTHROPIC_API_KEY) {
+        // Use Claude with extracted text
         const claudeResult = await extractGPAFromText(extractedText)
         gpaResult = claudeResult
         extractionMethod = 'claude'
+      } else if (process.env.ANTHROPIC_API_KEY) {
+        // Text extraction failed - use Claude's vision to analyze document directly
+        const visionResult = await extractGPAFromDocument(fileBuffer, mimeType)
+        gpaResult = visionResult
+        extractionMethod = 'claude'
+        // Store note that we used vision analysis
+        gpaResult.reasoning = `[Vision Analysis] ${gpaResult.reasoning}`
       } else if (formParserResult.gpa !== null) {
         // Use Form Parser result even if low confidence
         gpaResult = {
           gpa: formParserResult.gpa,
           scale: formParserResult.scale,
           confidence: 'low',
-          reasoning: formParserResult.reasoning + (extractedText.length < 100 ? ' (insufficient text for Claude analysis)' : ' (Claude not configured)'),
+          reasoning: formParserResult.reasoning + ' (Claude not configured for fallback)',
         }
         extractionMethod = 'form_parser'
       } else {
-        // No GPA found and can't use Claude - flag for manual review
+        // No GPA found and Claude not configured - flag for manual review
         gpaResult = {
           gpa: null,
           scale: null,
           confidence: 'low',
-          reasoning: extractedText.length < 100
-            ? 'Could not extract sufficient text from transcript. Requires manual review.'
-            : 'Form Parser found no GPA and Claude is not configured. Requires manual review.',
+          reasoning: 'Could not extract text and Claude is not configured. Requires manual review.',
         }
       }
     }

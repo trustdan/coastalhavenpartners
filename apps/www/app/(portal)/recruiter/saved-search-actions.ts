@@ -12,6 +12,13 @@ export interface SearchFilters {
   targetRole?: string
   undergradDegree?: string
   gradDegree?: string
+  // Profile completion filters
+  hasResume?: string
+  hasTranscript?: string
+  hasCalendar?: string
+  hasBio?: string
+  hasTargetRoles?: string
+  hasLocations?: string
 }
 
 export interface SavedSearchResult {

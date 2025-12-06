@@ -27,6 +27,13 @@ export default async function RecruiterDashboard({
   const undergradDegree = typeof params.undergradDegree === 'string' ? params.undergradDegree : undefined
   const gradDegree = typeof params.gradDegree === 'string' ? params.gradDegree : undefined
   const interestedInFirm = typeof params.interestedInFirm === 'string' ? params.interestedInFirm === 'true' : false
+  // Profile completion filters
+  const hasResume = typeof params.hasResume === 'string' ? params.hasResume === 'true' : false
+  const hasTranscript = typeof params.hasTranscript === 'string' ? params.hasTranscript === 'true' : false
+  const hasCalendar = typeof params.hasCalendar === 'string' ? params.hasCalendar === 'true' : false
+  const hasBio = typeof params.hasBio === 'string' ? params.hasBio === 'true' : false
+  const hasTargetRoles = typeof params.hasTargetRoles === 'string' ? params.hasTargetRoles === 'true' : false
+  const hasLocations = typeof params.hasLocations === 'string' ? params.hasLocations === 'true' : false
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -101,6 +108,10 @@ export default async function RecruiterDashboard({
       gpa_verified,
       resume_verified,
       transcript_verified,
+      resume_url,
+      transcript_url,
+      scheduling_url,
+      bio,
       profiles!user_id (
         full_name,
         email
@@ -131,6 +142,26 @@ export default async function RecruiterDashboard({
   }
   if (interestedInFirm && interestedCandidateIds.length > 0) {
     query = query.in('id', interestedCandidateIds)
+  }
+
+  // Profile completion filters
+  if (hasResume) {
+    query = query.not('resume_url', 'is', null)
+  }
+  if (hasTranscript) {
+    query = query.not('transcript_url', 'is', null)
+  }
+  if (hasCalendar) {
+    query = query.not('scheduling_url', 'is', null)
+  }
+  if (hasBio) {
+    query = query.not('bio', 'is', null).neq('bio', '')
+  }
+  if (hasTargetRoles) {
+    query = query.not('target_roles', 'is', null)
+  }
+  if (hasLocations) {
+    query = query.not('preferred_locations', 'is', null)
   }
 
   // Execute query with ordering
