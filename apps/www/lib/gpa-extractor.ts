@@ -41,36 +41,50 @@ ${truncatedText}
 
 CRITICAL INSTRUCTIONS FOR FINDING THE FINAL GPA:
 
-1. PROXIMITY TO "END OF TRANSCRIPT" IS THE STRONGEST INDICATOR:
-   - Search the text for "End of Transcript", "Degree Awarded", or "Degree Conferred"
-   - The cumulative GPA NEAREST to these phrases is the FINAL GPA
-   - This is the most reliable way to identify the final GPA
+1. IDENTIFY CREDIT HOURS VS QUALITY POINTS (schools use different terms):
+   Credit hours may be labeled: HE, Hours Earned, Credits, Credit Hours, Hrs, CH, Units
+   Quality points may be labeled: QP, Quality Points, Grade Points, Points
+
+   HOW TO TELL THEM APART (cross-check using math):
+   - Quality Points = GPA × Credit Hours
+   - So if you see "56.00, 131.91, 2.99" → check: 56 × 2.99 ≈ 167 (not 131.91, but close enough for rounding)
+   - The SMALLER number that when multiplied by GPA approximates the larger number = CREDIT HOURS
+   - Credit hours are typically 15-120 for undergrad, 30-90 for grad/law school
+   - Quality points are typically in the 100s-300s range
+   - If unsure, the number that's roughly (GPA × the other number) = Quality Points
 
 2. TWO-COLUMN LAYOUTS (text may be interleaved):
    - Many transcripts have TWO COLUMNS - when extracted as text, data from both columns gets mixed
    - You may see what looks like "earlier" semesters appearing AFTER "later" ones in the text
-   - IGNORE text order - use credit hours and proximity to "End of Transcript" instead
+   - IGNORE text order - use credit hours to find the final GPA
 
-3. USE CREDIT HOURS TO VERIFY:
-   - Look for cumulative credit hours (HE, Hours Earned, Credit Hours, Total Credits)
-   - Credits ALWAYS increase each semester
-   - The HIGHEST cumulative credit count = the FINAL semester
-   - Example: You see "Cumulative: 56 HE, GPA 2.99" and "Cumulative: 88 HE, GPA 3.17"
-     → The CORRECT answer is 3.17 (88 HE is higher, so it's the final semester)
+3. FIND THE HIGHEST CREDIT HOURS - THIS IS THE FINAL GPA:
+   - Once you identify which numbers are credit hours, find the HIGHEST value in the ENTIRE text
+   - Credit hours ALWAYS increase each semester (they accumulate)
+   - The row with the HIGHEST credit hours = the FINAL cumulative GPA
+   - Example: You see "56.00 HE, 131.91 QP, 2.99 GPA" and "88.00 HE, 232.11 QP, 3.17 GPA"
+     → 88 > 56, so the CORRECT answer is 3.17 (regardless of text order or proximity to "End of Transcript")
 
-4. DECISION PRIORITY:
-   a) First: Find "End of Transcript" or "Degree Awarded" - the nearest cumulative GPA wins
-   b) Second: Compare ALL credit hour counts - highest credit count wins
-   c) Do NOT assume text order = chronological order
+4. VERIFY WITH "END OF TRANSCRIPT" LOCATION:
+   - Search for "End of Transcript", "Degree Awarded", or "Degree Conferred"
+   - The GPA with the HIGHEST credit hours should be near these markers
+   - If it's NOT near these markers, you may have misidentified credit hours vs quality points
 
-5. DO NOT use:
-   - Semester GPAs (term-only GPAs, not cumulative)
-   - Intermediate cumulative GPAs with LOWER credit counts
-   - The first cumulative GPA you find (it's probably not the final one)
+5. DECISION PRIORITY:
+   a) First: Identify which numbers are credit hours (smaller values, multiply with GPA to get larger values)
+   b) Second: Find the HIGHEST credit hour value anywhere in the text
+   c) Third: The cumulative GPA on that same row is your answer
+   d) Verify: This GPA should be near "End of Transcript" or "Degree Awarded"
 
-6. GPA scale is usually 4.0, but could be 5.0 or 100-point
+6. DO NOT:
+   - Confuse QP (Quality Points) with credit hours
+   - Assume text order = chronological order
+   - Pick a GPA just because it's near "End of Transcript" without checking credit hours
+   - Use intermediate cumulative GPAs from earlier semesters (lower credit hour counts)
 
-7. Rate your confidence:
+7. GPA scale is usually 4.0, but could be 5.0 or 100-point
+
+8. Rate your confidence:
    - "high" if GPA is nearest to "End of Transcript" AND has the highest credit count
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain
@@ -82,7 +96,7 @@ Format:
   "gpa": 3.17,
   "scale": "4.0",
   "confidence": "high",
-  "reasoning": "Found final cumulative GPA of 3.17 with 88 HE (highest credit count), nearest to 'Degree Awarded' and 'End of Transcript'"
+  "reasoning": "Identified credit hours by checking: 88 × 3.17 ≈ 279 (close to QP 232.11), confirming 88.00 is credit hours not QP. Found highest credit hours = 88.00 with GPA 3.17. Verified: this GPA is in right column near 'Degree Awarded' and 'End of Transcript'. Other cumulative GPAs had lower credit hours (56.00 HE → 2.99 GPA)."
 }
 
 If you cannot find a cumulative GPA:
@@ -204,37 +218,53 @@ export async function extractGPAFromDocument(
 
 CRITICAL INSTRUCTIONS FOR TWO-COLUMN TRANSCRIPTS:
 
-1. ALWAYS CHECK THE RIGHT COLUMN FIRST!
+1. IDENTIFY CREDIT HOURS VS QUALITY POINTS (schools use different terms):
+   Credit hours may be labeled: HE, Hours Earned, Credits, Credit Hours, Hrs, CH, Units
+   Quality points may be labeled: QP, Quality Points, Grade Points, Points
+
+   HOW TO TELL THEM APART (cross-check using math):
+   - Quality Points = GPA × Credit Hours
+   - So if you see "56.00, 131.91, 2.99" → check: 56 × 2.99 ≈ 167 (not 131.91, but close enough for rounding)
+   - The SMALLER number that when multiplied by GPA approximates the larger number = CREDIT HOURS
+   - Credit hours are typically 15-120 for undergrad, 30-90 for grad/law school
+   - Quality points are typically in the 100s-300s range
+   - If unsure, the number that's roughly (GPA × the other number) = Quality Points
+
+2. ALWAYS CHECK THE RIGHT COLUMN FIRST!
    - Many transcripts have TWO COLUMNS side by side
    - The RIGHT column contains LATER/MORE RECENT semesters
    - The BOTTOM-RIGHT of the document is where the FINAL semester usually appears
    - Even if the left column goes lower on the page, the RIGHT column has the newer data
 
-2. PROXIMITY TO "END OF TRANSCRIPT" IS THE STRONGEST INDICATOR:
-   - Find where it says "End of Transcript", "Degree Awarded", or "Degree Conferred"
-   - The cumulative GPA NEAREST to these words is the FINAL GPA
-   - This GPA is almost always in the RIGHT column, near the bottom
+3. FIND THE HIGHEST CREDIT HOURS - THIS IS THE FINAL GPA:
+   - Once you identify which numbers are credit hours, find the HIGHEST value across the ENTIRE document
+   - Credit hours ALWAYS increase each semester (they accumulate)
+   - The row with the HIGHEST credit hours = the FINAL cumulative GPA
+   - Example: Left column shows "56.00 HE, 131.91 QP, 2.99 GPA"
+             Right column shows "88.00 HE, 232.11 QP, 3.17 GPA"
+     → 88 > 56, so the CORRECT answer is 3.17 (regardless of where "End of Transcript" appears in relation to text)
 
-3. USE CREDIT HOURS TO VERIFY:
-   - Look for cumulative credit hours (HE, Hours Earned, Credit Hours, Total Credits)
-   - Credits ALWAYS increase each semester
-   - The HIGHEST cumulative credit count = the FINAL semester
-   - Example: Left column shows 56 HE with 2.99 GPA, Right column shows 88 HE with 3.17 GPA
-     → The CORRECT answer is 3.17 (88 HE is higher, so it's the final semester)
+4. VERIFY WITH "END OF TRANSCRIPT" LOCATION:
+   - Find where "End of Transcript", "Degree Awarded", or "Degree Conferred" appears
+   - The GPA with the HIGHEST credit hours should be near these markers
+   - If it's NOT near these markers, you may have misidentified credit hours vs quality points
+   - In two-column layouts, "End of Transcript" is usually in the RIGHT column
 
-4. DECISION PRIORITY:
-   a) First: Find "End of Transcript" or "Degree Awarded" - the nearest cumulative GPA wins
-   b) Second: Compare credit hours - highest credit count wins
-   c) Third: Right column beats left column when in doubt
+5. DECISION PRIORITY:
+   a) First: Identify which numbers are credit hours (smaller values, multiply with GPA to get larger values)
+   b) Second: Find the HIGHEST credit hour value anywhere in the document
+   c) Third: The cumulative GPA on that same row is your answer
+   d) Verify: This GPA should be near "End of Transcript" or "Degree Awarded"
 
-5. DO NOT use:
-   - Semester GPAs (term-only GPAs, not cumulative)
-   - Intermediate cumulative GPAs from earlier semesters (lower credit counts)
-   - GPAs from the left column if the right column has higher credit hours
+6. DO NOT:
+   - Confuse QP (Quality Points) with credit hours
+   - Assume text order = chronological order
+   - Pick a GPA just because it's near "End of Transcript" without checking credit hours
+   - Use intermediate cumulative GPAs from earlier semesters (lower credit hour counts)
 
-6. GPA scale is usually 4.0, but could be 5.0 or 100-point
+7. GPA scale is usually 4.0, but could be 5.0 or 100-point
 
-7. Rate your confidence:
+8. Rate your confidence:
    - "high" if GPA is nearest to "End of Transcript" AND has the highest credit count
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain
@@ -246,7 +276,7 @@ Format:
   "gpa": 3.17,
   "scale": "4.0",
   "confidence": "high",
-  "reasoning": "Found final cumulative GPA of 3.17 with 88 HE (highest credit count) in right column, directly above 'Degree Awarded' and 'End of Transcript'"
+  "reasoning": "Identified credit hours by checking: 88 × 3.17 ≈ 279 (close to QP 232.11), confirming 88.00 is credit hours not QP. Found highest credit hours = 88.00 with GPA 3.17 in right column. Verified: this GPA is directly above 'Degree Awarded' and 'End of Transcript'. Other cumulative GPAs had lower credit hours (56.00 HE → 2.99 GPA in left column)."
 }
 
 If you cannot find a cumulative GPA:
