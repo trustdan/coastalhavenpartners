@@ -40,16 +40,33 @@ TRANSCRIPT TEXT:
 ${truncatedText}
 
 CRITICAL INSTRUCTIONS:
-1. Find the FINAL CUMULATIVE GPA - this is the LAST cumulative GPA shown chronologically in the document
-2. Transcripts often show cumulative GPA after EACH semester - you need the VERY LAST one (most recent)
-3. Look for labels like "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
-4. Scan the ENTIRE text to find the chronologically LAST cumulative GPA
-5. The final cumulative GPA is usually near the end of the transcript, often near "Degree Awarded" or "End of Transcript"
-6. DO NOT use semester GPAs or intermediate cumulative GPAs from earlier semesters
-7. USE CUMULATIVE CREDITS/HOURS AS A GUIDE: Credit hours (HE, Hours Earned, Total Credits) increase each semester. The HIGHEST cumulative credit count indicates the final semester - that's where the final GPA will be.
-8. Identify the GPA scale (usually 4.0, but could be 5.0 or 100-point)
-9. Rate your confidence:
-   - "high" if GPA is clearly the final cumulative (last one chronologically, highest credit count, near degree completion)
+1. MULTI-COLUMN LAYOUTS: Many transcripts have TWO COLUMNS of text. When converted to text, columns may be interleaved. The RIGHT column typically contains LATER/MORE RECENT semesters than the left column. You MUST analyze ALL semester data to find the truly final one.
+
+2. USE CREDIT HOURS TO FIND THE FINAL SEMESTER:
+   - Look for cumulative credit hours (HE, Hours Earned, Credit Hours, Total Credits, Cumulative Hours)
+   - Credits ALWAYS increase each semester
+   - The HIGHEST cumulative credit count = the FINAL semester
+   - Example: If you see entries with 56 HE and 88 HE, the 88 HE is the FINAL semester
+
+3. Find the cumulative GPA associated with the HIGHEST credit count - that is the FINAL GPA
+
+4. Look for these markers that indicate the end of the transcript:
+   - "End of Transcript"
+   - "Degree Awarded"
+   - "Degree Conferred"
+   - Final semester before these markers
+
+5. Look for labels: "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
+
+6. DO NOT use:
+   - Semester GPAs (term-only GPAs)
+   - Intermediate cumulative GPAs from earlier semesters
+   - Any cumulative GPA that does NOT have the highest credit count
+
+7. GPA scale is usually 4.0, but could be 5.0 or 100-point
+
+8. Rate your confidence:
+   - "high" if GPA has the highest credit count and is near "End of Transcript" or "Degree Awarded"
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain or could not find a clearly labeled cumulative GPA
 
@@ -58,7 +75,7 @@ Respond with ONLY valid JSON in this exact format:
   "gpa": 3.75,
   "scale": "4.0",
   "confidence": "high",
-  "reasoning": "Found final cumulative GPA of 3.75 in the last semester section (Spring 2024), near 'Degree Awarded'"
+  "reasoning": "Found final cumulative GPA of 3.75 with 88 HE (highest credit count), near 'Degree Awarded'"
 }
 
 If you cannot find a cumulative GPA, respond with:
@@ -175,18 +192,35 @@ export async function extractGPAFromDocument(
             text: `You are analyzing a college transcript document to extract the student's FINAL cumulative GPA.
 
 CRITICAL INSTRUCTIONS:
-1. Find the FINAL CUMULATIVE GPA - this is the LAST cumulative GPA shown chronologically in the document
-2. Transcripts often show cumulative GPA after EACH semester - you need the VERY LAST one (most recent)
-3. Look for labels like "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
-4. If the transcript has multiple columns or sections, scan the ENTIRE document to find the chronologically LAST cumulative GPA
-5. The final cumulative GPA is usually near the end of the transcript, often near "Degree Awarded" or "End of Transcript"
-6. DO NOT use semester GPAs or intermediate cumulative GPAs from earlier semesters
-7. USE CUMULATIVE CREDITS/HOURS AS A GUIDE: Credit hours (HE, Hours Earned, Total Credits) increase each semester. The HIGHEST cumulative credit count indicates the final semester - that's where the final GPA will be.
-8. Identify the GPA scale (usually 4.0, but could be 5.0 or 100-point)
-9. Rate your confidence:
-   - "high" if GPA is clearly the final cumulative (last one chronologically, highest credit count, near degree completion)
+1. MULTI-COLUMN LAYOUTS: Many transcripts have TWO COLUMNS. The RIGHT column typically contains LATER/MORE RECENT semesters than the left column. You MUST check BOTH columns thoroughly.
+
+2. USE CREDIT HOURS TO FIND THE FINAL SEMESTER:
+   - Look for cumulative credit hours (HE, Hours Earned, Credit Hours, Total Credits)
+   - Credits ALWAYS increase each semester
+   - The HIGHEST cumulative credit count = the FINAL semester
+   - Example: If left column shows 56 HE and right column shows 88 HE, the 88 HE is the FINAL semester
+
+3. Find the cumulative GPA associated with the HIGHEST credit count - that is the FINAL GPA
+
+4. Look for these markers that indicate the end of the transcript:
+   - "End of Transcript"
+   - "Degree Awarded"
+   - "Degree Conferred"
+   - Final semester before these markers
+
+5. Look for labels: "Cumulative GPA", "Overall GPA", "Cum GPA", "CGPA", "Career GPA", "Cumulative:"
+
+6. DO NOT use:
+   - Semester GPAs
+   - Intermediate cumulative GPAs from earlier semesters
+   - GPAs from the left column if the right column has higher credit hours
+
+7. GPA scale is usually 4.0, but could be 5.0 or 100-point
+
+8. Rate your confidence:
+   - "high" if GPA has the highest credit count and is near "End of Transcript" or "Degree Awarded"
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
-   - "low" if uncertain or could not find a clearly labeled cumulative GPA
+   - "low" if uncertain
 
 Respond with ONLY valid JSON in this exact format:
 {
