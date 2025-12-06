@@ -34,7 +34,7 @@ export async function extractGPAFromText(
     messages: [
       {
         role: 'user',
-        content: `You are analyzing a college transcript to extract the student's FINAL cumulative GPA.
+        content: `You are a GPA extraction assistant. Your ONLY job is to find the final cumulative GPA and return a JSON response. Do NOT explain your reasoning in prose - put all reasoning in the JSON "reasoning" field.
 
 TRANSCRIPT TEXT:
 ${truncatedText}
@@ -70,7 +70,9 @@ CRITICAL INSTRUCTIONS:
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain or could not find a clearly labeled cumulative GPA
 
-Respond with ONLY valid JSON in this exact format:
+IMPORTANT: Respond with ONLY valid JSON - no prose, no explanation outside the JSON. Start your response with { and end with }.
+
+Format:
 {
   "gpa": 3.75,
   "scale": "4.0",
@@ -78,7 +80,7 @@ Respond with ONLY valid JSON in this exact format:
   "reasoning": "Found final cumulative GPA of 3.75 with 88 HE (highest credit count), near 'Degree Awarded'"
 }
 
-If you cannot find a cumulative GPA, respond with:
+If you cannot find a cumulative GPA:
 {
   "gpa": null,
   "scale": null,
@@ -122,12 +124,16 @@ If you cannot find a cumulative GPA, respond with:
 
     return result
   } catch {
-    // If JSON parsing fails, return low confidence result
+    // Log the full response for debugging
+    console.error('[GPA Extractor] Failed to parse Claude response as JSON')
+    console.error('[GPA Extractor] Full response:', content.text)
+
+    // Return more of the response for visibility in the UI (500 chars instead of 100)
     return {
       gpa: null,
       scale: null,
       confidence: 'low',
-      reasoning: `Failed to parse extraction response: ${content.text.substring(0, 100)}...`,
+      reasoning: `Failed to parse extraction response: ${content.text.substring(0, 500)}${content.text.length > 500 ? '...' : ''}`,
     }
   }
 }
@@ -189,7 +195,7 @@ export async function extractGPAFromDocument(
               },
           {
             type: 'text' as const,
-            text: `You are analyzing a college transcript document to extract the student's FINAL cumulative GPA.
+            text: `You are a GPA extraction assistant. Your ONLY job is to find the final cumulative GPA and return a JSON response. Do NOT explain your reasoning in prose - put all reasoning in the JSON "reasoning" field.
 
 CRITICAL INSTRUCTIONS:
 1. MULTI-COLUMN LAYOUTS: Many transcripts have TWO COLUMNS. The RIGHT column typically contains LATER/MORE RECENT semesters than the left column. You MUST check BOTH columns thoroughly.
@@ -222,7 +228,9 @@ CRITICAL INSTRUCTIONS:
    - "medium" if you found a cumulative GPA but aren't 100% sure it's the final one
    - "low" if uncertain
 
-Respond with ONLY valid JSON in this exact format:
+IMPORTANT: Respond with ONLY valid JSON - no prose, no explanation outside the JSON. Start your response with { and end with }.
+
+Format:
 {
   "gpa": 3.75,
   "scale": "4.0",
@@ -230,7 +238,7 @@ Respond with ONLY valid JSON in this exact format:
   "reasoning": "Found final cumulative GPA of 3.75 in the last semester section (Spring 2024), near 'Degree Awarded'"
 }
 
-If you cannot find a cumulative GPA, respond with:
+If you cannot find a cumulative GPA:
 {
   "gpa": null,
   "scale": null,
@@ -276,12 +284,16 @@ If you cannot find a cumulative GPA, respond with:
 
     return result
   } catch {
-    // If JSON parsing fails, return low confidence result
+    // Log the full response for debugging
+    console.error('[GPA Extractor Vision] Failed to parse Claude response as JSON')
+    console.error('[GPA Extractor Vision] Full response:', content.text)
+
+    // Return more of the response for visibility in the UI (500 chars instead of 100)
     return {
       gpa: null,
       scale: null,
       confidence: 'low',
-      reasoning: `Failed to parse vision extraction response: ${content.text.substring(0, 100)}...`,
+      reasoning: `Failed to parse vision extraction response: ${content.text.substring(0, 500)}${content.text.length > 500 ? '...' : ''}`,
     }
   }
 }
