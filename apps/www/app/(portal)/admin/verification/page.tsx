@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { VerificationCard } from './verification-card'
+import { AutoVerificationCard } from './auto-verification-card'
+import { BulkVerifyButton } from './bulk-verify-button'
 import type { Database } from '@/lib/types/database.types'
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
@@ -26,8 +28,21 @@ export default async function AdminVerificationPage() {
     redirect('/login')
   }
 
-  // Use admin client to bypass RLS for admin operations
+  // Use typed admin client for existing tables
   const supabaseAdmin = createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  // Use untyped admin client for new transcript_verifications table
+  // (types will be available after running `pnpm supabase gen types`)
+  const supabaseAdminUntyped = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
@@ -112,21 +127,89 @@ export default async function AdminVerificationPage() {
   const pendingTranscriptCount = allTranscripts?.filter(t => !t.is_verified).length || 0
   const pendingGpaCount = allTranscripts?.filter(t => t.is_verified && t.gpa && !t.gpa_verified).length || 0
 
+  // Fetch auto-verification queue (flagged/error items that need review)
+  // Using untyped client since transcript_verifications table isn't in types yet
+  const { data: autoVerificationQueue } = await supabaseAdminUntyped
+    .from('transcript_verifications')
+    .select(`
+      *,
+      candidate_profiles(
+        id,
+        gpa,
+        school_name,
+        user_id
+      )
+    `)
+    .in('status', ['flagged', 'error'])
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  // Fetch user profiles for the auto-verification queue
+  const autoVerificationUserIds = autoVerificationQueue
+    ?.map(v => v.candidate_profiles?.user_id)
+    .filter((id): id is string => id !== null) || []
+
+  const { data: autoVerificationProfiles } = autoVerificationUserIds.length > 0
+    ? await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', autoVerificationUserIds)
+    : { data: [] }
+
+  const autoProfileMap = new Map(autoVerificationProfiles?.map(p => [p.id, p]) || [])
+
+  const autoVerificationsWithProfiles = autoVerificationQueue?.map(v => ({
+    ...v,
+    profile: v.candidate_profiles?.user_id
+      ? autoProfileMap.get(v.candidate_profiles.user_id)
+      : null,
+  })) || []
+
+  // Fetch transcript URLs for the auto-verification queue
+  const autoTranscriptIds = autoVerificationQueue
+    ?.map(v => v.transcript_id)
+    .filter((id): id is string => id !== null) || []
+
+  const { data: autoTranscripts } = autoTranscriptIds.length > 0
+    ? await supabaseAdmin
+        .from('candidate_transcripts')
+        .select('id, transcript_url')
+        .in('id', autoTranscriptIds)
+    : { data: [] }
+
+  const transcriptUrlMap = new Map(autoTranscripts?.map(t => [t.id, t.transcript_url]) || [])
+
+  // Fetch auto-verification stats
+  const { data: allAutoVerifications } = await supabaseAdminUntyped
+    .from('transcript_verifications')
+    .select('status')
+
+  const autoStats = {
+    total: allAutoVerifications?.length || 0,
+    autoVerified: allAutoVerifications?.filter(v => v.status === 'auto_verified').length || 0,
+    flagged: allAutoVerifications?.filter(v => v.status === 'flagged').length || 0,
+    manuallyVerified: allAutoVerifications?.filter(v => v.status === 'manually_verified').length || 0,
+    error: allAutoVerifications?.filter(v => v.status === 'error').length || 0,
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Document Verification</h1>
-        <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          Review and verify candidate documents
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Document Verification</h1>
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+            Review and verify candidate documents
+          </p>
+        </div>
+        <BulkVerifyButton />
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-neutral-900">
           <p className="text-2xl font-bold">{pendingVerification.length}</p>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Pending Review</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Manual Review</p>
         </div>
         <div className="rounded-xl border bg-yellow-50 p-4 shadow-sm dark:bg-yellow-900/20">
           <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{pendingResumeCount}</p>
@@ -141,6 +224,62 @@ export default async function AdminVerificationPage() {
           <p className="text-sm text-purple-600 dark:text-purple-400">GPA Confirmations</p>
         </div>
       </div>
+
+      {/* Auto-Verification Stats */}
+      {autoStats.total > 0 && (
+        <div className="rounded-xl border bg-gradient-to-r from-purple-50 to-blue-50 p-4 dark:from-purple-900/20 dark:to-blue-900/20">
+          <h3 className="flex items-center gap-2 font-semibold text-purple-900 dark:text-purple-100">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            AI Auto-Verification Stats
+          </h3>
+          <div className="mt-3 grid grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-bold text-green-600">{autoStats.autoVerified}</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400">Auto-Verified</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-amber-600">{autoStats.flagged}</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400">Flagged</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-blue-600">{autoStats.manuallyVerified}</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400">Manually Verified</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-red-600">{autoStats.error}</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400">Errors</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auto-Verification Queue (Flagged/Errors) */}
+      {autoVerificationsWithProfiles.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-amber-700 dark:text-amber-300">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
+              <path d="M12 8v4M12 16h.01"/>
+            </svg>
+            AI Flagged for Review ({autoVerificationsWithProfiles.length})
+          </h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            These transcripts were processed by AI but need manual review due to mismatches or low confidence.
+          </p>
+          <div className="space-y-4">
+            {autoVerificationsWithProfiles.map((verification) => (
+              <AutoVerificationCard
+                key={verification.id}
+                verification={verification as any}
+                transcriptUrl={verification.transcript_id ? transcriptUrlMap.get(verification.transcript_id) : undefined}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Pending Verification Queue */}
       <div className="space-y-4">

@@ -19,6 +19,21 @@ function getAdminClient() {
   )
 }
 
+// Helper to get untyped admin client for new tables not in types yet
+// (transcript_verifications - run `pnpm supabase gen types` after migration)
+function getUntypedAdminClient() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
 // Helper to verify admin status
 async function verifyAdmin() {
   const supabase = await createClient()
@@ -533,6 +548,99 @@ export async function rejectIndividualTranscriptGpa(transcriptId: string) {
     .eq('id', transcriptId)
 
   if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+// =============================================
+// AUTO GPA VERIFICATION ACTIONS
+// (using Document AI + Claude for automated GPA extraction)
+// =============================================
+
+export async function autoVerifyTranscript(candidateProfileId: string, transcriptId: string) {
+  await verifyAdmin()
+
+  const { verifyTranscript } = await import('@/lib/transcript-verification')
+  const result = await verifyTranscript(candidateProfileId, transcriptId)
+
+  revalidatePath('/admin/verification')
+  return result
+}
+
+export async function bulkAutoVerifyTranscripts(limit = 50) {
+  await verifyAdmin()
+
+  const { bulkVerifyTranscripts } = await import('@/lib/transcript-verification')
+  const result = await bulkVerifyTranscripts(limit)
+
+  revalidatePath('/admin/verification')
+  return result
+}
+
+export async function getAutoVerificationQueue() {
+  await verifyAdmin()
+
+  const { getVerificationQueue } = await import('@/lib/transcript-verification')
+  return getVerificationQueue()
+}
+
+export async function getAutoVerificationStats() {
+  await verifyAdmin()
+
+  const { getVerificationStats } = await import('@/lib/transcript-verification')
+  return getVerificationStats()
+}
+
+export async function manuallyVerifyAutoVerification(
+  verificationId: string,
+  decision: 'verified' | 'rejected',
+  notes: string
+) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  // Get the verification record (using untyped client for new table)
+  const { data: verification, error: fetchError } = await supabaseUntyped
+    .from('transcript_verifications')
+    .select('candidate_profile_id, transcript_id')
+    .eq('id', verificationId)
+    .single()
+
+  if (fetchError || !verification) throw new Error('Verification not found')
+
+  // Update verification record
+  const { error: updateError } = await supabaseUntyped
+    .from('transcript_verifications')
+    .update({
+      status: decision === 'verified' ? 'manually_verified' : 'rejected',
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+      review_notes: notes,
+    })
+    .eq('id', verificationId)
+
+  if (updateError) throw new Error(updateError.message)
+
+  // Update candidate_transcripts based on decision
+  if (verification.transcript_id) {
+    await supabaseAdmin
+      .from('candidate_transcripts')
+      .update({
+        gpa_verified: decision === 'verified',
+        is_verified: decision === 'verified',
+        verified_by: user.id,
+        verified_at: new Date().toISOString(),
+      })
+      .eq('id', verification.transcript_id)
+  }
+
+  // Update candidate profile status (gpa_verification_status is also new)
+  await supabaseUntyped
+    .from('candidate_profiles')
+    .update({
+      gpa_verification_status: decision,
+    })
+    .eq('id', verification.candidate_profile_id)
 
   revalidatePath('/admin/verification')
 }
