@@ -85,6 +85,12 @@ export default async function SchoolLayout({
               Recruiters
             </Link>
             <Link
+              href="/school/analytics"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Analytics
+            </Link>
+            <Link
               href="/school/settings"
               className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >

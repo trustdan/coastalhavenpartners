@@ -35,21 +35,26 @@ const menuItem = [
   },
   {
     id: 2,
+    label: "About",
+    href: "/about",
+  },
+  {
+    id: 3,
     label: "For Students",
     href: "/#students",
   },
   {
-    id: 3,
+    id: 4,
     label: "For Recruiters",
     href: "/#recruiters",
   },
   {
-    id: 4,
+    id: 5,
     label: "For Schools",
     href: "/#schools",
   },
   {
-    id: 5,
+    id: 6,
     label: "Insights",
     href: "/insights",
   },
