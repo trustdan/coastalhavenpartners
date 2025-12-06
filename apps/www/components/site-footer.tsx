@@ -46,6 +46,19 @@ function InstagramIcon({ className }: { className?: string }) {
 
 const footerNavs = [
   {
+    label: "Support",
+    items: [
+      {
+        href: "/help",
+        name: "Help Center",
+      },
+      {
+        href: "/support",
+        name: "Contact Us",
+      },
+    ],
+  },
+  {
     label: "Legal",
     items: [
       {
@@ -109,7 +122,7 @@ export function SiteFooter() {
               </a>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:gap-10">
+          <div className="grid grid-cols-2 gap-8 sm:gap-10">
             {footerNavs.map((nav) => (
               <div key={nav.label}>
                 <h2 className="mb-6 text-sm tracking-tighter font-medium text-gray-900 uppercase dark:text-white">

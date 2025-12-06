@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatedThemeToggler } from "@/components/magicui/animated-theme-toggler"
-import { Home } from "lucide-react"
+import { Home, HelpCircle, MessageSquareMore } from "lucide-react"
 import Link from "next/link"
 
 const DISCORD_INVITE_URL = "https://discord.gg/MarkPXNfXd"
@@ -22,6 +22,22 @@ function DiscordIcon({ className }: { className?: string }) {
 export function PortalNavExtras() {
   return (
     <div className="flex items-center gap-2">
+      <Link
+        href="/help"
+        className="inline-flex items-center justify-center rounded-md p-2 text-neutral-600 hover:text-blue-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-blue-400 dark:hover:bg-neutral-800 transition-colors"
+        title="Help Center"
+      >
+        <HelpCircle className="h-5 w-5" />
+        <span className="sr-only">Help Center</span>
+      </Link>
+      <Link
+        href="/support"
+        className="inline-flex items-center justify-center rounded-md p-2 text-neutral-600 hover:text-purple-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-purple-400 dark:hover:bg-neutral-800 transition-colors"
+        title="Support & Feedback"
+      >
+        <MessageSquareMore className="h-5 w-5" />
+        <span className="sr-only">Support & Feedback</span>
+      </Link>
       <Link
         href="/"
         className="inline-flex items-center justify-center rounded-md p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800 transition-colors"
