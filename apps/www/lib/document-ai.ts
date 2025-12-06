@@ -56,15 +56,21 @@ export async function extractTextFromDocument(
   fileBuffer: Buffer,
   mimeType: string
 ): Promise<DocumentExtractionResult> {
-  const documentClient = getClient()
-
   const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID
   const location = process.env.GOOGLE_DOCUMENT_AI_LOCATION || 'us'
   const processorId = process.env.GOOGLE_DOCUMENT_AI_PROCESSOR_ID
 
-  if (!projectId || !processorId) {
-    throw new Error('Missing Google Document AI configuration. Please set GOOGLE_CLOUD_PROJECT_ID and GOOGLE_DOCUMENT_AI_PROCESSOR_ID.')
+  // OCR processor is optional - return empty result if not configured
+  // The calling code should fall back to Claude for text analysis
+  if (!projectId || !processorId || processorId === 'your-processor-id') {
+    return {
+      text: '',
+      confidence: 0,
+      pageCount: 0,
+    }
   }
+
+  const documentClient = getClient()
 
   const name = `projects/${projectId}/locations/${location}/processors/${processorId}`
 

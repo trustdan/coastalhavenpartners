@@ -127,37 +127,34 @@ export async function verifyTranscript(
       if (formParserResult.rawText && formParserResult.rawText.length > 100) {
         extractedText = formParserResult.rawText
       } else {
-        // Use Document OCR if Form Parser didn't return text
+        // Use Document OCR if Form Parser didn't return text (OCR is optional)
         const ocrResult = await extractTextFromDocument(fileBuffer, mimeType)
-        extractedText = ocrResult.text
+        extractedText = ocrResult.text || formParserResult.rawText || ''
       }
 
-      if (!extractedText || extractedText.length < 100) {
-        throw new Error('Could not extract sufficient text from transcript')
-      }
-
-      // Check if Anthropic API key is configured
-      if (process.env.ANTHROPIC_API_KEY) {
+      // If we have text, try Claude; otherwise flag for manual review
+      if (extractedText && extractedText.length >= 100 && process.env.ANTHROPIC_API_KEY) {
         const claudeResult = await extractGPAFromText(extractedText)
         gpaResult = claudeResult
         extractionMethod = 'claude'
+      } else if (formParserResult.gpa !== null) {
+        // Use Form Parser result even if low confidence
+        gpaResult = {
+          gpa: formParserResult.gpa,
+          scale: formParserResult.scale,
+          confidence: 'low',
+          reasoning: formParserResult.reasoning + (extractedText.length < 100 ? ' (insufficient text for Claude analysis)' : ' (Claude not configured)'),
+        }
+        extractionMethod = 'form_parser'
       } else {
-        // No Claude fallback available, use Form Parser result even if low confidence
-        if (formParserResult.gpa !== null) {
-          gpaResult = {
-            gpa: formParserResult.gpa,
-            scale: formParserResult.scale,
-            confidence: 'low',
-            reasoning: formParserResult.reasoning + ' (Claude fallback not configured)',
-          }
-          extractionMethod = 'form_parser'
-        } else {
-          gpaResult = {
-            gpa: null,
-            scale: null,
-            confidence: 'low',
-            reasoning: 'Could not extract GPA. Form Parser found no match and Claude is not configured.',
-          }
+        // No GPA found and can't use Claude - flag for manual review
+        gpaResult = {
+          gpa: null,
+          scale: null,
+          confidence: 'low',
+          reasoning: extractedText.length < 100
+            ? 'Could not extract sufficient text from transcript. Requires manual review.'
+            : 'Form Parser found no GPA and Claude is not configured. Requires manual review.',
         }
       }
     }
@@ -214,18 +211,31 @@ export async function verifyTranscript(
           is_verified: true,
         })
         .eq('id', transcriptId)
-
-      // Also update candidate profile GPA verification status
-      await supabase
-        .from('candidate_profiles')
-        .update({ gpa_verification_status: 'verified' })
-        .eq('id', candidateProfileId)
-    } else {
-      await supabase
-        .from('candidate_profiles')
-        .update({ gpa_verification_status: 'flagged' })
-        .eq('id', candidateProfileId)
     }
+
+    // 9. Update candidate profile status based on ALL their transcripts
+    // Only mark as 'verified' if ALL transcripts with GPA are verified
+    const { data: allTranscripts } = await supabase
+      .from('candidate_transcripts')
+      .select('id, gpa, gpa_verified')
+      .eq('candidate_profile_id', candidateProfileId)
+
+    const transcriptsWithGpa = allTranscripts?.filter(t => t.gpa !== null) || []
+    const allVerified = transcriptsWithGpa.length > 0 &&
+      transcriptsWithGpa.every(t => t.gpa_verified === true)
+    const anyFlagged = transcriptsWithGpa.some(t => t.gpa_verified === false)
+
+    let candidateStatus: 'verified' | 'flagged' | 'pending' = 'pending'
+    if (allVerified) {
+      candidateStatus = 'verified'
+    } else if (anyFlagged) {
+      candidateStatus = 'flagged'
+    }
+
+    await supabase
+      .from('candidate_profiles')
+      .update({ gpa_verification_status: candidateStatus })
+      .eq('id', candidateProfileId)
 
     return {
       success: true,
