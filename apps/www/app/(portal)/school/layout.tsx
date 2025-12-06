@@ -37,11 +37,16 @@ export default async function SchoolLayout({
   }
 
   // Get school profile
-  const { data: schoolProfile } = await supabase
+  const { data: schoolProfile, error: schoolProfileError } = await supabase
     .from('school_profiles')
     .select('school_name, is_approved')
     .eq('user_id', user.id)
     .single()
+
+  // If no school profile exists, redirect to complete profile
+  if (schoolProfileError || !schoolProfile) {
+    redirect('/complete-profile/school')
+  }
 
   async function handleLogout() {
     'use server'

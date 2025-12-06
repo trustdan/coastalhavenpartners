@@ -65,7 +65,7 @@ export default async function SchoolDashboardPage({
     return <AccessRevoked userType="school" email={profile?.email} />
   }
 
-  if (!schoolProfile?.is_approved) {
+  if (!schoolProfile || !schoolProfile.is_approved) {
     return (
       <div className="rounded-xl border bg-white p-8 text-center shadow-sm dark:bg-neutral-900">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20">
