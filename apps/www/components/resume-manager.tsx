@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Loader2, Upload, Plus, Trash2, FileText, CheckCircle2, Clock, ExternalLink, Star, StarOff } from 'lucide-react'
+import { Loader2, Upload, Plus, Trash2, FileText, CheckCircle2, Clock, ExternalLink, Star, StarOff, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Resume {
@@ -47,11 +47,14 @@ export function ResumeManager() {
   const [candidateProfileId, setCandidateProfileId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
 
-  // Form state for new resume
+  // Form state for new/edit resume
   const [label, setLabel] = useState('')
   const [description, setDescription] = useState('')
   const [isDefault, setIsDefault] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+  // Edit mode state
+  const [editingResume, setEditingResume] = useState<Resume | null>(null)
 
   const supabase = createClient()
 
@@ -238,6 +241,95 @@ export function ResumeManager() {
     }
   }
 
+  function openEditDialog(resume: Resume) {
+    setEditingResume(resume)
+    setLabel(resume.label)
+    setDescription(resume.description || '')
+    setIsDefault(resume.is_default)
+    setSelectedFile(null)
+    setDialogOpen(true)
+  }
+
+  function resetForm() {
+    setEditingResume(null)
+    setSelectedFile(null)
+    setLabel('')
+    setDescription('')
+    setIsDefault(false)
+  }
+
+  async function handleUpdate() {
+    if (!editingResume || !userId || !candidateProfileId) return
+
+    if (!label.trim()) {
+      toast.error('Please enter a label for this resume')
+      return
+    }
+
+    setUploading(true)
+
+    try {
+      let publicUrl = editingResume.resume_url
+
+      // If a new file was selected, upload it
+      if (selectedFile) {
+        const filePath = `${userId}/${Date.now()}-${selectedFile.name}`
+        const { error: uploadError } = await supabase.storage
+          .from('resumes')
+          .upload(filePath, selectedFile)
+
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl: newUrl } } = supabase.storage
+          .from('resumes')
+          .getPublicUrl(filePath)
+
+        publicUrl = newUrl
+      }
+
+      // If setting this as default, unset other defaults first
+      if (isDefault && !editingResume.is_default) {
+        await supabase
+          .from('candidate_resumes')
+          .update({ is_default: false })
+          .eq('candidate_profile_id', candidateProfileId)
+      }
+
+      // Update resume record
+      const { data: updatedResume, error: dbError } = await supabase
+        .from('candidate_resumes')
+        .update({
+          resume_url: publicUrl,
+          label: label.trim(),
+          description: description.trim() || null,
+          is_default: isDefault,
+          // Reset verification status if file changed
+          ...(selectedFile ? { is_verified: false } : {}),
+        })
+        .eq('id', editingResume.id)
+        .select()
+        .single()
+
+      if (dbError) throw dbError
+
+      // Update local state
+      const mappedResume: Resume = { ...updatedResume, is_default: updatedResume.is_default ?? false }
+      if (isDefault && !editingResume.is_default) {
+        setResumes(resumes.map(r => r.id === editingResume.id ? mappedResume : { ...r, is_default: false }))
+      } else {
+        setResumes(resumes.map(r => r.id === editingResume.id ? mappedResume : r))
+      }
+
+      toast.success('Resume updated successfully')
+      setDialogOpen(false)
+      resetForm()
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating resume')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -255,7 +347,10 @@ export function ResumeManager() {
             Upload role-specific resumes for different opportunities
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open)
+          if (!open) resetForm()
+        }}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
@@ -264,9 +359,11 @@ export function ResumeManager() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Upload Resume</DialogTitle>
+              <DialogTitle>{editingResume ? 'Update Resume' : 'Upload Resume'}</DialogTitle>
               <DialogDescription>
-                Add a resume tailored for specific roles or industries.
+                {editingResume
+                  ? 'Update the resume details or upload a new file.'
+                  : 'Add a resume tailored for specific roles or industries.'}
               </DialogDescription>
             </DialogHeader>
 
@@ -315,7 +412,7 @@ export function ResumeManager() {
               </div>
 
               <div className="space-y-2">
-                <Label>Resume File *</Label>
+                <Label>Resume File {editingResume ? '(optional - leave empty to keep current)' : '*'}</Label>
                 <div className="rounded-lg border border-dashed border-neutral-300 p-4 dark:border-neutral-700">
                   <input
                     type="file"
@@ -334,6 +431,14 @@ export function ResumeManager() {
                         <span className="font-medium">{selectedFile.name}</span>
                         <span className="text-neutral-500">Click to change file</span>
                       </>
+                    ) : editingResume ? (
+                      <>
+                        <RefreshCw className="h-8 w-8 text-neutral-400" />
+                        <span className="text-neutral-600 dark:text-neutral-400">
+                          Click to upload a new file
+                        </span>
+                        <span className="text-xs text-neutral-500">Leave empty to keep current file</span>
+                      </>
                     ) : (
                       <>
                         <Upload className="h-8 w-8 text-neutral-400" />
@@ -349,13 +454,23 @@ export function ResumeManager() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setDialogOpen(false)
+                resetForm()
+              }}>
                 Cancel
               </Button>
-              <Button onClick={handleUpload} disabled={!selectedFile || !label.trim() || uploading}>
-                {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Upload
-              </Button>
+              {editingResume ? (
+                <Button onClick={handleUpdate} disabled={!label.trim() || uploading}>
+                  {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Update
+                </Button>
+              ) : (
+                <Button onClick={handleUpload} disabled={!selectedFile || !label.trim() || uploading}>
+                  {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Upload
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -443,6 +558,14 @@ export function ResumeManager() {
                     <ExternalLink className="mr-1.5 h-4 w-4" />
                     View
                   </a>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openEditDialog(resume)}
+                  title="Edit resume"
+                >
+                  <RefreshCw className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"

@@ -553,6 +553,42 @@ export async function rejectIndividualTranscriptGpa(transcriptId: string) {
 }
 
 // =============================================
+// INDIVIDUAL RESUME VERIFICATION ACTIONS
+// (for candidate_resumes table - multiple resumes per candidate)
+// =============================================
+
+export async function verifyIndividualResume(resumeId: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+
+  const { error } = await supabaseAdmin
+    .from('candidate_resumes')
+    .update({
+      is_verified: true,
+      verified_by: user.id,
+      verified_at: new Date().toISOString()
+    })
+    .eq('id', resumeId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+export async function rejectIndividualResume(resumeId: string) {
+  const { supabaseAdmin } = await verifyAdmin()
+
+  // Delete the resume record (candidate can upload a new one)
+  const { error } = await supabaseAdmin
+    .from('candidate_resumes')
+    .delete()
+    .eq('id', resumeId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin/verification')
+}
+
+// =============================================
 // AUTO GPA VERIFICATION ACTIONS
 // (using Document AI + Claude for automated GPA extraction)
 // =============================================

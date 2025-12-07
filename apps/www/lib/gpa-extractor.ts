@@ -215,6 +215,8 @@ export async function extractGPAFromDocument(
   const response = await getAnthropicClient().messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1024,
+    // System message enforces JSON-only output
+    system: `You are a JSON-only API. You MUST respond with ONLY a valid JSON object, nothing else. No explanations, no markdown, no text before or after the JSON. Your entire response must be parseable by JSON.parse().`,
     messages: [
       {
         role: 'user',
@@ -238,52 +240,18 @@ export async function extractGPAFromDocument(
               },
           {
             type: 'text' as const,
-            text: `You are a GPA extraction assistant. Your ONLY job is to find the final cumulative GPA.
+            text: `Extract the FINAL cumulative GPA from this transcript document.
 
-=== THE ONE RULE THAT MATTERS ===
-The FINAL cumulative GPA is ALWAYS the one with the HIGHEST CREDIT HOURS.
-Credit hours increase each semester. The highest number = the most recent = the final GPA.
+RULES:
+1. The FINAL cumulative GPA = the one with the HIGHEST CREDIT HOURS (credit hours increase each semester)
+2. Credit Hours (HE) are small numbers (15-120). Quality Points are large (50-300). Don't confuse them.
+3. Two-column transcripts: RIGHT column continues after LEFT. Find max credit hours across BOTH columns.
 
-=== STEP 1: IDENTIFY CREDIT HOURS (not quality points) ===
-For each "Cumulative" row, you'll see THREE numbers. Identify credit hours:
-- Credit Hours (HE): SMALL number, typically 15-120
-- Quality Points (QP): LARGE number, typically 50-300
-- GPA: Number between 0.00 and 4.00
-
-CRITICAL: Numbers like 123.91, 131.91, 180.84, 232.11 are QUALITY POINTS (too big for credit hours!)
-CRITICAL: Numbers like 32.00, 43.00, 56.00, 73.00, 88.00 are CREDIT HOURS (reasonable semester accumulation)
-
-=== STEP 2: LIST ALL CUMULATIVE ENTRIES ===
-List ONLY credit hours and GPA pairs. Format: "18 HE → 2.66, 32 HE → 2.90, 43 HE → 2.95, 56 HE → 2.99, 73 HE → 3.11, 88 HE → 3.17"
-
-=== STEP 3: FIND MAXIMUM CREDIT HOURS ===
-Compare the credit hour numbers: 18, 32, 43, 56, 73, 88
-Maximum = 88
-Answer = GPA paired with 88 = 3.17
-
-THIS STEP IS FINAL. Do NOT let text position, "End of Transcript" location, or anything else override this.
-
-=== TWO-COLUMN TRANSCRIPTS ===
-Many transcripts have TWO columns. The RIGHT column continues AFTER the left column.
-- LEFT column bottom may show 56 HE → 2.99
-- RIGHT column bottom may show 88 HE → 3.17
-88 > 56, so the answer is 3.17 (not 2.99!)
-
-=== RESPOND WITH ONLY JSON ===
-{
-  "gpa": 3.17,
-  "scale": "4.0",
-  "confidence": "high",
-  "reasoning": "STEP 1-2: Found cumulative entries: 18 HE → 2.66, 32 HE → 2.90, 43 HE → 2.95, 56 HE → 2.99 (left), 73 HE → 3.11, 88 HE → 3.17 (right). STEP 3: Credit hours comparison: 18 < 32 < 43 < 56 < 73 < 88. Maximum = 88. GPA at 88 HE = 3.17. ANSWER: 3.17"
-}
+OUTPUT FORMAT - Return ONLY this JSON (no other text):
+{"gpa": 3.14, "scale": "4.0", "confidence": "high", "reasoning": "Found entries: 16→3.29, 31→2.54, 45→2.79, 60→2.41, 75→2.82, 92→3.01, 98→3.70, 110→3.14. Max credits=110, GPA=3.14"}
 
 If no GPA found:
-{
-  "gpa": null,
-  "scale": null,
-  "confidence": "low",
-  "reasoning": "Could not locate cumulative GPA in transcript."
-}`,
+{"gpa": null, "scale": null, "confidence": "low", "reasoning": "Could not locate cumulative GPA"}`,
           },
         ],
       },
@@ -294,6 +262,10 @@ If no GPA found:
   if (content.type !== 'text') {
     throw new Error('Unexpected response type from Claude')
   }
+
+  // DETAILED LOGGING - Always log the raw response for debugging
+  console.log('[GPA Extractor Vision] Raw Claude response length:', content.text.length)
+  console.log('[GPA Extractor Vision] Raw Claude response (first 1000 chars):', content.text.substring(0, 1000))
 
   try {
     // Clean up the response - remove any markdown code blocks if present
@@ -309,6 +281,12 @@ If no GPA found:
     }
     jsonText = jsonText.trim()
 
+    // Try to extract JSON from anywhere in the response (in case there's text before/after)
+    const jsonMatch = jsonText.match(/\{[\s\S]*"gpa"[\s\S]*\}/)
+    if (jsonMatch) {
+      jsonText = jsonMatch[0]
+    }
+
     const result = JSON.parse(jsonText) as GPAExtractionResult
 
     // Validate the result
@@ -321,18 +299,96 @@ If no GPA found:
       }
     }
 
+    console.log('[GPA Extractor Vision] Successfully parsed GPA:', result.gpa)
     return result
-  } catch {
-    // Log the full response for debugging
-    console.error('[GPA Extractor Vision] Failed to parse Claude response as JSON')
+  } catch (parseError) {
+    // FALLBACK: Try to extract GPA from verbose response
+    console.error('[GPA Extractor Vision] Failed to parse JSON, attempting fallback extraction')
+    console.error('[GPA Extractor Vision] Parse error:', parseError instanceof Error ? parseError.message : 'Unknown')
     console.error('[GPA Extractor Vision] Full response:', content.text)
 
-    // Return more of the response for visibility in the UI (500 chars instead of 100)
+    // Try to find the final GPA from verbose text patterns like "110 HE → 3.14" or "GPA at 110 HE = 3.14"
+    const fallbackResult = extractGPAFromVerboseResponse(content.text)
+    if (fallbackResult) {
+      console.log('[GPA Extractor Vision] Fallback extraction succeeded:', fallbackResult.gpa)
+      return fallbackResult
+    }
+
+    // Return the full response for admin visibility
     return {
       gpa: null,
       scale: null,
       confidence: 'low',
-      reasoning: `Failed to parse vision extraction response: ${content.text.substring(0, 500)}${content.text.length > 500 ? '...' : ''}`,
+      reasoning: `[PARSE_ERROR] Claude returned non-JSON response. Raw output: ${content.text.substring(0, 800)}${content.text.length > 800 ? '...' : ''}`,
     }
   }
+}
+
+/**
+ * Fallback parser to extract GPA from verbose Claude responses
+ * When Claude doesn't return JSON, try to find the GPA from text patterns
+ */
+function extractGPAFromVerboseResponse(text: string): GPAExtractionResult | null {
+  // Look for patterns like "Maximum = 110" followed by "GPA = 3.14" or "GPA at 110 HE = 3.14"
+  // Also look for "ANSWER: 3.14" or "Final GPA: 3.14"
+
+  // Pattern 1: "Maximum = X" followed by a GPA value near it
+  const maxCreditMatch = text.match(/Maximum\s*=\s*(\d+)/i)
+
+  // Pattern 2: Look for the highest credit hour entry and its GPA
+  // Format like "110 HE → 3.14" or "110 → 3.14"
+  const creditGpaPatterns = text.matchAll(/(\d+)\s*(?:HE|hours?|credits?)?\s*[→:=]\s*(\d+\.\d{1,2})/gi)
+  const entries: Array<{ credits: number; gpa: number }> = []
+
+  for (const match of creditGpaPatterns) {
+    const credits = parseInt(match[1], 10)
+    const gpa = parseFloat(match[2])
+    // Only valid credit hours (15-200) and GPAs (0-4.0)
+    if (credits >= 15 && credits <= 200 && gpa >= 0 && gpa <= 4.5) {
+      entries.push({ credits, gpa })
+    }
+  }
+
+  // Pattern 3: Look for "ANSWER: X.XX" or "Final GPA: X.XX"
+  const answerMatch = text.match(/(?:ANSWER|Final\s+GPA|cumulative\s+GPA)\s*[:=]\s*(\d+\.\d{1,2})/i)
+
+  // Pattern 4: Look for "GPA = X.XX" or "GPA: X.XX" near the end of text
+  const gpaValueMatch = text.match(/GPA\s*[:=]\s*(\d+\.\d{1,2})/gi)
+
+  let extractedGpa: number | null = null
+  let reasoning = 'Fallback extraction from verbose response: '
+
+  // Use entries if we found them - pick the one with max credit hours
+  if (entries.length > 0) {
+    const maxEntry = entries.reduce((max, entry) =>
+      entry.credits > max.credits ? entry : max
+    )
+    extractedGpa = maxEntry.gpa
+    reasoning += `Found ${entries.length} entries, max credits=${maxEntry.credits}, GPA=${maxEntry.gpa}`
+  }
+  // Otherwise try the ANSWER pattern
+  else if (answerMatch) {
+    extractedGpa = parseFloat(answerMatch[1])
+    reasoning += `Found explicit answer: ${extractedGpa}`
+  }
+  // Last resort: last GPA value mentioned
+  else if (gpaValueMatch && gpaValueMatch.length > 0) {
+    const lastMatch = gpaValueMatch[gpaValueMatch.length - 1]
+    const value = lastMatch.match(/(\d+\.\d{1,2})/)
+    if (value) {
+      extractedGpa = parseFloat(value[1])
+      reasoning += `Found GPA mention: ${extractedGpa}`
+    }
+  }
+
+  if (extractedGpa !== null && extractedGpa >= 0 && extractedGpa <= 4.5) {
+    return {
+      gpa: extractedGpa,
+      scale: '4.0',
+      confidence: 'medium',
+      reasoning,
+    }
+  }
+
+  return null
 }

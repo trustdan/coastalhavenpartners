@@ -25,14 +25,14 @@ import {
   Brain,
 } from "lucide-react"
 import {
-  verifyResume,
-  rejectResume,
+  verifyIndividualResume,
+  rejectIndividualResume,
   verifyIndividualTranscript,
   rejectIndividualTranscript,
   verifyIndividualTranscriptGpa,
   rejectIndividualTranscriptGpa,
 } from "../actions"
-import type { TranscriptRecord, TranscriptVerification } from "./page"
+import type { TranscriptRecord, TranscriptVerification, ResumeRecord } from "./page"
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
 
@@ -56,11 +56,10 @@ interface Candidate {
   major: string
   gpa: number
   graduation_year: number
-  resume_url: string | null
-  resume_verified: boolean | null
   gpa_verified: boolean | null
   profiles: CandidateProfile | null
   transcripts: TranscriptRecord[]
+  resumes: ResumeRecord[]
 }
 
 interface VerificationCardProps {
@@ -69,19 +68,17 @@ interface VerificationCardProps {
 
 export function VerificationCard({ candidate }: VerificationCardProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null)
-  const [showRejectDialog, setShowRejectDialog] = useState<{ type: "resume" | "transcript" | "gpa", transcriptId?: string } | null>(null)
+  const [showRejectDialog, setShowRejectDialog] = useState<{ type: "resume" | "transcript" | "gpa", resumeId?: string, transcriptId?: string } | null>(null)
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-
-  async function handleVerifyResume() {
-    setIsLoading("verifyResume")
-    await verifyResume(candidate.id)
+  async function handleVerifyResume(resumeId: string) {
+    setIsLoading(`verifyResume-${resumeId}`)
+    await verifyIndividualResume(resumeId)
     setIsLoading(null)
   }
 
-  async function handleRejectResume() {
-    setIsLoading("rejectResume")
-    await rejectResume(candidate.id)
+  async function handleRejectResume(resumeId: string) {
+    setIsLoading(`rejectResume-${resumeId}`)
+    await rejectIndividualResume(resumeId)
     setIsLoading(null)
     setShowRejectDialog(null)
   }
@@ -113,7 +110,7 @@ export function VerificationCard({ candidate }: VerificationCardProps) {
   }
 
   const hasUnverifiedDocs =
-    (candidate.resume_url && !candidate.resume_verified) ||
+    candidate.resumes.some(r => !r.is_verified) ||
     candidate.transcripts.some(t => !t.is_verified) ||
     candidate.transcripts.some(t => t.is_verified && t.gpa && !t.gpa_verified)
 
@@ -140,72 +137,82 @@ export function VerificationCard({ candidate }: VerificationCardProps) {
 
         {/* Verification Items */}
         <div className="mt-6 space-y-4">
-          {/* Resume Verification */}
-          {candidate.resume_url && (
-            <div className={`flex items-center justify-between rounded-lg border p-4 ${
-              candidate.resume_verified
-                ? "border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20"
-                : "border-yellow-200 bg-yellow-50 dark:border-yellow-900/50 dark:bg-yellow-900/20"
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                  candidate.resume_verified
-                    ? "bg-green-100 dark:bg-green-900/40"
-                    : "bg-yellow-100 dark:bg-yellow-900/40"
+          {/* Resumes Section */}
+          {candidate.resumes.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                Resumes ({candidate.resumes.length})
+              </h4>
+              {candidate.resumes.map((resume) => (
+                <div key={resume.id} className={`flex items-center justify-between rounded-lg border p-4 ${
+                  resume.is_verified
+                    ? "border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20"
+                    : "border-yellow-200 bg-yellow-50 dark:border-yellow-900/50 dark:bg-yellow-900/20"
                 }`}>
-                  <FileText className={`h-5 w-5 ${
-                    candidate.resume_verified ? "text-green-600" : "text-yellow-600"
-                  }`} />
-                </div>
-                <div>
-                  <p className="font-medium">Resume</p>
-                  <p className="text-sm text-neutral-500">
-                    {candidate.resume_verified ? "Verified" : "Pending verification"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={candidate.resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="mr-1.5 h-4 w-4" />
-                    View
-                  </a>
-                </Button>
-                {!candidate.resume_verified && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:bg-red-50"
-                      onClick={() => setShowRejectDialog({ type: "resume" })}
-                      disabled={isLoading !== null}
-                    >
-                      <XCircle className="mr-1.5 h-4 w-4" />
-                      Reject
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                      resume.is_verified
+                        ? "bg-green-100 dark:bg-green-900/40"
+                        : "bg-yellow-100 dark:bg-yellow-900/40"
+                    }`}>
+                      <FileText className={`h-5 w-5 ${
+                        resume.is_verified ? "text-green-600" : "text-yellow-600"
+                      }`} />
+                    </div>
+                    <div>
+                      <p className="font-medium">
+                        {resume.label}
+                        {resume.is_default && <span className="ml-2 text-xs text-neutral-500">(Default)</span>}
+                      </p>
+                      <p className="text-sm text-neutral-500">
+                        {resume.is_verified ? "Verified" : "Pending verification"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <a
+                        href={resume.resume_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="mr-1.5 h-4 w-4" />
+                        View
+                      </a>
                     </Button>
-                    <Button
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={handleVerifyResume}
-                      disabled={isLoading !== null}
-                    >
-                      {isLoading === "verifyResume" ? (
-                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                      )}
-                      Verify
-                    </Button>
-                  </>
-                )}
-                {candidate.resume_verified && (
-                  <BadgeCheck className="h-5 w-5 text-green-600" />
-                )}
-              </div>
+                    {!resume.is_verified && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => setShowRejectDialog({ type: "resume", resumeId: resume.id })}
+                          disabled={isLoading !== null}
+                        >
+                          <XCircle className="mr-1.5 h-4 w-4" />
+                          Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => handleVerifyResume(resume.id)}
+                          disabled={isLoading !== null}
+                        >
+                          {isLoading === `verifyResume-${resume.id}` ? (
+                            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                          )}
+                          Verify
+                        </Button>
+                      </>
+                    )}
+                    {resume.is_verified && (
+                      <BadgeCheck className="h-5 w-5 text-green-600" />
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -457,11 +464,11 @@ export function VerificationCard({ candidate }: VerificationCardProps) {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading !== null}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleRejectResume}
+              onClick={() => showRejectDialog?.resumeId && handleRejectResume(showRejectDialog.resumeId)}
               disabled={isLoading !== null}
               className="bg-red-600 text-white hover:bg-red-700"
             >
-              {isLoading === "rejectResume" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading?.startsWith("rejectResume") && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Reject Resume
             </AlertDialogAction>
           </AlertDialogFooter>

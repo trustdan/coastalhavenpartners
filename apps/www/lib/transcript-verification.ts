@@ -133,11 +133,16 @@ export async function verifyTranscript(
     const claudeResult = await extractGPAFromDocument(fileBuffer, mimeType)
     gpaResult = claudeResult
     extractionMethod = 'claude'
-    console.log('[Verification] Claude result', {
+    // Log full details for Vercel debugging
+    console.log('[Verification] Claude extraction result:', JSON.stringify({
       gpa: claudeResult.gpa,
+      scale: claudeResult.scale,
       confidence: claudeResult.confidence,
-      reasoning: claudeResult.reasoning.substring(0, 100),
-    })
+      reasoningLength: claudeResult.reasoning.length,
+      reasoningPreview: claudeResult.reasoning.substring(0, 200),
+      isParseError: claudeResult.reasoning.startsWith('[PARSE_ERROR]'),
+      isFallback: claudeResult.reasoning.startsWith('Fallback'),
+    }, null, 2))
 
     // 6. Determine verification status
     let status: 'auto_verified' | 'flagged' = 'flagged'
@@ -217,7 +222,7 @@ export async function verifyTranscript(
       .update({ gpa_verification_status: candidateStatus })
       .eq('id', candidateProfileId)
 
-    console.log('[Verification] COMPLETE', {
+    console.log('[Verification] COMPLETE:', JSON.stringify({
       status,
       extractionMethod,
       extractedGpa: gpaResult.gpa,
@@ -225,7 +230,9 @@ export async function verifyTranscript(
       gpaMatch,
       gpaDifference,
       confidence: gpaResult.confidence,
-    })
+      shouldAutoVerify: gpaMatch && gpaResult.confidence !== 'low',
+      toleranceUsed: GPA_TOLERANCE,
+    }, null, 2))
 
     return {
       success: true,

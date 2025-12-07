@@ -22,6 +22,19 @@ interface CandidateProfile {
   linkedin_url: string | null
 }
 
+interface ResumeRecord {
+  id: string
+  resume_url: string
+  label: string
+  is_default: boolean | null
+}
+
+interface TranscriptRecord {
+  id: string
+  transcript_url: string
+  education_level: string
+}
+
 interface Candidate {
   id: string
   school_name: string
@@ -31,10 +44,10 @@ interface Candidate {
   status: string | null
   is_rejected: boolean | null
   rejected_at: string | null
-  resume_url: string | null
-  transcript_url: string | null
   gpa_verification_status: string | null
   profiles: CandidateProfile | null
+  resumes: ResumeRecord[]
+  transcripts: TranscriptRecord[]
 }
 
 type RowVariant = "pending" | "verified" | "rejected"
@@ -139,32 +152,63 @@ export function CandidateRow({ candidate, variant }: CandidateRowProps) {
 
         <td className="px-6 py-4 text-right">
           <div className="flex justify-end gap-2">
-            {/* Document Links */}
-            {candidate.resume_url && (
-              <Button variant="ghost" size="sm" asChild>
-                <a
-                  href={candidate.resume_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="View Resume"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span className="sr-only">Resume</span>
-                </a>
-              </Button>
+            {/* Document Links - Resumes */}
+            {candidate.resumes.length > 0 && (
+              candidate.resumes.length === 1 ? (
+                <Button variant="ghost" size="sm" asChild>
+                  <a
+                    href={candidate.resumes[0].resume_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`View Resume: ${candidate.resumes[0].label}`}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="sr-only">Resume</span>
+                  </a>
+                </Button>
+              ) : (
+                // Multiple resumes - show dropdown or first one with count
+                <Button variant="ghost" size="sm" asChild>
+                  <a
+                    href={candidate.resumes.find(r => r.is_default)?.resume_url || candidate.resumes[0].resume_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`View Resumes (${candidate.resumes.length})`}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="sr-only">Resumes ({candidate.resumes.length})</span>
+                  </a>
+                </Button>
+              )
             )}
-            {candidate.transcript_url && (
-              <Button variant="ghost" size="sm" asChild>
-                <a
-                  href={candidate.transcript_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="View Transcript"
-                >
-                  <GraduationCap className="h-4 w-4" />
-                  <span className="sr-only">Transcript</span>
-                </a>
-              </Button>
+            {/* Document Links - Transcripts */}
+            {candidate.transcripts.length > 0 && (
+              candidate.transcripts.length === 1 ? (
+                <Button variant="ghost" size="sm" asChild>
+                  <a
+                    href={candidate.transcripts[0].transcript_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="View Transcript"
+                  >
+                    <GraduationCap className="h-4 w-4" />
+                    <span className="sr-only">Transcript</span>
+                  </a>
+                </Button>
+              ) : (
+                // Multiple transcripts - show with count
+                <Button variant="ghost" size="sm" asChild>
+                  <a
+                    href={candidate.transcripts[0].transcript_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`View Transcripts (${candidate.transcripts.length})`}
+                  >
+                    <GraduationCap className="h-4 w-4" />
+                    <span className="sr-only">Transcripts ({candidate.transcripts.length})</span>
+                  </a>
+                </Button>
+              )
             )}
 
             {/* LinkedIn */}

@@ -32,6 +32,14 @@ export interface TranscriptRecord {
   verification?: TranscriptVerification | null
 }
 
+export interface ResumeRecord {
+  id: string
+  resume_url: string
+  label: string
+  is_verified: boolean | null
+  is_default: boolean | null
+}
+
 export default async function AdminVerificationPage() {
   const supabase = await createClient()
 
@@ -86,19 +94,26 @@ export default async function AdminVerificationPage() {
       major,
       gpa,
       graduation_year,
-      resume_url,
-      resume_verified,
       gpa_verified,
       user_id
     `)
     .eq('is_rejected', false)
     .order('created_at', { ascending: false })
 
-  // Fetch all transcripts from the new table
+  // Fetch all transcripts from the transcripts table
   const candidateIds = candidates?.map(c => c.id).filter(Boolean) || []
   const { data: allTranscripts } = candidateIds.length > 0
     ? await supabaseAdmin
         .from('candidate_transcripts')
+        .select('*')
+        .in('candidate_profile_id', candidateIds)
+        .order('created_at', { ascending: false })
+    : { data: [] }
+
+  // Fetch all resumes from the resumes table
+  const { data: allResumes } = candidateIds.length > 0
+    ? await supabaseAdmin
+        .from('candidate_resumes')
         .select('*')
         .in('candidate_profile_id', candidateIds)
         .order('created_at', { ascending: false })
@@ -127,33 +142,34 @@ export default async function AdminVerificationPage() {
         .in('id', userIds)
     : { data: [] }
 
-  // Combine candidates with their profiles and transcripts (including verification data)
+  // Combine candidates with their profiles, transcripts, and resumes
   const candidatesWithProfiles = candidates?.map(candidate => ({
     ...candidate,
     profiles: profiles?.find(p => p.id === candidate.user_id) || null,
     transcripts: (allTranscripts?.filter(t => t.candidate_profile_id === candidate.id) || []).map(t => ({
       ...t,
       verification: verificationMap.get(t.id) || null
-    })) as TranscriptRecord[]
+    })) as TranscriptRecord[],
+    resumes: (allResumes?.filter(r => r.candidate_profile_id === candidate.id) || []) as ResumeRecord[]
   })) || []
 
-  // Filter: show candidates with pending resume OR any pending transcripts
+  // Filter: show candidates with pending resumes OR any pending transcripts
   const pendingVerification = candidatesWithProfiles.filter(c => {
-    const hasUnverifiedResume = c.resume_url && !c.resume_verified
+    const hasUnverifiedResume = c.resumes.some(r => !r.is_verified)
     const hasUnverifiedTranscripts = c.transcripts.some(t => !t.is_verified)
     const hasUnverifiedGpa = c.transcripts.some(t => t.is_verified && t.gpa && !t.gpa_verified)
     return hasUnverifiedResume || hasUnverifiedTranscripts || hasUnverifiedGpa
   })
 
   const fullyVerified = candidatesWithProfiles.filter(c => {
-    const resumeOk = !c.resume_url || c.resume_verified
+    const resumesOk = c.resumes.length === 0 || c.resumes.every(r => r.is_verified)
     const transcriptsOk = c.transcripts.length === 0 || c.transcripts.every(t => t.is_verified)
     const gpasOk = c.transcripts.every(t => !t.gpa || t.gpa_verified)
-    return resumeOk && transcriptsOk && gpasOk && c.transcripts.length > 0
+    return resumesOk && transcriptsOk && gpasOk && (c.transcripts.length > 0 || c.resumes.length > 0)
   })
 
   // Stats
-  const pendingResumeCount = candidatesWithProfiles.filter(c => c.resume_url && !c.resume_verified).length
+  const pendingResumeCount = allResumes?.filter(r => !r.is_verified).length || 0
   const pendingTranscriptCount = allTranscripts?.filter(t => !t.is_verified).length || 0
   const pendingGpaCount = allTranscripts?.filter(t => t.is_verified && t.gpa && !t.gpa_verified).length || 0
 

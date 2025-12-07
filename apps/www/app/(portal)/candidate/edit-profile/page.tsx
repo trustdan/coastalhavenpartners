@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { TranscriptManager } from '@/components/transcript-manager'
 import { ResumeManager } from '@/components/resume-manager'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader2, Building2, Users, Calendar, FileText, Tag } from 'lucide-react'
+import { ArrowLeft, Loader2, Building2, Users, Calendar, FileText, Tag, AlertTriangle } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { MultiAutocompleteInput } from '@/components/ui/multi-autocomplete-input'
 import { MultiSelectTags } from '@/components/ui/multi-select-tags'
@@ -22,6 +22,18 @@ import { MFASettings } from '@/components/auth/mfa-settings'
 import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
 import { NotificationSettings } from '@/components/settings/notification-settings'
 import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
+import { deleteAccount } from '@/app/(portal)/candidate/actions'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 const TARGET_ROLES = [
   'Investment Banking',
@@ -128,6 +140,11 @@ export default function EditProfilePage() {
   // Messaging preferences
   const [messagingPrefs, setMessagingPrefs] = useState<MessagingPrefsType | null>(null)
 
+  // Delete account state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
   const toggleRecruiterField = (field: keyof VisibilityFields) => {
     setRecruiterVisibility(prev => ({ ...prev, [field]: !prev[field] }))
   }
@@ -214,6 +231,30 @@ export default function EditProfilePage() {
 
     loadProfile()
   }, [router, supabase])
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmation !== 'DELETE MY ACCOUNT') {
+      toast.error('Please type "DELETE MY ACCOUNT" exactly to confirm')
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const result = await deleteAccount(deleteConfirmation)
+      if (result.success) {
+        toast.success('Account deleted successfully')
+        router.push('/')
+      } else {
+        toast.error(result.error || 'Failed to delete account')
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred')
+    } finally {
+      setDeleting(false)
+      setDeleteDialogOpen(false)
+      setDeleteConfirmation('')
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -736,6 +777,69 @@ export default function EditProfilePage() {
               </Button>
             </div>
           </form>
+        </div>
+
+        {/* Danger Zone - Account Deletion */}
+        <div className="rounded-xl border border-red-200 bg-red-50/50 p-6 shadow-sm dark:border-red-900/50 dark:bg-red-900/10">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Danger Zone</h2>
+          </div>
+          <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+            Once you delete your account, there is no going back. All your data, including your profile, resumes, transcripts, and application history will be permanently deleted.
+          </p>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                Delete My Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  Delete Account Permanently
+                </AlertDialogTitle>
+                <AlertDialogDescription className="space-y-4">
+                  <p>
+                    This action cannot be undone. This will permanently delete your account and remove all your data from our servers, including:
+                  </p>
+                  <ul className="list-disc pl-6 space-y-1">
+                    <li>Your profile information</li>
+                    <li>All uploaded resumes and transcripts</li>
+                    <li>Your job applications</li>
+                    <li>Messages and conversations</li>
+                    <li>Verification history</li>
+                  </ul>
+                  <div className="pt-4">
+                    <Label htmlFor="delete-confirmation" className="text-sm font-medium">
+                      Type <span className="font-mono bg-neutral-100 dark:bg-neutral-800 px-1 rounded">DELETE MY ACCOUNT</span> to confirm:
+                    </Label>
+                    <Input
+                      id="delete-confirmation"
+                      value={deleteConfirmation}
+                      onChange={(e) => setDeleteConfirmation(e.target.value)}
+                      placeholder="DELETE MY ACCOUNT"
+                      className="mt-2"
+                    />
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setDeleteConfirmation('')}>
+                  Cancel
+                </AlertDialogCancel>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmation !== 'DELETE MY ACCOUNT' || deleting}
+                >
+                  {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Delete Account
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>

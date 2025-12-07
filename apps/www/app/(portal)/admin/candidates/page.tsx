@@ -39,22 +39,41 @@ export default async function AdminCandidatesPage() {
   // Fetch all candidates (using admin client to bypass RLS)
   const { data: candidates } = await supabaseAdmin
     .from('candidate_profiles')
-    .select('id, user_id, school_name, major, gpa, graduation_year, status, is_rejected, rejected_at, resume_url, transcript_url, gpa_verification_status')
+    .select('id, user_id, school_name, major, gpa, graduation_year, status, is_rejected, rejected_at, gpa_verification_status')
     .order('created_at', { ascending: false })
 
   // Fetch profiles separately to avoid RLS join issues
   const userIds = (candidates?.map(c => c.user_id).filter((id): id is string => id !== null) || [])
-  const { data: profiles } = userIds.length > 0 
+  const { data: profiles } = userIds.length > 0
     ? await supabaseAdmin
         .from('profiles')
         .select('id, full_name, email, linkedin_url')
         .in('id', userIds)
     : { data: [] }
 
-  // Combine candidates with their profiles
+  // Fetch resumes from candidate_resumes table
+  const candidateIds = candidates?.map(c => c.id).filter(Boolean) || []
+  const { data: allResumes } = candidateIds.length > 0
+    ? await supabaseAdmin
+        .from('candidate_resumes')
+        .select('id, candidate_profile_id, resume_url, label, is_default')
+        .in('candidate_profile_id', candidateIds)
+    : { data: [] }
+
+  // Fetch transcripts from candidate_transcripts table
+  const { data: allTranscripts } = candidateIds.length > 0
+    ? await supabaseAdmin
+        .from('candidate_transcripts')
+        .select('id, candidate_profile_id, transcript_url, education_level')
+        .in('candidate_profile_id', candidateIds)
+    : { data: [] }
+
+  // Combine candidates with their profiles, resumes, and transcripts
   const candidatesWithProfiles = candidates?.map(candidate => ({
     ...candidate,
-    profiles: profiles?.find(p => p.id === candidate.user_id) || null
+    profiles: profiles?.find(p => p.id === candidate.user_id) || null,
+    resumes: allResumes?.filter(r => r.candidate_profile_id === candidate.id) || [],
+    transcripts: allTranscripts?.filter(t => t.candidate_profile_id === candidate.id) || []
   })) || []
 
   // Filter into three categories
