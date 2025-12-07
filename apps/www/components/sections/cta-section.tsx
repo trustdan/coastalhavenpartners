@@ -28,7 +28,7 @@ export function CTASection() {
             delay={0.2}
             className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed"
           >
-            Join the network where elite finance students connect with top investment banks, PE firms, and hedge funds
+            Join the network where students and early-career professionals connect with top investment banks, PE firms, and hedge funds
           </TextAnimate>
 
           {/* CTA Buttons */}
@@ -42,7 +42,7 @@ export function CTASection() {
                 borderRadius="12px"
                 background="rgba(0, 0, 0, 0.95)"
               >
-                Join as Student
+                Join as Candidate
               </ShimmerButton>
             </Link>
             <Link href="/signup/recruiter">
@@ -63,7 +63,7 @@ export function CTASection() {
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-500" />
-              <span>Free for students</span>
+              <span>Free for candidates</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-500" />
@@ -84,7 +84,7 @@ export function CTASection() {
                 <Target className="h-10 w-10 text-emerald-500" />
               </div>
               <div className="text-lg font-semibold mb-1">
-                For Students
+                For Candidates
               </div>
               <div className="text-sm text-muted-foreground">
                 Showcase your credentials to elite firms
@@ -118,7 +118,7 @@ export function CTASection() {
         {/* Final Note */}
         <div className="mt-12 text-center">
           <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            Join the growing community of students, recruiters, and career services professionals 
+            Join the growing community of students, early-career professionals, recruiters, and career services
             building meaningful connections in elite finance.
           </p>
         </div>

@@ -10,12 +10,12 @@ export function AudienceSections() {
   return (
     <section className="w-full py-20 md:py-32 px-4">
       <div className="max-w-7xl mx-auto space-y-32">
-        {/* For Students */}
-        <div id="students" className="scroll-mt-20">
+        {/* For Candidates (Students & Early-Career) */}
+        <div id="candidates" className="scroll-mt-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-gradient-to-r from-teal-500/10 to-emerald-500/10 border border-teal-500/20">
-                <span className="text-sm font-semibold text-teal-600 dark:text-teal-400">For Students</span>
+                <span className="text-sm font-semibold text-teal-600 dark:text-teal-400">For Candidates</span>
               </div>
               <TextAnimate
                 animation="slideUp"
@@ -24,16 +24,16 @@ export function AudienceSections() {
                 Launch Your Finance Career
               </TextAnimate>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Showcase your academic achievements to elite investment banks, PE firms, and hedge funds.
-                Get discovered by top recruiters actively seeking talent from your school.
+                Whether you&apos;re a student seeking an internship or an early-career professional ready for your next move,
+                showcase your credentials to elite investment banks, PE firms, and hedge funds.
               </p>
               <ul className="space-y-4 mb-8">
                 {[
-                  "GPA-verified profile builds instant credibility",
-                  "Control who sees your contact info and academic details",
+                  "Verified credentials build instant credibility",
+                  "Control who sees your contact info and background",
                   "Track which recruiters viewed your profile",
                   "Connect directly with decision-makers at top firms",
-                  "100% free for students"
+                  "100% free for candidates"
                 ].map((benefit, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <Check className="h-4 w-4 text-green-500 mt-1 shrink-0" />
@@ -48,7 +48,7 @@ export function AudienceSections() {
                   shimmerDuration="2.5s"
                   background="rgba(0, 0, 0, 0.95)"
                 >
-                  Create Student Profile →
+                  Create Your Profile →
                 </ShimmerButton>
               </Link>
             </div>
@@ -65,8 +65,8 @@ export function AudienceSections() {
                       <GraduationCap className="h-7 w-7 text-emerald-500" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-lg">Top School Student</h4>
-                      <p className="text-sm text-muted-foreground">Wharton, Finance • 3.9 GPA</p>
+                      <h4 className="font-semibold text-lg">Finance Professional</h4>
+                      <p className="text-sm text-muted-foreground">Wharton &apos;24 • IB Analyst</p>
                     </div>
                   </div>
                   <div className="border-t pt-4">
@@ -117,7 +117,7 @@ export function AudienceSections() {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="px-3 py-2 rounded-md bg-background/50 border text-xs">GPA: 3.7+</div>
                       <div className="px-3 py-2 rounded-md bg-background/50 border text-xs">Wharton</div>
-                      <div className="px-3 py-2 rounded-md bg-background/50 border text-xs">IB Interest</div>
+                      <div className="px-3 py-2 rounded-md bg-background/50 border text-xs">0-3 yrs exp</div>
                       <div className="px-3 py-2 rounded-md bg-background/50 border text-xs">NYC</div>
                     </div>
                   </div>
@@ -138,14 +138,14 @@ export function AudienceSections() {
                 Discover Pre-Vetted Talent
               </TextAnimate>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Access a curated pool of high-achieving finance students from target schools.
-                Every GPA is verified, every profile is complete.
+                Access a curated pool of high-achieving students and early-career professionals from target schools.
+                Every credential is verified, every profile is complete.
               </p>
               <ul className="space-y-4 mb-8">
                 {[
-                  "Filter by school, GPA, graduation year, and target roles",
-                  "Transcript-verified GPAs eliminate resume inflation",
-                  "Direct access to student contact information",
+                  "Filter by school, GPA, experience level, and target roles",
+                  "Verified credentials eliminate resume inflation",
+                  "Direct access to candidate contact information",
                   "Track outreach and engagement metrics",
                   "Join the recruiter network and collaborate with peers"
                 ].map((benefit, index) => (
@@ -183,16 +183,16 @@ export function AudienceSections() {
                 Track Student Success
               </TextAnimate>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Monitor your students' job search progress and placement outcomes.
+                Monitor your students&apos; and alumni&apos;s job search progress and placement outcomes.
                 Build stronger relationships with recruiting firms.
               </p>
               <ul className="space-y-4 mb-8">
                 {[
-                  "Dashboard showing all students from your school",
+                  "Dashboard showing students and alumni from your school",
                   "Track verification status and placement progress",
                   "See which firms are recruiting from your school",
-                  "Verify student GPAs and academic standing",
-                  "Connect with recruiters actively hiring your graduates"
+                  "Verify credentials and academic standing",
+                  "Connect with recruiters actively hiring your talent"
                 ].map((benefit, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <Check className="h-4 w-4 text-green-500 mt-1 shrink-0" />

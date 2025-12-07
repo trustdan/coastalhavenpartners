@@ -38,7 +38,7 @@ export function HeroSection({ className }: HeroSectionProps) {
 
           {/* Subtitle - Aurora Text */}
           <AuroraText className="max-w-3xl text-lg text-muted-foreground md:text-xl lg:text-2xl">
-            The verified network connecting top finance students with investment banks, PE firms, and hedge funds
+            The verified network connecting top finance talent — students and early-career professionals — with investment banks, PE firms, and hedge funds
           </AuroraText>
 
           {/* CTA Buttons */}
@@ -50,7 +50,7 @@ export function HeroSection({ className }: HeroSectionProps) {
                 shimmerDuration="2.5s"
                 background="rgba(0, 0, 0, 0.95)"
               >
-                Join as Student
+                Join as Candidate
               </ShimmerButton>
             </Link>
             <Link href="/signup/recruiter">

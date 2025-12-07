@@ -62,13 +62,13 @@ export function HowItWorksSection({ className }: HowItWorksSectionProps) {
     {
       icon: UserPlus,
       title: "Sign Up",
-      description: "Create your profile with academic info, resume, and target roles in under 5 minutes",
+      description: "Create your profile with your background, resume, and target roles in under 5 minutes",
       ref: step1Ref,
     },
     {
       icon: Search,
       title: "Get Discovered",
-      description: "Recruiters from top firms browse and filter candidates by school, GPA, and target roles",
+      description: "Recruiters from top firms browse and filter candidates by school, experience, and target roles",
       ref: step2Ref,
     },
     {
@@ -94,7 +94,7 @@ export function HowItWorksSection({ className }: HowItWorksSectionProps) {
             How It Works
           </TextAnimate>
           <p className="mt-4 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
-            From signup to placement — your journey to elite finance starts here
+            From signup to placement — whether you&apos;re a student or early-career professional, your journey to elite finance starts here
           </p>
         </div>
 

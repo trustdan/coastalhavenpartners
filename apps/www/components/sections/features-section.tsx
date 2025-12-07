@@ -42,15 +42,15 @@ export function FeaturesSection() {
   const features = [
     {
       icon: ShieldCheck,
-      title: "GPA-Verified Talent",
+      title: "Verified Credentials",
       description:
-        "Every student profile is verified with transcripts, ensuring you're connecting with top performers from target schools.",
+        "Every candidate profile is verified — from transcripts to work experience — ensuring you're connecting with top performers.",
     },
     {
       icon: Users,
-      title: "Students, Recruiters, Career Services",
+      title: "Candidates, Recruiters, Career Services",
       description:
-        "A balanced ecosystem where candidates showcase skills, recruiters discover talent, and schools track placements.",
+        "A balanced ecosystem where students and early-career professionals showcase skills, recruiters discover talent, and schools track placements.",
     },
     {
       icon: Lock,
@@ -62,7 +62,7 @@ export function FeaturesSection() {
       icon: TrendingUp,
       title: "Track Your Impact",
       description:
-        "Students see who viewed their profile. Recruiters track outreach. Schools monitor placement rates.",
+        "Candidates see who viewed their profile. Recruiters track outreach. Schools monitor placement rates.",
     },
   ]
 
