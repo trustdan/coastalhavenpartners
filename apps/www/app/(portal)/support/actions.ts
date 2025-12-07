@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { headers } from 'next/headers'
 import { createHash } from 'crypto'
+import { sendSupportMessageNotification, sendSupportConfirmation } from '@/lib/resend'
 
 // Simple in-memory rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
@@ -145,6 +146,31 @@ export async function submitSupportMessage(
     if (insertError) {
       console.error('Failed to insert support message:', insertError)
       return { success: false, error: 'Failed to submit message. Please try again later.' }
+    }
+
+    // 9. Send email notifications (don't block on failure)
+    const senderEmail = profile.email || user.email || ''
+    const senderName = profile.full_name || 'Unknown'
+
+    // Notify admins
+    sendSupportMessageNotification({
+      messageId: '', // We don't have the ID easily, but it's not critical
+      messageType: input.messageType,
+      senderName,
+      senderEmail,
+      subject: sanitizedSubject,
+      message: sanitizedMessage,
+      userRole: profile.role,
+    }).catch(err => console.error('Failed to send admin notification:', err))
+
+    // Send confirmation to user
+    if (senderEmail) {
+      sendSupportConfirmation(
+        senderEmail,
+        senderName,
+        input.messageType,
+        sanitizedSubject
+      ).catch(err => console.error('Failed to send user confirmation:', err))
     }
 
     return { success: true }

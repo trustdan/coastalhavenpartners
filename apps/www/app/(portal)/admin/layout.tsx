@@ -57,7 +57,8 @@ export default async function AdminLayout({
     { count: pendingRecruiters },
     { count: pendingCandidates },
     { count: pendingSchools },
-    { count: pendingCapitalApps }
+    { count: pendingCapitalApps },
+    { count: pendingSupportMessages }
   ] = await Promise.all([
     supabaseAdmin
       .from('recruiter_profiles')
@@ -78,6 +79,10 @@ export default async function AdminLayout({
       .select('*', { count: 'exact', head: true })
       .eq('target_type', 'capital')
       .eq('status', 'pending'),
+    (supabaseAdmin as any)
+      .from('support_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'new'),
   ])
 
   async function handleLogout() {
@@ -111,6 +116,10 @@ export default async function AdminLayout({
               <Link href="/admin/capital" className="flex items-center text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
                 Capital
                 <NotificationBadge count={pendingCapitalApps || 0} />
+              </Link>
+              <Link href="/admin/support" className="flex items-center text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
+                Support
+                <NotificationBadge count={pendingSupportMessages || 0} />
               </Link>
               <Link href="/admin/verification" className="text-neutral-600 hover:text-purple-600 dark:text-neutral-400">
                 Verification
