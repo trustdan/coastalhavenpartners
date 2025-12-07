@@ -21,6 +21,8 @@ import {
   Loader2,
   AlertTriangle,
   BadgeCheck,
+  Bot,
+  Brain,
 } from "lucide-react"
 import {
   verifyResume,
@@ -30,7 +32,7 @@ import {
   verifyIndividualTranscriptGpa,
   rejectIndividualTranscriptGpa,
 } from "../actions"
-import type { TranscriptRecord } from "./page"
+import type { TranscriptRecord, TranscriptVerification } from "./page"
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
 
@@ -213,78 +215,167 @@ export function VerificationCard({ candidate }: VerificationCardProps) {
               <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Transcripts ({candidate.transcripts.length})
               </h4>
-              {candidate.transcripts.map((transcript) => (
+              {candidate.transcripts.map((transcript) => {
+                const isFlagged = transcript.verification?.status === 'flagged'
+                const isError = transcript.verification?.status === 'error'
+                const hasAiResult = isFlagged || isError
+
+                // Determine card styling based on state
+                const getCardStyle = () => {
+                  if (transcript.is_verified) {
+                    return "border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20"
+                  }
+                  if (isFlagged) {
+                    return "border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20"
+                  }
+                  if (isError) {
+                    return "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20"
+                  }
+                  return "border-yellow-200 bg-yellow-50 dark:border-yellow-900/50 dark:bg-yellow-900/20"
+                }
+
+                const getIconStyle = () => {
+                  if (transcript.is_verified) return "bg-green-100 dark:bg-green-900/40"
+                  if (isFlagged) return "bg-amber-100 dark:bg-amber-900/40"
+                  if (isError) return "bg-red-100 dark:bg-red-900/40"
+                  return "bg-yellow-100 dark:bg-yellow-900/40"
+                }
+
+                const getIconColor = () => {
+                  if (transcript.is_verified) return "text-green-600"
+                  if (isFlagged) return "text-amber-600"
+                  if (isError) return "text-red-600"
+                  return "text-yellow-600"
+                }
+
+                const getStatusText = () => {
+                  if (transcript.is_verified) return " · Verified"
+                  if (isFlagged) return " · AI Flagged"
+                  if (isError) return " · AI Error"
+                  return " · Pending"
+                }
+
+                return (
                 <div key={transcript.id} className="space-y-2">
                   {/* Transcript Verification */}
-                  <div className={`flex items-center justify-between rounded-lg border p-4 ${
-                    transcript.is_verified
-                      ? "border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20"
-                      : "border-yellow-200 bg-yellow-50 dark:border-yellow-900/50 dark:bg-yellow-900/20"
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                        transcript.is_verified
-                          ? "bg-green-100 dark:bg-green-900/40"
-                          : "bg-yellow-100 dark:bg-yellow-900/40"
-                      }`}>
-                        <GraduationCap className={`h-5 w-5 ${
-                          transcript.is_verified ? "text-green-600" : "text-yellow-600"
-                        }`} />
+                  <div className={`rounded-lg border p-4 ${getCardStyle()}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${getIconStyle()}`}>
+                          {hasAiResult ? (
+                            <Bot className={`h-5 w-5 ${getIconColor()}`} />
+                          ) : (
+                            <GraduationCap className={`h-5 w-5 ${getIconColor()}`} />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {EDUCATION_LEVEL_LABELS[transcript.education_level]}
+                            {transcript.degree_type && ` - ${transcript.degree_type}`}
+                          </p>
+                          <p className="text-sm text-neutral-500">
+                            {transcript.school_name || candidate.school_name}
+                            {transcript.gpa && ` · ${transcript.gpa.toFixed(2)} GPA`}
+                            {getStatusText()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">
-                          {EDUCATION_LEVEL_LABELS[transcript.education_level]}
-                          {transcript.degree_type && ` - ${transcript.degree_type}`}
-                        </p>
-                        <p className="text-sm text-neutral-500">
-                          {transcript.school_name || candidate.school_name}
-                          {transcript.gpa && ` · ${transcript.gpa.toFixed(2)} GPA`}
-                          {transcript.is_verified ? " · Verified" : " · Pending"}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <a
+                            href={transcript.transcript_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="mr-1.5 h-4 w-4" />
+                            View
+                          </a>
+                        </Button>
+                        {!transcript.is_verified && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:bg-red-50"
+                              onClick={() => setShowRejectDialog({ type: "transcript", transcriptId: transcript.id })}
+                              disabled={isLoading !== null}
+                            >
+                              <XCircle className="mr-1.5 h-4 w-4" />
+                              Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleVerifyTranscript(transcript.id)}
+                              disabled={isLoading !== null}
+                            >
+                              {isLoading === `verifyTranscript-${transcript.id}` ? (
+                                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                              )}
+                              Verify
+                            </Button>
+                          </>
+                        )}
+                        {transcript.is_verified && (
+                          <BadgeCheck className="h-5 w-5 text-green-600" />
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <a
-                          href={transcript.transcript_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="mr-1.5 h-4 w-4" />
-                          View
-                        </a>
-                      </Button>
-                      {!transcript.is_verified && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:bg-red-50"
-                            onClick={() => setShowRejectDialog({ type: "transcript", transcriptId: transcript.id })}
-                            disabled={isLoading !== null}
-                          >
-                            <XCircle className="mr-1.5 h-4 w-4" />
-                            Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleVerifyTranscript(transcript.id)}
-                            disabled={isLoading !== null}
-                          >
-                            {isLoading === `verifyTranscript-${transcript.id}` ? (
-                              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                            ) : (
-                              <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                            )}
-                            Verify
-                          </Button>
-                        </>
-                      )}
-                      {transcript.is_verified && (
-                        <BadgeCheck className="h-5 w-5 text-green-600" />
-                      )}
-                    </div>
+
+                    {/* AI Analysis Results (shown inline when flagged) */}
+                    {isFlagged && transcript.verification && transcript.gpa && (
+                      <div className="mt-4 space-y-3 border-t border-amber-200 pt-4 dark:border-amber-800">
+                        {/* GPA Comparison */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="rounded-lg bg-white/70 p-2 text-center dark:bg-neutral-800/50">
+                            <p className="text-xs text-neutral-500">Entered GPA</p>
+                            <p className="text-lg font-bold">{transcript.gpa.toFixed(2)}</p>
+                          </div>
+                          <div className="rounded-lg bg-white/70 p-2 text-center dark:bg-neutral-800/50">
+                            <p className="text-xs text-neutral-500">AI Extracted</p>
+                            <p className="text-lg font-bold">
+                              {transcript.verification.extracted_gpa?.toFixed(2) || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-white/70 p-2 text-center dark:bg-neutral-800/50">
+                            <p className="text-xs text-neutral-500">Difference</p>
+                            <p className={`text-lg font-bold ${transcript.verification.gpa_match ? 'text-green-600' : 'text-red-600'}`}>
+                              {transcript.verification.gpa_difference !== null
+                                ? `±${transcript.verification.gpa_difference.toFixed(2)}`
+                                : 'N/A'
+                              }
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* AI Reasoning */}
+                        {transcript.verification.extraction_reasoning && (
+                          <div className="flex items-start gap-2">
+                            <Brain className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
+                            <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                              {transcript.verification.extraction_reasoning}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Confidence Badge */}
+                        {transcript.verification.extraction_confidence && (
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              transcript.verification.extraction_confidence === 'high'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                : transcript.verification.extraction_confidence === 'medium'
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                            }`}>
+                              {transcript.verification.extraction_confidence} confidence
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* GPA Verification for this transcript (only if transcript is verified and has GPA) */}
@@ -337,7 +428,7 @@ export function VerificationCard({ candidate }: VerificationCardProps) {
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
           )}
 

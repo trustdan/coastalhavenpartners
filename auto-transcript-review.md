@@ -401,6 +401,65 @@ Added "Verification" link to admin navigation at `/admin/verification`
 3. Check if all their transcripts are verified
 4. Verify or reject any pending transcripts
 
+### Two-Column Transcript GPA Extraction Error
+
+**Problem:** Claude extracts wrong GPA from two-column transcripts (e.g., returns 2.99 instead of 3.17).
+
+**Root Cause:** When OCR reads two-column transcripts, text is extracted left-to-right then top-to-bottom. This means the LEFT column's bottom cumulative row (e.g., 56 HE → 2.99) may appear AFTER the RIGHT column's bottom row (88 HE → 3.17) in the extracted text. Claude was using "End of Transcript" position or text order to pick the final GPA instead of credit hours.
+
+**Example Transcript Layout:**
+
+```text
+LEFT COLUMN                      RIGHT COLUMN
+Fall 2014-2015                   Spring 2015-2016 cont.
+  Cumulative: 18 HE → 2.66         Cumulative: 73 HE → 3.11
+Spring 2014-2015                 Fall 2016-2017
+  Cumulative: 32 HE → 2.90         Cumulative: 88 HE → 3.17  ← FINAL
+Summer 2014-2015                   Degree Awarded
+  Cumulative: 43 HE → 2.95         End of Transcript
+Fall 2015-2016
+  Cumulative: 56 HE → 2.99  ← Claude was picking this
+```
+
+**OCR Text Order (misleading):**
+
+```text
+...56.00 HE → 2.99... ...88.00 HE → 3.17... ...56.00 → 2.99... End of Transcript
+```
+
+Claude was seeing "End of Transcript" after 56 HE/2.99 and concluding that was final.
+
+**Solution (implemented in `gpa-extractor.ts`):**
+
+The prompt was rewritten with ONE unambiguous rule:
+
+```text
+=== THE ONE RULE THAT MATTERS ===
+The FINAL cumulative GPA is ALWAYS the one with the HIGHEST CREDIT HOURS.
+Credit hours increase each semester. The highest number = the most recent = the final GPA.
+```
+
+Key prompt improvements:
+
+1. **Explicit credit hour identification**: Numbers 15-120 are credit hours, numbers 100-300 are quality points
+2. **Step 3 is final**: "Do NOT let text position, 'End of Transcript' location, or anything else override this"
+3. **Removed verification step** that allowed position-based overrides
+4. **Example reasoning** shows explicit comparison: `18 < 32 < 43 < 56 < 73 < 88. Maximum = 88. GPA at 88 HE = 3.17`
+
+**Before (wrong):**
+
+```text
+STEP 3: Identified credit hours vs quality points by testing multiplication...
+STEP 4: Verified - 'End of Transcript' appears after the 2.99 entry. ANSWER: 2.99
+```
+
+**After (correct):**
+
+```text
+STEP 1-2: Found cumulative entries: 18 HE → 2.66, 32 HE → 2.90, 43 HE → 2.95, 56 HE → 2.99, 73 HE → 3.11, 88 HE → 3.17
+STEP 3: Credit hours comparison: 18 < 32 < 43 < 56 < 73 < 88. Maximum = 88. GPA at 88 HE = 3.17. ANSWER: 3.17
+```
+
 ---
 
 ## Testing

@@ -8,6 +8,16 @@ import type { Database } from '@/lib/types/database.types'
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
 
+export interface TranscriptVerification {
+  id: string
+  status: string
+  extracted_gpa: number | null
+  extraction_confidence: string | null
+  extraction_reasoning: string | null
+  gpa_match: boolean | null
+  gpa_difference: number | null
+}
+
 export interface TranscriptRecord {
   id: string
   transcript_url: string
@@ -17,6 +27,7 @@ export interface TranscriptRecord {
   gpa: number | null
   is_verified: boolean | null
   gpa_verified: boolean | null
+  verification?: TranscriptVerification | null
 }
 
 export default async function AdminVerificationPage() {
@@ -91,6 +102,20 @@ export default async function AdminVerificationPage() {
         .order('created_at', { ascending: false })
     : { data: [] }
 
+  // Fetch verification data for all transcripts
+  const transcriptIds = allTranscripts?.map(t => t.id).filter(Boolean) || []
+  const { data: transcriptVerifications } = transcriptIds.length > 0
+    ? await supabaseAdminUntyped
+        .from('transcript_verifications')
+        .select('id, transcript_id, status, extracted_gpa, extraction_confidence, extraction_reasoning, gpa_match, gpa_difference')
+        .in('transcript_id', transcriptIds)
+    : { data: [] }
+
+  // Create a map of transcript_id -> verification
+  const verificationMap = new Map(
+    transcriptVerifications?.map((v: any) => [v.transcript_id, v]) || []
+  )
+
   // Fetch profiles for the candidates
   const userIds = (candidates?.map(c => c.user_id).filter((id): id is string => id !== null) || [])
   const { data: profiles } = userIds.length > 0
@@ -100,11 +125,14 @@ export default async function AdminVerificationPage() {
         .in('id', userIds)
     : { data: [] }
 
-  // Combine candidates with their profiles and transcripts
+  // Combine candidates with their profiles and transcripts (including verification data)
   const candidatesWithProfiles = candidates?.map(candidate => ({
     ...candidate,
     profiles: profiles?.find(p => p.id === candidate.user_id) || null,
-    transcripts: (allTranscripts?.filter(t => t.candidate_profile_id === candidate.id) || []) as TranscriptRecord[]
+    transcripts: (allTranscripts?.filter(t => t.candidate_profile_id === candidate.id) || []).map(t => ({
+      ...t,
+      verification: verificationMap.get(t.id) || null
+    })) as TranscriptRecord[]
   })) || []
 
   // Filter: show candidates with pending resume OR any pending transcripts
