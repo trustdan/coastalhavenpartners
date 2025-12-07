@@ -1,6 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { extractTextFromDocument, extractGPAWithFormParser } from './document-ai'
-import { extractGPAFromText, extractGPAFromDocument } from './gpa-extractor'
+import { extractGPAFromDocument, countPdfPages } from './gpa-extractor'
 
 // GPA comparison tolerance - allows for minor rounding differences
 const GPA_TOLERANCE = 0.05
@@ -28,7 +27,7 @@ export interface VerificationResult {
   enteredGpa: number
   confidence: string
   reasoning: string
-  extractionMethod: 'form_parser' | 'claude' | 'none'
+  extractionMethod: 'claude' | 'none'
   error?: string
 }
 
@@ -39,13 +38,11 @@ export async function verifyTranscript(
   const supabase = getAdminClient()
 
   // Very visible log to confirm new code is running
-  console.log('========== TRANSCRIPT VERIFICATION v2 ==========')
+  console.log('========== TRANSCRIPT VERIFICATION v3 (Claude OCR Only) ==========')
   console.log('[Verification] Starting transcript verification', {
     candidateProfileId,
     transcriptId,
     hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
-    hasGoogleProjectId: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
-    hasFormParserId: !!process.env.GOOGLE_DOCUMENT_AI_FORM_PARSER_ID,
   })
 
   try {
@@ -109,95 +106,38 @@ export async function verifyTranscript(
           ? 'image/png'
           : 'application/pdf'
 
-    // 4. Try Form Parser first (cheaper, works for standard formats)
+    // 4. Check page count for PDFs to prevent abuse
+    if (mimeType === 'application/pdf') {
+      const pageCount = countPdfPages(fileBuffer)
+      console.log('[Verification] PDF page count:', pageCount)
+
+      if (pageCount > 5) {
+        throw new Error(`Document has ${pageCount} pages, which exceeds the maximum allowed (5 pages). Please upload a shorter transcript or just the page containing your cumulative GPA.`)
+      }
+    }
+
+    // 5. Use Claude OCR to extract GPA directly from the document
     let gpaResult: {
       gpa: number | null
       scale: string | null
       confidence: 'high' | 'medium' | 'low'
       reasoning: string
     }
-    let extractionMethod: 'form_parser' | 'claude' | 'none' = 'none'
-    let extractedText = ''
+    let extractionMethod: 'claude' | 'none' = 'none'
 
-    console.log('[Verification] Step 4: Calling Form Parser...')
-    const formParserResult = await extractGPAWithFormParser(fileBuffer, mimeType)
-
-    console.log('[Verification] Form Parser result', {
-      gpa: formParserResult.gpa,
-      confidence: formParserResult.confidence,
-      textLength: formParserResult.rawText?.length || 0,
-      reasoning: formParserResult.reasoning,
-    })
-
-    // Use Form Parser result if it found a GPA with decent confidence
-    if (formParserResult.gpa !== null && formParserResult.confidence !== 'low') {
-      console.log('[Verification] Using Form Parser result (good confidence)')
-      gpaResult = {
-        gpa: formParserResult.gpa,
-        scale: formParserResult.scale,
-        confidence: formParserResult.confidence,
-        reasoning: formParserResult.reasoning,
-      }
-      extractionMethod = 'form_parser'
-      extractedText = formParserResult.rawText
-    } else {
-      // 5. Fall back to Claude for complex/non-standard formats
-      console.log('[Verification] Step 5: Form Parser insufficient, trying fallbacks...')
-
-      // First, try to get the text (either from Form Parser or via OCR)
-      if (formParserResult.rawText && formParserResult.rawText.length > 100) {
-        extractedText = formParserResult.rawText
-        console.log('[Verification] Using text from Form Parser', { textLength: extractedText.length })
-      } else {
-        // Use Document OCR if Form Parser didn't return text (OCR is optional)
-        console.log('[Verification] Trying OCR fallback...')
-        const ocrResult = await extractTextFromDocument(fileBuffer, mimeType)
-        extractedText = ocrResult.text || formParserResult.rawText || ''
-        console.log('[Verification] OCR result', { textLength: extractedText.length })
-      }
-
-      // Try Claude with extracted text first, then fall back to direct document analysis
-      if (extractedText && extractedText.length >= 100 && process.env.ANTHROPIC_API_KEY) {
-        // Use Claude with extracted text
-        console.log('[Verification] Using Claude TEXT analysis...')
-        const claudeResult = await extractGPAFromText(extractedText)
-        gpaResult = claudeResult
-        extractionMethod = 'claude'
-        console.log('[Verification] Claude text result', { gpa: claudeResult.gpa, confidence: claudeResult.confidence })
-      } else if (process.env.ANTHROPIC_API_KEY) {
-        // Text extraction failed - use Claude's vision to analyze document directly
-        console.log('[Verification] Using Claude VISION analysis (text extraction failed)...')
-        const visionResult = await extractGPAFromDocument(fileBuffer, mimeType)
-        gpaResult = visionResult
-        extractionMethod = 'claude'
-        // Store note that we used vision analysis
-        gpaResult.reasoning = `[Vision Analysis] ${gpaResult.reasoning}`
-        console.log('[Verification] Claude vision result', { gpa: visionResult.gpa, confidence: visionResult.confidence })
-      } else if (formParserResult.gpa !== null) {
-        // Use Form Parser result even if low confidence
-        console.log('[Verification] Using low-confidence Form Parser result (Claude not configured)')
-        gpaResult = {
-          gpa: formParserResult.gpa,
-          scale: formParserResult.scale,
-          confidence: 'low',
-          reasoning: formParserResult.reasoning + ' (Claude not configured for fallback)',
-        }
-        extractionMethod = 'form_parser'
-      } else {
-        // No GPA found and Claude not configured - flag for manual review
-        console.log('[Verification] FAILED - No extraction method available', {
-          hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
-          extractedTextLength: extractedText.length,
-          formParserGpa: formParserResult.gpa,
-        })
-        gpaResult = {
-          gpa: null,
-          scale: null,
-          confidence: 'low',
-          reasoning: 'Could not extract text and Claude is not configured. Requires manual review.',
-        }
-      }
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured. Claude OCR is required for transcript verification.')
     }
+
+    console.log('[Verification] Using Claude Vision OCR...')
+    const claudeResult = await extractGPAFromDocument(fileBuffer, mimeType)
+    gpaResult = claudeResult
+    extractionMethod = 'claude'
+    console.log('[Verification] Claude result', {
+      gpa: claudeResult.gpa,
+      confidence: claudeResult.confidence,
+      reasoning: claudeResult.reasoning.substring(0, 100),
+    })
 
     // 6. Determine verification status
     let status: 'auto_verified' | 'flagged' = 'flagged'
@@ -228,7 +168,7 @@ export async function verifyTranscript(
       .upsert({
         candidate_profile_id: candidateProfileId,
         transcript_id: transcriptId,
-        extracted_text: extractedText.substring(0, 10000), // Limit stored text
+        extracted_text: '', // No longer storing extracted text (using vision directly)
         extracted_gpa: gpaResult.gpa,
         extracted_gpa_scale: gpaResult.scale,
         extraction_confidence: gpaResult.confidence,

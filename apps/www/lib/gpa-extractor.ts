@@ -12,6 +12,39 @@ function getAnthropicClient(): Anthropic {
   return anthropic
 }
 
+// Maximum allowed pages to prevent abuse (large documents = high API costs)
+const MAX_ALLOWED_PAGES = 5
+
+/**
+ * Count pages in a PDF buffer without external dependencies.
+ * PDFs contain a /Count entry in the Pages dictionary that indicates total pages.
+ */
+export function countPdfPages(buffer: Buffer): number {
+  const content = buffer.toString('binary')
+
+  // Method 1: Look for /Count in the Pages dictionary (most reliable)
+  // Pattern: /Type /Pages followed by /Count N (using [\s\S]* instead of .* with s flag)
+  const countMatch = content.match(/\/Type\s*\/Pages[\s\S]*?\/Count\s+(\d+)/)
+  if (countMatch) {
+    return parseInt(countMatch[1], 10)
+  }
+
+  // Method 2: Look for standalone /Count patterns (backup)
+  const standaloneCountMatch = content.match(/\/Count\s+(\d+)/)
+  if (standaloneCountMatch) {
+    return parseInt(standaloneCountMatch[1], 10)
+  }
+
+  // Method 3: Count /Type /Page entries (less reliable but works for simple PDFs)
+  const pageMatches = content.match(/\/Type\s*\/Page[^s]/g)
+  if (pageMatches) {
+    return pageMatches.length
+  }
+
+  // Default: assume 1 page if we can't determine
+  return 1
+}
+
 export interface GPAExtractionResult {
   gpa: number | null
   scale: string | null
@@ -135,7 +168,7 @@ If no GPA found:
 
 /**
  * Extract GPA directly from a document (PDF or image) using Claude's vision capabilities
- * This is a fallback when text extraction fails
+ * This is the primary method for transcript verification
  */
 export async function extractGPAFromDocument(
   fileBuffer: Buffer,
@@ -156,6 +189,21 @@ export async function extractGPAFromDocument(
       scale: null,
       confidence: 'low',
       reasoning: `Unsupported file type for vision analysis: ${mimeType}`,
+    }
+  }
+
+  // Check page count for PDFs to prevent abuse from large documents
+  if (mimeType === 'application/pdf') {
+    const pageCount = countPdfPages(fileBuffer)
+    console.log(`[GPA Extractor] PDF page count: ${pageCount}`)
+
+    if (pageCount > MAX_ALLOWED_PAGES) {
+      return {
+        gpa: null,
+        scale: null,
+        confidence: 'low',
+        reasoning: `Document has ${pageCount} pages, which exceeds the maximum allowed (${MAX_ALLOWED_PAGES} pages). Please upload a shorter transcript or just the page containing your cumulative GPA.`,
+      }
     }
   }
 

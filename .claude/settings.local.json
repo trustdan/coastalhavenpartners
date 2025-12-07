@@ -32,7 +32,8 @@
       "Bash(npx dotenv:*)",
       "Bash(grep:*)",
       "Bash(git checkout:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(del \"c:\\Users\\Dan\\coastalhavenpartners\\apps\\www\\lib\\document-ai.ts\")"
     ],
     "deny": [],
     "ask": []
