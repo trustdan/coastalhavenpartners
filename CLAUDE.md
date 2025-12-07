@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Full Send Emails** is an AI-powered email outreach landing page built to showcase personalized email outreach at scale. This repository contains a high-performance marketing website with polished animations and modern UI components.
+**Coastal Haven Partners** is a curated finance talent network connecting elite undergraduate and MBA candidates with boutique investment banks, private equity firms, and venture capital funds.
 
-**Note**: The [overview.md](overview.md) file contains a detailed plan for rebranding this codebase into "Coastal Haven Partners" - a finance talent network. This template is designed to be cloned and rebranded.
+**Core docs**: See [docs/planning/overview.md](docs/planning/overview.md) for the full vision and architecture.
 
 ## Tech Stack
 
@@ -62,32 +62,37 @@ pnpm typecheck        # Type check this app only
 ```
 coastalhavenpartners/
 ├── apps/
-│   └── www/                    # Main Next.js application
-│       ├── app/
-│       │   ├── (marketing)/    # Route group for marketing pages
-│       │   │   ├── page.tsx    # Home page (sections-based)
-│       │   │   └── layout.tsx  # Marketing layout with header/footer
-│       │   ├── privacy/        # Legal pages
-│       │   ├── terms/
-│       │   ├── test-components/
-│       │   ├── layout.tsx      # Root layout with theme + analytics
-│       │   ├── globals.css     # Tailwind + custom CSS variables
-│       │   ├── robots.ts       # SEO: robots.txt generation
-│       │   └── sitemap.ts      # SEO: sitemap.xml generation
-│       ├── components/
-│       │   ├── magicui/        # Magic UI animated components
-│       │   ├── sections/       # Landing page sections
-│       │   ├── landing/        # Alternative section components
-│       │   ├── ui/             # Shadcn/UI base components
-│       │   ├── site-header.tsx
-│       │   ├── site-footer.tsx
-│       │   └── theme-provider.tsx
-│       ├── lib/
-│       │   └── utils.ts        # Utilities (cn, constructMetadata, etc.)
-│       └── public/             # Static assets
+│   ├── www/                    # Main Next.js application
+│   ├── capital/                # Coastal Haven Capital landing page
+│   └── discord-bot/            # Discord moderation bot
+├── docs/
+│   ├── planning/               # Feature plans, roadmaps, specs
+│   ├── content/                # Blog & content marketing strategy
+│   ├── research/               # User research, feedback, analysis
+│   └── archive/                # Historical docs, completed work
+├── content/                    # Blog articles (MDX)
+├── supabase/                   # Supabase config & migrations
 ├── turbo.json                  # Turborepo task configuration
 ├── pnpm-workspace.yaml         # pnpm workspace definition
 └── package.json                # Root package with shared scripts
+```
+
+**apps/www structure:**
+
+```text
+apps/www/
+├── app/
+│   ├── (marketing)/            # Public marketing pages
+│   ├── (portal)/               # Authenticated user portal
+│   ├── (auth)/                 # Auth pages (login, signup)
+│   ├── admin/                  # Admin dashboard
+│   └── api/                    # API routes
+├── components/
+│   ├── magicui/                # Magic UI animated components
+│   ├── sections/               # Landing page sections
+│   └── ui/                     # Shadcn/UI base components
+├── lib/                        # Utilities, Supabase client, email
+└── public/                     # Static assets
 ```
 
 ### Component Organization Pattern
@@ -204,25 +209,6 @@ Google Analytics is configured in [app/layout.tsx](apps/www/app/layout.tsx):
 - Tracking ID: `G-SC0JD2CK9H`
 - Loaded via Next.js `<Script>` component with `strategy="afterInteractive"`
 
-## Rebranding for Coastal Haven Partners
-
-The [overview.md](overview.md) file contains a comprehensive blueprint for rebranding this template into a finance talent network platform. Key transformation points:
-
-### Component Reuse Mapping
-- `<AnimatedShinyText />`: "Outbound that reads like..." → "Where Elite Talent Meets Boutique Opportunity"
-- `<IconCloud />`: AI tool logos → Finance firm logos (Goldman Sachs, Blackstone, Sequoia, etc.)
-- `<AnimatedBeam />`: Research → Personalize → Deliver → Student Profile → GPA Verified → Firm Match
-- `<ShimmerButton />`: "Start Outreach" → "Join the Network"
-
-### Next Steps for Rebranding
-1. Update copy in section components (`components/sections/`)
-2. Replace IconCloud logos in `tech-stack-section.tsx`
-3. Update metadata in `lib/utils.ts` and `app/layout.tsx`
-4. Replace favicon and OG images in `app/` directory
-5. Update footer links in `site-footer.tsx`
-6. Configure DNS for new domain
-7. Update environment variables
-
 ## Important Notes
 
 - **Package Manager**: Only pnpm is allowed (enforced by `preinstall` script)
@@ -230,7 +216,8 @@ The [overview.md](overview.md) file contains a comprehensive blueprint for rebra
 - **Animation Performance**: Magic UI components use GPU-accelerated transforms (transform/opacity only)
 - **Theme Support**: Dark mode enabled via `next-themes` with `attribute="class"`
 - **Route Groups**: `(marketing)` route group allows shared layouts without affecting URL structure
-- **No Backend**: This is a static marketing site - all data is hardcoded in components
+- **Backend**: Supabase (Postgres + Auth + Storage) - see `apps/www/supabase/` for migrations
+- **Email**: Resend for transactional emails - see `apps/www/lib/resend.ts`
 
 ## Development Workflow
 

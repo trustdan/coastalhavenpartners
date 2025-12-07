@@ -1,0 +1,21 @@
+# Build outputs
+node_modules/
+.next/
+dist/
+.turbo/
+
+# Vendor/copied UI components
+components/magicui/
+components/ui/
+
+# Content (not code)
+content/articles/
+
+# Generated files
+*.types.ts
+database.types.ts
+pnpm-lock.yaml
+
+# Registry (Magic UI build output)
+public/r/
+__registry__/

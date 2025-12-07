@@ -33,7 +33,8 @@
       "Bash(grep:*)",
       "Bash(git checkout:*)",
       "Bash(findstr:*)",
-      "Bash(del \"c:\\Users\\Dan\\coastalhavenpartners\\apps\\www\\lib\\document-ai.ts\")"
+      "Bash(del \"c:\\Users\\Dan\\coastalhavenpartners\\apps\\www\\lib\\document-ai.ts\")",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
