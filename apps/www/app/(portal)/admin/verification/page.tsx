@@ -3,7 +3,9 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { VerificationCard } from './verification-card'
 import { AutoVerificationCard } from './auto-verification-card'
+import { ResumeVerificationCard } from './resume-verification-card'
 import { BulkVerifyButton, ReprocessFlaggedButton } from './bulk-verify-button'
+import { ResumeBulkVerifyButton, ResumeReprocessFlaggedButton } from './resume-bulk-verify-button'
 import type { Database } from '@/lib/types/database.types'
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
@@ -220,6 +222,73 @@ export default async function AdminVerificationPage() {
     error: allAutoVerifications?.filter(v => v.status === 'error').length || 0,
   }
 
+  // =============================================
+  // RESUME AUTO-VERIFICATION DATA
+  // =============================================
+
+  // Fetch resume auto-verification queue (flagged/error items that need review)
+  const { data: resumeVerificationQueue } = await supabaseAdminUntyped
+    .from('resume_verifications')
+    .select(`
+      *,
+      candidate_profiles(
+        id,
+        school_name,
+        user_id
+      )
+    `)
+    .in('status', ['flagged', 'error'])
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  // Fetch user profiles for the resume verification queue
+  const resumeVerificationUserIds = resumeVerificationQueue
+    ?.map((v: any) => v.candidate_profiles?.user_id)
+    .filter((id: any): id is string => id !== null) || []
+
+  const { data: resumeVerificationProfiles } = resumeVerificationUserIds.length > 0
+    ? await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', resumeVerificationUserIds)
+    : { data: [] }
+
+  const resumeProfileMap = new Map(resumeVerificationProfiles?.map(p => [p.id, p]) || [])
+
+  const resumeVerificationsWithProfiles = resumeVerificationQueue?.map((v: any) => ({
+    ...v,
+    profile: v.candidate_profiles?.user_id
+      ? resumeProfileMap.get(v.candidate_profiles.user_id)
+      : null,
+  })) || []
+
+  // Fetch resume URLs for the resume verification queue
+  const resumeVerificationResumeIds = resumeVerificationQueue
+    ?.map((v: any) => v.resume_id)
+    .filter((id: any): id is string => id !== null) || []
+
+  const { data: verificationResumes } = resumeVerificationResumeIds.length > 0
+    ? await supabaseAdmin
+        .from('candidate_resumes')
+        .select('id, resume_url')
+        .in('id', resumeVerificationResumeIds)
+    : { data: [] }
+
+  const resumeUrlMap = new Map(verificationResumes?.map(r => [r.id, r.resume_url]) || [])
+
+  // Fetch resume auto-verification stats
+  const { data: allResumeVerifications } = await supabaseAdminUntyped
+    .from('resume_verifications')
+    .select('status')
+
+  const resumeAutoStats = {
+    total: allResumeVerifications?.length || 0,
+    autoVerified: allResumeVerifications?.filter((v: any) => v.status === 'auto_verified').length || 0,
+    flagged: allResumeVerifications?.filter((v: any) => v.status === 'flagged').length || 0,
+    manuallyVerified: allResumeVerifications?.filter((v: any) => v.status === 'manually_verified').length || 0,
+    error: allResumeVerifications?.filter((v: any) => v.status === 'error').length || 0,
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -230,9 +299,13 @@ export default async function AdminVerificationPage() {
             Review and verify candidate documents
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {/* Transcript buttons */}
           <ReprocessFlaggedButton />
           <BulkVerifyButton />
+          {/* Resume buttons */}
+          <ResumeReprocessFlaggedButton />
+          <ResumeBulkVerifyButton />
         </div>
       </div>
 
@@ -256,38 +329,77 @@ export default async function AdminVerificationPage() {
         </div>
       </div>
 
-      {/* Auto-Verification Stats */}
-      {autoStats.total > 0 && (
-        <div className="rounded-xl border bg-gradient-to-r from-purple-50 to-blue-50 p-4 dark:from-purple-900/20 dark:to-blue-900/20">
-          <h3 className="flex items-center gap-2 font-semibold text-purple-900 dark:text-purple-100">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
-              <path d="M12 6v6l4 2"/>
-            </svg>
-            AI Auto-Verification Stats
-          </h3>
-          <div className="mt-3 grid grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-green-600">{autoStats.autoVerified}</p>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">Auto-Verified</p>
+      {/* AI Verification Stats Grid */}
+      {(autoStats.total > 0 || resumeAutoStats.total > 0) && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Transcript Auto-Verification Stats */}
+          {autoStats.total > 0 && (
+            <div className="rounded-xl border bg-linear-to-r from-purple-50 to-blue-50 p-4 dark:from-purple-900/20 dark:to-blue-900/20">
+              <h3 className="flex items-center gap-2 font-semibold text-purple-900 dark:text-purple-100">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                Transcript GPA Verification
+              </h3>
+              <div className="mt-3 grid grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-green-600">{autoStats.autoVerified}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Auto-Verified</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber-600">{autoStats.flagged}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Flagged</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-600">{autoStats.manuallyVerified}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Manually Verified</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-red-600">{autoStats.error}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Errors</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-amber-600">{autoStats.flagged}</p>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">Flagged</p>
+          )}
+
+          {/* Resume Auto-Verification Stats */}
+          {resumeAutoStats.total > 0 && (
+            <div className="rounded-xl border bg-linear-to-r from-emerald-50 to-teal-50 p-4 dark:from-emerald-900/20 dark:to-teal-900/20">
+              <h3 className="flex items-center gap-2 font-semibold text-emerald-900 dark:text-emerald-100">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
+                  <path d="M16 13H8"/>
+                  <path d="M16 17H8"/>
+                  <path d="M10 9H8"/>
+                </svg>
+                Resume Authenticity Verification
+              </h3>
+              <div className="mt-3 grid grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-green-600">{resumeAutoStats.autoVerified}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Auto-Verified</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber-600">{resumeAutoStats.flagged}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Flagged</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-600">{resumeAutoStats.manuallyVerified}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Manually Verified</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-red-600">{resumeAutoStats.error}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">Errors</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-600">{autoStats.manuallyVerified}</p>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">Manually Verified</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-red-600">{autoStats.error}</p>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">Errors</p>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* Auto-Verification Queue (Flagged/Errors) */}
+      {/* Transcript Auto-Verification Queue (Flagged/Errors) */}
       {autoVerificationsWithProfiles.length > 0 && (
         <div className="space-y-4">
           <h2 className="flex items-center gap-2 text-xl font-semibold text-amber-700 dark:text-amber-300">
@@ -295,7 +407,7 @@ export default async function AdminVerificationPage() {
               <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
               <path d="M12 8v4M12 16h.01"/>
             </svg>
-            AI Flagged for Review ({autoVerificationsWithProfiles.length})
+            Transcript GPA Flagged for Review ({autoVerificationsWithProfiles.length})
           </h2>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
             These transcripts were processed by AI but need manual review due to mismatches or low confidence.
@@ -306,6 +418,33 @@ export default async function AdminVerificationPage() {
                 key={verification.id}
                 verification={verification as any}
                 transcriptUrl={verification.transcript_id ? transcriptUrlMap.get(verification.transcript_id) : undefined}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Resume Auto-Verification Queue (Flagged/Errors) */}
+      {resumeVerificationsWithProfiles.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-emerald-700 dark:text-emerald-300">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 2v6h6"/>
+              <path d="M12 18v-6"/>
+              <path d="M9 15l3 3 3-3"/>
+            </svg>
+            Resumes Flagged for Review ({resumeVerificationsWithProfiles.length})
+          </h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            These resumes were flagged as potentially fake or invalid. Review for placeholder names, fake phone numbers, or non-resume documents.
+          </p>
+          <div className="space-y-4">
+            {resumeVerificationsWithProfiles.map((verification: any) => (
+              <ResumeVerificationCard
+                key={verification.id}
+                verification={verification}
+                resumeUrl={verification.resume_id ? resumeUrlMap.get(verification.resume_id) : undefined}
               />
             ))}
           </div>

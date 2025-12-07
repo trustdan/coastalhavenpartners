@@ -654,3 +654,105 @@ export async function manuallyVerifyAutoVerification(
 
   revalidatePath('/admin/verification')
 }
+
+// =============================================
+// AUTO RESUME VERIFICATION ACTIONS
+// (using Claude vision for automated resume authenticity checks)
+// =============================================
+
+export async function autoVerifyResume(candidateProfileId: string, resumeId: string) {
+  await verifyAdmin()
+
+  const { verifyResume } = await import('@/lib/resume-verification')
+  const result = await verifyResume(candidateProfileId, resumeId)
+
+  revalidatePath('/admin/verification')
+  return result
+}
+
+export async function bulkAutoVerifyResumes(limit = 50) {
+  await verifyAdmin()
+
+  const { bulkVerifyResumes } = await import('@/lib/resume-verification')
+  const result = await bulkVerifyResumes(limit)
+
+  revalidatePath('/admin/verification')
+  return result
+}
+
+export async function reprocessFlaggedResumes(limit = 50) {
+  await verifyAdmin()
+
+  const { reprocessFlaggedResumes } = await import('@/lib/resume-verification')
+  const result = await reprocessFlaggedResumes(limit)
+
+  revalidatePath('/admin/verification')
+  return result
+}
+
+export async function getResumeAutoVerificationQueue() {
+  await verifyAdmin()
+
+  const { getResumeVerificationQueue } = await import('@/lib/resume-verification')
+  return getResumeVerificationQueue()
+}
+
+export async function getResumeAutoVerificationStats() {
+  await verifyAdmin()
+
+  const { getResumeVerificationStats } = await import('@/lib/resume-verification')
+  return getResumeVerificationStats()
+}
+
+export async function manuallyVerifyResumeVerification(
+  verificationId: string,
+  decision: 'verified' | 'rejected',
+  notes: string
+) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  // Get the verification record
+  const { data: verification, error: fetchError } = await supabaseUntyped
+    .from('resume_verifications')
+    .select('candidate_profile_id, resume_id')
+    .eq('id', verificationId)
+    .single()
+
+  if (fetchError || !verification) throw new Error('Verification not found')
+
+  // Update verification record
+  const { error: updateError } = await supabaseUntyped
+    .from('resume_verifications')
+    .update({
+      status: decision === 'verified' ? 'manually_verified' : 'rejected',
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+      review_notes: notes,
+    })
+    .eq('id', verificationId)
+
+  if (updateError) throw new Error(updateError.message)
+
+  // Update candidate_resumes based on decision
+  if (verification.resume_id) {
+    await supabaseAdmin
+      .from('candidate_resumes')
+      .update({
+        is_verified: decision === 'verified',
+        verified_by: user.id,
+        verified_at: new Date().toISOString(),
+      })
+      .eq('id', verification.resume_id)
+  }
+
+  // Update candidate profile resume verification status
+  await supabaseUntyped
+    .from('candidate_profiles')
+    .update({
+      resume_verification_status: decision,
+    })
+    .eq('id', verification.candidate_profile_id)
+
+  revalidatePath('/admin/verification')
+}

@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       analytics_events: {
@@ -397,6 +422,7 @@ export type Database = {
           rejected_at: string | null
           rejected_by: string | null
           resume_url: string | null
+          resume_verification_status: string | null
           resume_verified: boolean | null
           scheduling_url: string | null
           school_name: string
@@ -441,6 +467,7 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           resume_url?: string | null
+          resume_verification_status?: string | null
           resume_verified?: boolean | null
           scheduling_url?: string | null
           school_name: string
@@ -485,6 +512,7 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           resume_url?: string | null
+          resume_verification_status?: string | null
           resume_verified?: boolean | null
           scheduling_url?: string | null
           school_name?: string
@@ -1637,6 +1665,82 @@ export type Database = {
           },
         ]
       }
+      resume_verifications: {
+        Row: {
+          appears_authentic: boolean | null
+          candidate_profile_id: string
+          confidence: number | null
+          created_at: string
+          error_message: string | null
+          fake_indicators: Json | null
+          id: string
+          is_valid_resume: boolean | null
+          reasoning: string | null
+          resume_id: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appears_authentic?: boolean | null
+          candidate_profile_id: string
+          confidence?: number | null
+          created_at?: string
+          error_message?: string | null
+          fake_indicators?: Json | null
+          id?: string
+          is_valid_resume?: boolean | null
+          reasoning?: string | null
+          resume_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appears_authentic?: boolean | null
+          candidate_profile_id?: string
+          confidence?: number | null
+          created_at?: string
+          error_message?: string | null
+          fake_indicators?: Json | null
+          id?: string
+          is_valid_resume?: boolean | null
+          reasoning?: string | null
+          resume_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_verifications_candidate_profile_id_fkey"
+            columns: ["candidate_profile_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resume_verifications_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: true
+            referencedRelation: "candidate_resumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resume_verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_searches: {
         Row: {
           created_at: string | null
@@ -2101,6 +2205,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status: [
