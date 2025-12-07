@@ -151,65 +151,41 @@ export function CandidateRow({ candidate, variant }: CandidateRowProps) {
         )}
 
         <td className="px-6 py-4 text-right">
-          <div className="flex justify-end gap-2">
-            {/* Document Links - Resumes */}
-            {candidate.resumes.length > 0 && (
-              candidate.resumes.length === 1 ? (
-                <Button variant="ghost" size="sm" asChild>
-                  <a
-                    href={candidate.resumes[0].resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`View Resume: ${candidate.resumes[0].label}`}
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span className="sr-only">Resume</span>
-                  </a>
-                </Button>
-              ) : (
-                // Multiple resumes - show dropdown or first one with count
-                <Button variant="ghost" size="sm" asChild>
-                  <a
-                    href={candidate.resumes.find(r => r.is_default)?.resume_url || candidate.resumes[0].resume_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`View Resumes (${candidate.resumes.length})`}
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span className="sr-only">Resumes ({candidate.resumes.length})</span>
-                  </a>
-                </Button>
-              )
-            )}
-            {/* Document Links - Transcripts */}
-            {candidate.transcripts.length > 0 && (
-              candidate.transcripts.length === 1 ? (
-                <Button variant="ghost" size="sm" asChild>
-                  <a
-                    href={candidate.transcripts[0].transcript_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="View Transcript"
-                  >
-                    <GraduationCap className="h-4 w-4" />
-                    <span className="sr-only">Transcript</span>
-                  </a>
-                </Button>
-              ) : (
-                // Multiple transcripts - show with count
-                <Button variant="ghost" size="sm" asChild>
-                  <a
-                    href={candidate.transcripts[0].transcript_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`View Transcripts (${candidate.transcripts.length})`}
-                  >
-                    <GraduationCap className="h-4 w-4" />
-                    <span className="sr-only">Transcripts ({candidate.transcripts.length})</span>
-                  </a>
-                </Button>
-              )
-            )}
+          <div className="flex justify-end gap-1">
+            {/* Document Links - All Resumes */}
+            {candidate.resumes.map((resume, index) => (
+              <Button key={resume.id} variant="ghost" size="sm" asChild>
+                <a
+                  href={resume.resume_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Resume: ${resume.label}${resume.is_default ? ' (Default)' : ''}`}
+                >
+                  <FileText className="h-4 w-4" />
+                  {candidate.resumes.length > 1 && (
+                    <span className="ml-0.5 text-[10px] text-neutral-500">{index + 1}</span>
+                  )}
+                  <span className="sr-only">Resume: {resume.label}</span>
+                </a>
+              </Button>
+            ))}
+            {/* Document Links - All Transcripts */}
+            {candidate.transcripts.map((transcript, index) => (
+              <Button key={transcript.id} variant="ghost" size="sm" asChild>
+                <a
+                  href={transcript.transcript_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Transcript: ${transcript.education_level}`}
+                >
+                  <GraduationCap className="h-4 w-4" />
+                  {candidate.transcripts.length > 1 && (
+                    <span className="ml-0.5 text-[10px] text-neutral-500">{index + 1}</span>
+                  )}
+                  <span className="sr-only">Transcript: {transcript.education_level}</span>
+                </a>
+              </Button>
+            ))}
 
             {/* LinkedIn */}
             {candidate.profiles?.linkedin_url && (
