@@ -116,11 +116,16 @@ export async function submitSupportMessage(
     const sanitizedSubject = sanitizeInput(input.subject, 200)
     const sanitizedMessage = sanitizeInput(input.message, 5000)
 
-    // 7. Use admin client to insert
-    // Note: support_messages table types will be available after running migrations
+    // 7. Validate environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase environment variables')
+      return { success: false, error: 'Server configuration error. Please contact support.' }
+    }
+
+    // 8. Use admin client to insert
     const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
       {
         auth: {
           autoRefreshToken: false,
@@ -129,26 +134,33 @@ export async function submitSupportMessage(
       }
     )
 
-    // 8. Insert the support message with user info from session
+    // 9. Insert the support message with user info from session
+    const insertData = {
+      message_type: input.messageType,
+      user_id: user.id,
+      sender_name: profile.full_name || 'Unknown',
+      sender_email: profile.email || user.email || 'Unknown',
+      subject: sanitizedSubject,
+      message: sanitizedMessage,
+      ip_hash: ipHash,
+      status: 'new'
+    }
+
     const { error: insertError } = await supabaseAdmin
       .from('support_messages')
-      .insert({
-        message_type: input.messageType,
-        user_id: user.id,
-        sender_name: profile.full_name || 'Unknown',
-        sender_email: profile.email || user.email || 'Unknown',
-        subject: sanitizedSubject,
-        message: sanitizedMessage,
-        ip_hash: ipHash,
-        status: 'new'
-      })
+      .insert(insertData)
 
     if (insertError) {
       console.error('Failed to insert support message:', insertError)
-      return { success: false, error: 'Failed to submit message. Please try again later.' }
+      console.error('Insert data:', JSON.stringify(insertData, null, 2))
+      // Provide more specific error if available
+      if (insertError.code === '42P01') {
+        return { success: false, error: 'Support system is being configured. Please try again in a few minutes.' }
+      }
+      return { success: false, error: `Failed to submit message: ${insertError.message}` }
     }
 
-    // 9. Send email notifications (don't block on failure)
+    // 10. Send email notifications (don't block on failure)
     const senderEmail = profile.email || user.email || ''
     const senderName = profile.full_name || 'Unknown'
 
