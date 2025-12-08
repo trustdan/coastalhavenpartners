@@ -1,0 +1,286 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show OtpType;
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/router/app_router.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../data/services/supabase_service.dart';
+import '../../../widgets/magic_ui/magic_ui.dart';
+
+/// Email verification screen shown after signup
+class VerifyEmailScreen extends ConsumerStatefulWidget {
+  const VerifyEmailScreen({super.key});
+
+  @override
+  ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
+}
+
+class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
+  bool _isResending = false;
+  bool _isChecking = false;
+  int _resendCooldown = 0;
+  Timer? _cooldownTimer;
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCooldown() {
+    setState(() => _resendCooldown = 60);
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCooldown > 0) {
+        setState(() => _resendCooldown--);
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  Future<void> _resendEmail() async {
+    if (_resendCooldown > 0) return;
+
+    setState(() => _isResending = true);
+
+    try {
+      final user = SupabaseService.instance.currentUser;
+      if (user?.email != null) {
+        await SupabaseService.instance.client?.auth.resend(
+          type: OtpType.signup,
+          email: user!.email!,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Verification email sent!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _startCooldown();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send email: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isResending = false);
+      }
+    }
+  }
+
+  Future<void> _checkVerification() async {
+    setState(() => _isChecking = true);
+
+    try {
+      // Refresh the session to get updated user data
+      await SupabaseService.instance.client?.auth.refreshSession();
+
+      final user = SupabaseService.instance.currentUser;
+
+      if (user?.emailConfirmedAt != null) {
+        // Email is verified - get user role and navigate
+        if (mounted) {
+          final authState = ref.read(authStateProvider);
+          final role = authState.hasValue ? authState.value?.userRole : null;
+
+          switch (role) {
+            case 'candidate':
+              context.go(AppRoutes.candidate);
+              break;
+            case 'recruiter':
+              context.go(AppRoutes.recruiter);
+              break;
+            case 'school':
+              context.go(AppRoutes.school);
+              break;
+            default:
+              context.go(AppRoutes.candidate);
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Email not verified yet. Please check your inbox.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isChecking = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimaryDark),
+          onPressed: () => context.go(AppRoutes.login),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: AppSpacing.screenPadding,
+          child: Column(
+            children: [
+              const Spacer(),
+
+              // Email icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.teal.withValues(alpha: 0.2),
+                      AppColors.emerald.withValues(alpha: 0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: const Icon(
+                  Icons.mark_email_unread_outlined,
+                  size: 56,
+                  color: AppColors.teal,
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Title
+              Text(
+                'Check Your Email',
+                style: AppTextStyles.h2.copyWith(
+                  color: AppColors.textPrimaryDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Description
+              Text(
+                'We\'ve sent a verification link to your email address. Please click the link to verify your account.',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: AppColors.textSecondaryDark,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 8),
+
+              // Email display
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.cardDark,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderDark),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.email_outlined,
+                      size: 18,
+                      color: AppColors.textMutedDark,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      SupabaseService.instance.currentUser?.email ??
+                          'your@email.com',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Spacer(),
+
+              // Verify button
+              ShimmerButton(
+                text: _isChecking ? 'Checking...' : 'I\'ve Verified My Email',
+                onPressed: _isChecking ? null : _checkVerification,
+                isLoading: _isChecking,
+                fullWidth: true,
+                height: AppSizes.buttonHeightLg,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Resend button
+              TextButton(
+                onPressed:
+                    (_resendCooldown > 0 || _isResending) ? null : _resendEmail,
+                child: Text(
+                  _resendCooldown > 0
+                      ? 'Resend email in ${_resendCooldown}s'
+                      : _isResending
+                          ? 'Sending...'
+                          : 'Resend verification email',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: _resendCooldown > 0
+                        ? AppColors.textMutedDark
+                        : AppColors.teal,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Help text
+              Text(
+                'Didn\'t receive the email? Check your spam folder.',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMutedDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

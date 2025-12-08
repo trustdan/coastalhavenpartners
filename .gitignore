@@ -19,3 +19,85 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# ===================
+# Flutter / Dart
+# ===================
+
+# Dart tool
+.dart_tool/
+.packages
+pubspec.lock
+
+# Build and generated files
+*.g.dart
+*.freezed.dart
+*.gr.dart
+*.mocks.dart
+
+# Flutter build outputs
+apps/mobile/build/
+apps/mobile/.dart_tool/
+apps/mobile/.packages
+
+# Android
+apps/mobile/android/.gradle/
+apps/mobile/android/app/debug/
+apps/mobile/android/app/profile/
+apps/mobile/android/app/release/
+apps/mobile/android/local.properties
+apps/mobile/android/key.properties
+apps/mobile/android/*.keystore
+apps/mobile/android/*.jks
+*.apk
+*.aab
+
+# iOS
+apps/mobile/ios/Pods/
+apps/mobile/ios/.symlinks/
+apps/mobile/ios/Flutter/Flutter.framework
+apps/mobile/ios/Flutter/Flutter.podspec
+apps/mobile/ios/Flutter/Generated.xcconfig
+apps/mobile/ios/Flutter/app.flx
+apps/mobile/ios/Flutter/engine/
+apps/mobile/ios/ServiceDefinitions.json
+apps/mobile/ios/Runner/GeneratedPluginRegistrant.*
+*.ipa
+
+# macOS
+apps/mobile/macos/Pods/
+apps/mobile/macos/.symlinks/
+apps/mobile/macos/Flutter/GeneratedPluginRegistrant.swift
+apps/mobile/macos/Flutter/ephemeral/
+
+# Windows
+apps/mobile/windows/flutter/generated_plugin_registrant.cc
+apps/mobile/windows/flutter/generated_plugin_registrant.h
+apps/mobile/windows/flutter/generated_plugins.cmake
+
+# Linux
+apps/mobile/linux/flutter/generated_plugin_registrant.cc
+apps/mobile/linux/flutter/generated_plugin_registrant.h
+apps/mobile/linux/flutter/generated_plugins.cmake
+
+# Coverage
+coverage/
+*.lcov
+
+# Symbols
+app.*.symbols
+
+# Exceptions to above rules
+!**/ios/**/default.mode1v3
+!**/ios/**/default.mode2v3
+!**/ios/**/default.pbxuser
+!**/ios/**/default.perspectivev3

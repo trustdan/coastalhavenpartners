@@ -3,6 +3,7 @@ node_modules/
 .next/
 dist/
 .turbo/
+build/
 
 # Vendor/copied UI components
 components/magicui/
@@ -19,3 +20,45 @@ pnpm-lock.yaml
 # Registry (Magic UI build output)
 public/r/
 __registry__/
+
+# ===================
+# Flutter / Dart
+# ===================
+
+# Dart/Flutter build
+.dart_tool/
+.packages
+apps/mobile/build/
+apps/mobile/.dart_tool/
+
+# Generated code
+*.g.dart
+*.freezed.dart
+*.gr.dart
+*.mocks.dart
+
+# Platform build outputs
+apps/mobile/android/.gradle/
+apps/mobile/android/app/debug/
+apps/mobile/android/app/profile/
+apps/mobile/android/app/release/
+apps/mobile/ios/Pods/
+apps/mobile/ios/.symlinks/
+apps/mobile/ios/Flutter/
+apps/mobile/macos/Pods/
+apps/mobile/macos/.symlinks/
+apps/mobile/macos/Flutter/ephemeral/
+
+# Generated plugin registrants
+apps/mobile/windows/flutter/generated_*
+apps/mobile/linux/flutter/generated_*
+apps/mobile/macos/Flutter/GeneratedPluginRegistrant.swift
+apps/mobile/ios/Runner/GeneratedPluginRegistrant.*
+
+# Lock files
+apps/mobile/pubspec.lock
+
+# Binary assets (icons already processed)
+*.apk
+*.aab
+*.ipa
