@@ -1,43 +1,97 @@
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'base_repository.dart';
 import '../models/models.dart';
+import '../local/database.dart';
+import '../local/converters.dart';
+import '../../services/connectivity_service.dart';
 
-/// Repository for profile-related operations
+/// Repository for profile-related operations with offline support
 class ProfileRepository extends BaseRepository {
   ProfileRepository._();
   static ProfileRepository? _instance;
   static ProfileRepository get instance => _instance ??= ProfileRepository._();
 
+  final AppDatabase _db = AppDatabase();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
+
   // =====================
-  // Base Profile
+  // Base Profile (Local-First)
   // =====================
 
-  /// Get current user's base profile
+  /// Get current user's base profile (local-first)
   Future<Profile?> getCurrentProfile() async {
-    if (!isAvailable || currentUserId == null) return null;
+    if (currentUserId == null) return null;
 
-    return safeExecute<Profile?>(() async {
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      return _getCachedProfile(currentUserId!);
+    }
+
+    if (!isAvailable) {
+      return _getCachedProfile(currentUserId!);
+    }
+
+    final result = await safeExecute<Profile?>(() async {
       final response = await table('profiles')
           .select()
           .eq('id', currentUserId!)
           .single();
-      return Profile.fromJson(response);
-    }, errorMessage: 'Error fetching current profile');
+      final profile = Profile.fromJson(response);
+
+      // Cache the profile
+      await _db.cacheProfile(profile.toCacheCompanion());
+
+      return profile;
+    }, errorMessage: 'Error fetching current profile', rethrowError: false);
+
+    // If network failed, return cached data
+    if (result == null) {
+      return _getCachedProfile(currentUserId!);
+    }
+
+    return result;
   }
 
-  /// Get profile by user ID
-  Future<Profile?> getProfile(String userId) async {
-    if (!isAvailable) return null;
+  /// Get cached profile from local database
+  Future<Profile?> _getCachedProfile(String userId) async {
+    final cached = await _db.getProfileById(userId);
+    return cached?.toProfile();
+  }
 
-    return safeExecute<Profile?>(() async {
+  /// Get profile by user ID (local-first)
+  Future<Profile?> getProfile(String userId) async {
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      return _getCachedProfile(userId);
+    }
+
+    if (!isAvailable) {
+      return _getCachedProfile(userId);
+    }
+
+    final result = await safeExecute<Profile?>(() async {
       final response = await table('profiles')
           .select()
           .eq('id', userId)
           .maybeSingle();
       if (response == null) return null;
-      return Profile.fromJson(response);
-    }, errorMessage: 'Error fetching profile');
+
+      final profile = Profile.fromJson(response);
+
+      // Cache the profile
+      await _db.cacheProfile(profile.toCacheCompanion());
+
+      return profile;
+    }, errorMessage: 'Error fetching profile', rethrowError: false);
+
+    // If network failed, return cached data
+    if (result == null) {
+      return _getCachedProfile(userId);
+    }
+
+    return result;
   }
 
   /// Update base profile
@@ -58,44 +112,102 @@ class ProfileRepository extends BaseRepository {
         if (role != null) 'role': role.name,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', userId);
+
+      // Refresh cache
+      await getProfile(userId);
     }, errorMessage: 'Error updating profile');
   }
 
   // =====================
-  // Candidate Profile
+  // Candidate Profile (Local-First)
   // =====================
 
-  /// Get candidate profile for current user
+  /// Get candidate profile for current user (local-first)
   Future<CandidateProfile?> getCurrentCandidateProfile() async {
-    if (!isAvailable || currentUserId == null) return null;
+    if (currentUserId == null) return null;
 
-    return safeExecute<CandidateProfile?>(() async {
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      return _getCachedCandidateProfile(currentUserId!);
+    }
+
+    if (!isAvailable) {
+      return _getCachedCandidateProfile(currentUserId!);
+    }
+
+    final result = await safeExecute<CandidateProfile?>(() async {
       final response = await table('candidate_profiles')
           .select('*, profiles!candidate_profiles_user_id_fkey(*)')
           .eq('user_id', currentUserId!)
           .maybeSingle();
       if (response == null) return null;
-      return CandidateProfile.fromJson(response);
-    }, errorMessage: 'Error fetching candidate profile');
+
+      final profile = CandidateProfile.fromJson(response);
+
+      // Cache the profile
+      await _db.cacheCandidateProfile(profile.toCacheCompanion());
+
+      return profile;
+    }, errorMessage: 'Error fetching candidate profile', rethrowError: false);
+
+    // If network failed, return cached data
+    if (result == null) {
+      return _getCachedCandidateProfile(currentUserId!);
+    }
+
+    return result;
   }
 
-  /// Get candidate profile by ID
-  Future<CandidateProfile?> getCandidateProfile(String profileId) async {
-    if (!isAvailable) return null;
+  /// Get cached candidate profile from local database
+  Future<CandidateProfile?> _getCachedCandidateProfile(String userId) async {
+    final cached = await _db.getCandidateProfileByUserId(userId);
+    return cached?.toCandidateProfile();
+  }
 
-    return safeExecute<CandidateProfile?>(() async {
+  /// Get candidate profile by ID (local-first)
+  Future<CandidateProfile?> getCandidateProfile(String profileId) async {
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      final cached = await _db.getCandidateProfileById(profileId);
+      return cached?.toCandidateProfile();
+    }
+
+    if (!isAvailable) {
+      final cached = await _db.getCandidateProfileById(profileId);
+      return cached?.toCandidateProfile();
+    }
+
+    final result = await safeExecute<CandidateProfile?>(() async {
       final response = await table('candidate_profiles')
           .select('*, profiles!candidate_profiles_user_id_fkey(*)')
           .eq('id', profileId)
           .maybeSingle();
       if (response == null) return null;
-      return CandidateProfile.fromJson(response);
-    }, errorMessage: 'Error fetching candidate profile');
+
+      final profile = CandidateProfile.fromJson(response);
+
+      // Cache the profile
+      await _db.cacheCandidateProfile(profile.toCacheCompanion());
+
+      return profile;
+    }, errorMessage: 'Error fetching candidate profile', rethrowError: false);
+
+    // If network failed, return cached data
+    if (result == null) {
+      final cached = await _db.getCandidateProfileById(profileId);
+      return cached?.toCandidateProfile();
+    }
+
+    return result;
   }
 
   /// Check if user has candidate profile
   Future<bool> hasCandidateProfile(String userId) async {
-    if (!isAvailable) return false;
+    // Check local cache first
+    final cached = await _db.getCandidateProfileByUserId(userId);
+    if (cached != null) return true;
+
+    if (!_connectivity.isOnline || !isAvailable) return false;
 
     final response = await table('candidate_profiles')
         .select('id')
@@ -139,6 +251,10 @@ class ProfileRepository extends BaseRepository {
             preferredLocations: preferredLocations,
           );
         }
+
+        // Refresh cache
+        await getCurrentCandidateProfile();
+
         return profileId;
       } catch (e) {
         // Fallback to direct insert
@@ -154,6 +270,10 @@ class ProfileRepository extends BaseRepository {
           'target_roles': targetRoles,
           'preferred_locations': preferredLocations,
         }).select('id').single();
+
+        // Refresh cache
+        await getCurrentCandidateProfile();
+
         return response['id'] as String;
       }
     }, errorMessage: 'Error creating candidate profile');
@@ -193,44 +313,102 @@ class ProfileRepository extends BaseRepository {
         if (tags != null) 'tags': tags,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', profileId);
+
+      // Refresh cache
+      await getCurrentCandidateProfile();
     }, errorMessage: 'Error updating candidate profile');
   }
 
   // =====================
-  // Recruiter Profile
+  // Recruiter Profile (Local-First)
   // =====================
 
-  /// Get recruiter profile for current user
+  /// Get recruiter profile for current user (local-first)
   Future<RecruiterProfile?> getCurrentRecruiterProfile() async {
-    if (!isAvailable || currentUserId == null) return null;
+    if (currentUserId == null) return null;
 
-    return safeExecute<RecruiterProfile?>(() async {
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      return _getCachedRecruiterProfile(currentUserId!);
+    }
+
+    if (!isAvailable) {
+      return _getCachedRecruiterProfile(currentUserId!);
+    }
+
+    final result = await safeExecute<RecruiterProfile?>(() async {
       final response = await table('recruiter_profiles')
           .select('*, profiles!recruiter_profiles_user_id_fkey(*)')
           .eq('user_id', currentUserId!)
           .maybeSingle();
       if (response == null) return null;
-      return RecruiterProfile.fromJson(response);
-    }, errorMessage: 'Error fetching recruiter profile');
+
+      final profile = RecruiterProfile.fromJson(response);
+
+      // Cache the profile
+      await _db.cacheRecruiterProfile(profile.toCacheCompanion());
+
+      return profile;
+    }, errorMessage: 'Error fetching recruiter profile', rethrowError: false);
+
+    // If network failed, return cached data
+    if (result == null) {
+      return _getCachedRecruiterProfile(currentUserId!);
+    }
+
+    return result;
   }
 
-  /// Get recruiter profile by ID
-  Future<RecruiterProfile?> getRecruiterProfile(String profileId) async {
-    if (!isAvailable) return null;
+  /// Get cached recruiter profile from local database
+  Future<RecruiterProfile?> _getCachedRecruiterProfile(String userId) async {
+    final cached = await _db.getRecruiterProfileByUserId(userId);
+    return cached?.toRecruiterProfile();
+  }
 
-    return safeExecute<RecruiterProfile?>(() async {
+  /// Get recruiter profile by ID (local-first)
+  Future<RecruiterProfile?> getRecruiterProfile(String profileId) async {
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      final cached = await _db.getRecruiterProfileById(profileId);
+      return cached?.toRecruiterProfile();
+    }
+
+    if (!isAvailable) {
+      final cached = await _db.getRecruiterProfileById(profileId);
+      return cached?.toRecruiterProfile();
+    }
+
+    final result = await safeExecute<RecruiterProfile?>(() async {
       final response = await table('recruiter_profiles')
           .select('*, profiles!recruiter_profiles_user_id_fkey(*)')
           .eq('id', profileId)
           .maybeSingle();
       if (response == null) return null;
-      return RecruiterProfile.fromJson(response);
-    }, errorMessage: 'Error fetching recruiter profile');
+
+      final profile = RecruiterProfile.fromJson(response);
+
+      // Cache the profile
+      await _db.cacheRecruiterProfile(profile.toCacheCompanion());
+
+      return profile;
+    }, errorMessage: 'Error fetching recruiter profile', rethrowError: false);
+
+    // If network failed, return cached data
+    if (result == null) {
+      final cached = await _db.getRecruiterProfileById(profileId);
+      return cached?.toRecruiterProfile();
+    }
+
+    return result;
   }
 
   /// Check if user has recruiter profile
   Future<bool> hasRecruiterProfile(String userId) async {
-    if (!isAvailable) return false;
+    // Check local cache first
+    final cached = await _db.getRecruiterProfileByUserId(userId);
+    if (cached != null) return true;
+
+    if (!_connectivity.isOnline || !isAvailable) return false;
 
     final response = await table('recruiter_profiles')
         .select('id')
@@ -262,6 +440,10 @@ class ProfileRepository extends BaseRepository {
         'specialties': specialties,
         'locations': locations,
       }).select('id').single();
+
+      // Refresh cache
+      await getCurrentRecruiterProfile();
+
       return response['id'] as String;
     }, errorMessage: 'Error creating recruiter profile');
   }
@@ -296,6 +478,9 @@ class ProfileRepository extends BaseRepository {
         if (locations != null) 'locations': locations,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', profileId);
+
+      // Refresh cache
+      await getCurrentRecruiterProfile();
     }, errorMessage: 'Error updating recruiter profile');
   }
 

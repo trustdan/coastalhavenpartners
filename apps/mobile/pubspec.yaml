@@ -70,6 +70,14 @@ dependencies:
   firebase_messaging: any
   flutter_local_notifications: any
 
+  # Offline Support
+  drift: ^2.24.0
+  drift_flutter: ^0.2.4
+  sqlite3_flutter_libs: any
+  path_provider: any
+  path: any
+  connectivity_plus: ^6.1.4
+
   # Serialization (needed at runtime)
   freezed_annotation: any
   json_annotation: ^4.9.0
@@ -86,6 +94,7 @@ dev_dependencies:
   build_runner: any
   freezed: any
   json_serializable: any
+  drift_dev: ^2.24.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

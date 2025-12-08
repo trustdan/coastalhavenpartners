@@ -5,6 +5,8 @@ import 'app.dart';
 import 'data/services/supabase_service.dart';
 import 'data/services/local_storage_service.dart';
 import 'data/services/notification_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/sync_service.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -41,6 +43,14 @@ void main() async {
     await NotificationService.instance.initialize();
   } catch (e) {
     debugPrint('Push notifications initialization skipped: $e');
+  }
+
+  // Initialize connectivity monitoring for offline support
+  try {
+    await ConnectivityService.instance.initialize();
+    SyncService.instance.initialize();
+  } catch (e) {
+    debugPrint('Offline support initialization failed: $e');
   }
 
   // Run the app with Riverpod

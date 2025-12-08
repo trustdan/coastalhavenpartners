@@ -244,6 +244,8 @@ class _CompleteProfileCandidateScreenState
         degreeType: _selectedDegreeType,
         targetRoles: _selectedRoles.toList(),
         preferredLocations: _selectedLocations.toList(),
+        email: user.email,
+        fullName: user.userMetadata?['full_name'] as String?,
       );
 
       if (mounted) {

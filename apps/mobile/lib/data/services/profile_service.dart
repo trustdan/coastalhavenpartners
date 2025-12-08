@@ -20,6 +20,51 @@ class ProfileService {
     debugPrint('ProfileService: Updated user role to $role');
   }
 
+  /// Ensure user profile exists in the profiles table
+  /// Creates it if it doesn't exist (handles cases where the trigger didn't fire)
+  Future<bool> ensureProfileExists(String userId, {String? role, String? email, String? fullName}) async {
+    final client = SupabaseService.instance.client;
+    if (client == null) {
+      debugPrint('ProfileService: Supabase not initialized');
+      return false;
+    }
+
+    try {
+      // Check if profile exists
+      final existing = await client
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (existing != null) {
+        debugPrint('ProfileService: Profile already exists for user $userId');
+        // Update role if provided and different
+        if (role != null) {
+          await client.from('profiles').update({'role': role}).eq('id', userId);
+        }
+        return true;
+      }
+
+      // Create the profile
+      debugPrint('ProfileService: Creating missing profile for user $userId');
+      await client.from('profiles').insert({
+        'id': userId,
+        'role': role ?? 'candidate',
+        'email': email,
+        'full_name': fullName,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      debugPrint('ProfileService: Created profile for user $userId');
+      return true;
+    } catch (e) {
+      debugPrint('ProfileService: Error ensuring profile exists: $e');
+      return false;
+    }
+  }
+
   /// Create or update a candidate profile
   Future<String?> saveCandidateProfile({
     required String userId,
@@ -31,6 +76,8 @@ class ProfileService {
     List<String>? targetRoles,
     List<String>? preferredLocations,
     String? resumeUrl,
+    String? email,
+    String? fullName,
   }) async {
     final client = SupabaseService.instance.client;
     if (client == null) {
@@ -39,6 +86,18 @@ class ProfileService {
     }
 
     try {
+      // IMPORTANT: Ensure the base profile exists first (foreign key requirement)
+      final profileExists = await ensureProfileExists(
+        userId,
+        role: 'candidate',
+        email: email,
+        fullName: fullName,
+      );
+      if (!profileExists) {
+        debugPrint('ProfileService: Failed to ensure base profile exists');
+        return null;
+      }
+
       // First check if candidate profile exists
       final existing = await client
           .from('candidate_profiles')

@@ -83,16 +83,33 @@ class AppRoutes {
   // Note: Individual conversation routes use /messages/:conversationId
 }
 
+/// Listenable for auth state changes (used by GoRouter's refreshListenable)
+class AuthChangeNotifier extends ChangeNotifier {
+  AuthChangeNotifier(this._ref) {
+    _ref.listen(authStateProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+  final Ref _ref;
+}
+
+/// Provider for the auth change notifier
+final authChangeNotifierProvider = Provider<AuthChangeNotifier>((ref) {
+  return AuthChangeNotifier(ref);
+});
+
 /// App router configuration
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final authChangeNotifier = ref.watch(authChangeNotifierProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
+    refreshListenable: authChangeNotifier,
 
     // Redirect logic based on auth state
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
       final authValue = authState.hasValue ? authState.value : null;
       final isLoggedIn = authValue?.isAuthenticated ?? false;
       final isLoading = authState.isLoading;
@@ -126,20 +143,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.login;
       }
 
-      // If logged in and on login/signup, redirect to appropriate dashboard
+      // If logged in and on login/signup pages, redirect to appropriate dashboard
+      // But only if user has a role set - otherwise let them complete their profile
       if (isLoggedIn && (currentPath == AppRoutes.login ||
           currentPath.startsWith('/signup'))) {
         final userRole = authValue?.userRole;
-        switch (userRole) {
-          case 'candidate':
-            return AppRoutes.candidate;
-          case 'recruiter':
-            return AppRoutes.recruiter;
-          case 'school':
-            return AppRoutes.school;
-          default:
-            return AppRoutes.roleSelection;
+        // Only redirect if user has a role - otherwise let them access signup/complete-profile
+        if (userRole != null && userRole.isNotEmpty) {
+          switch (userRole) {
+            case 'candidate':
+              return AppRoutes.candidate;
+            case 'recruiter':
+              return AppRoutes.recruiter;
+            case 'school':
+              return AppRoutes.school;
+          }
         }
+        // No role set - don't redirect, let them complete signup
+        return null;
       }
 
       return null;

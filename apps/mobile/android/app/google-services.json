@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "480734299640",
+    "project_id": "coastal-haven-partners-11819",
+    "storage_bucket": "coastal-haven-partners-11819.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480734299640:android:c95a757d9769c6e6d4820d",
+        "android_client_info": {
+          "package_name": "com.coastalhavenpartners.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFCKUu9f9qizduz8cAAsjRJRE5ZpiGp64"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

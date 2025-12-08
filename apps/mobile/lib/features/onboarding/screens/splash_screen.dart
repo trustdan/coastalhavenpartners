@@ -211,6 +211,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             child: const Text('Start Onboarding Flow'),
           ),
           const SizedBox(height: 8),
+          // Login button for returning users
+          TextButton(
+            onPressed: () => context.go(AppRoutes.login),
+            child: Text(
+              'Already have an account? Sign In',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.teal,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           // Profile completion screens
           Row(
             children: [

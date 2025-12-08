@@ -52,7 +52,10 @@
       "Bash(flutter pub run build_runner build:*)",
       "Bash(dart run build_runner build:*)",
       "Bash(dart run build_runner:*)",
-      "Bash(flutter pub:*)"
+      "Bash(flutter pub:*)",
+      "Bash(flutter clean:*)",
+      "Bash(flutter attach:*)",
+      "Bash(powershell -Command \"echo ''r'' | flutter attach -d emulator-5554\")"
     ],
     "deny": [],
     "ask": []

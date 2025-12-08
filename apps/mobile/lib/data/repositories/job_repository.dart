@@ -1,19 +1,35 @@
 import 'base_repository.dart';
 import '../models/models.dart';
+import '../local/database.dart';
+import '../local/converters.dart';
+import '../../services/connectivity_service.dart';
+import '../../services/sync_service.dart';
 
-/// Repository for job-related operations
+/// Repository for job-related operations with offline support
 class JobRepository extends BaseRepository {
   JobRepository._();
   static JobRepository? _instance;
   static JobRepository get instance => _instance ??= JobRepository._();
 
+  final AppDatabase _db = AppDatabase();
+  final ConnectivityService _connectivity = ConnectivityService.instance;
+  final SyncService _sync = SyncService.instance;
+
   // =====================
   // Firms
   // =====================
 
-  /// Get all visible firms
+  /// Get all visible firms (local-first)
   Future<List<Firm>> getFirms({int limit = 50, int offset = 0}) async {
-    if (!isAvailable) return [];
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      return _getCachedFirms();
+    }
+
+    // Try to fetch from network
+    if (!isAvailable) {
+      return _getCachedFirms();
+    }
 
     final result = await safeExecute<List<Firm>>(() async {
       final response = await table('firms')
@@ -21,9 +37,33 @@ class JobRepository extends BaseRepository {
           .eq('is_visible', true)
           .order('name')
           .range(offset, offset + limit - 1);
-      return (response as List).map((e) => Firm.fromJson(e)).toList();
+      final firms = (response as List).map((e) => Firm.fromJson(e)).toList();
+
+      // Cache the results
+      await _cacheFirms(firms);
+
+      return firms;
     }, errorMessage: 'Error fetching firms', rethrowError: false);
-    return result ?? [];
+
+    // If network failed, return cached data
+    if (result == null) {
+      return _getCachedFirms();
+    }
+
+    return result;
+  }
+
+  /// Get cached firms from local database
+  Future<List<Firm>> _getCachedFirms() async {
+    final cached = await _db.getAllFirms();
+    return cached.map((c) => c.toFirm()).toList();
+  }
+
+  /// Cache firms to local database
+  Future<void> _cacheFirms(List<Firm> firms) async {
+    final companions = firms.map((f) => f.toCacheCompanion()).toList();
+    await _db.cacheFirms(companions);
+    await _db.setLastSyncTime('firms');
   }
 
   /// Get firm by ID
@@ -60,7 +100,7 @@ class JobRepository extends BaseRepository {
   // Job Listings
   // =====================
 
-  /// Get active job listings with optional filters
+  /// Get active job listings with optional filters (local-first)
   Future<List<JobListing>> getJobListings({
     int limit = 20,
     int offset = 0,
@@ -69,7 +109,23 @@ class JobRepository extends BaseRepository {
     List<String>? locations,
     String? searchQuery,
   }) async {
-    if (!isAvailable) return [];
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      return _getCachedJobListings(
+        query: searchQuery,
+        jobType: jobType,
+        firmId: firmId,
+      );
+    }
+
+    // Try to fetch from network
+    if (!isAvailable) {
+      return _getCachedJobListings(
+        query: searchQuery,
+        jobType: jobType,
+        firmId: firmId,
+      );
+    }
 
     final result = await safeExecute<List<JobListing>>(() async {
       var query = table('job_listings')
@@ -91,9 +147,63 @@ class JobRepository extends BaseRepository {
           .order('published_at', ascending: false)
           .range(offset, offset + limit - 1);
 
-      return (response as List).map((e) => JobListing.fromJson(e)).toList();
+      final jobs = (response as List).map((e) => JobListing.fromJson(e)).toList();
+
+      // Cache the results (only on first page to avoid duplicates)
+      if (offset == 0) {
+        await _cacheJobListings(jobs);
+      }
+
+      return jobs;
     }, errorMessage: 'Error fetching job listings', rethrowError: false);
-    return result ?? [];
+
+    // If network failed, return cached data
+    if (result == null) {
+      return _getCachedJobListings(
+        query: searchQuery,
+        jobType: jobType,
+        firmId: firmId,
+      );
+    }
+
+    return result;
+  }
+
+  /// Get cached job listings from local database
+  Future<List<JobListing>> _getCachedJobListings({
+    String? query,
+    JobType? jobType,
+    String? firmId,
+  }) async {
+    final cached = await _db.searchJobListings(
+      query: query,
+      jobType: jobType?.value,
+      firmId: firmId,
+    );
+
+    // Also fetch associated firms for full data
+    final jobs = <JobListing>[];
+    for (final cachedJob in cached) {
+      final cachedFirm = await _db.getFirmById(cachedJob.firmId);
+      jobs.add(cachedJob.toJobListing(
+        firm: cachedFirm?.toFirm(),
+      ));
+    }
+    return jobs;
+  }
+
+  /// Cache job listings to local database
+  Future<void> _cacheJobListings(List<JobListing> jobs) async {
+    // Cache firms first
+    final firms = jobs.map((j) => j.firm).whereType<Firm>().toList();
+    if (firms.isNotEmpty) {
+      await _cacheFirms(firms);
+    }
+
+    // Then cache job listings
+    final companions = jobs.map((j) => j.toCacheCompanion()).toList();
+    await _db.cacheJobListings(companions);
+    await _db.setLastSyncTime('job_listings');
   }
 
   /// Get job listing by ID
@@ -177,12 +287,19 @@ class JobRepository extends BaseRepository {
   // Applications
   // =====================
 
-  /// Get applications for current candidate
+  /// Get applications for current candidate (local-first)
   Future<List<Application>> getMyApplications({
     ApplicationStatus? status,
     int limit = 50,
   }) async {
-    if (!isAvailable || currentUserId == null) return [];
+    // If offline, return cached data
+    if (!_connectivity.isOnline && currentUserId != null) {
+      return _getCachedApplications();
+    }
+
+    if (!isAvailable || currentUserId == null) {
+      return _getCachedApplications();
+    }
 
     final result = await safeExecute<List<Application>>(() async {
       // First get candidate profile ID
@@ -205,9 +322,39 @@ class JobRepository extends BaseRepository {
           .order('applied_at', ascending: false)
           .limit(limit);
 
-      return (response as List).map((e) => Application.fromJson(e)).toList();
+      final applications = (response as List).map((e) => Application.fromJson(e)).toList();
+
+      // Cache the results
+      await _cacheApplications(applications);
+
+      return applications;
     }, errorMessage: 'Error fetching applications', rethrowError: false);
-    return result ?? [];
+
+    // If network failed, return cached data
+    if (result == null) {
+      return _getCachedApplications();
+    }
+
+    return result;
+  }
+
+  /// Get cached applications from local database
+  Future<List<Application>> _getCachedApplications() async {
+    if (currentUserId == null) return [];
+
+    // Get cached candidate profile to get profile ID
+    final cachedProfile = await _db.getCandidateProfileByUserId(currentUserId!);
+    if (cachedProfile == null) return [];
+
+    final cached = await _db.getMyApplications(cachedProfile.id);
+    return cached.map((c) => c.toApplication()).toList();
+  }
+
+  /// Cache applications to local database
+  Future<void> _cacheApplications(List<Application> applications) async {
+    final companions = applications.map((a) => a.toCacheCompanion()).toList();
+    await _db.cacheApplications(companions);
+    await _db.setLastSyncTime('applications');
   }
 
   /// Get single application
@@ -224,14 +371,23 @@ class JobRepository extends BaseRepository {
     }, errorMessage: 'Error fetching application');
   }
 
-  /// Submit application for a job
+  /// Submit application for a job (supports offline queueing)
   Future<Application?> submitApplication({
     required String jobListingId,
     required String coverLetter,
     required String outreachApproach,
     Map<String, dynamic>? snapshot,
   }) async {
-    if (!isAvailable || currentUserId == null) return null;
+    if (currentUserId == null) return null;
+
+    // If offline, create a pending application and queue for sync
+    if (!_connectivity.isOnline || !isAvailable) {
+      return _queueApplicationForSync(
+        jobListingId: jobListingId,
+        coverLetter: coverLetter,
+        outreachApproach: outreachApproach,
+      );
+    }
 
     return safeExecute<Application?>(() async {
       // Get candidate profile ID
@@ -266,13 +422,98 @@ class JobRepository extends BaseRepository {
         'applied_at': DateTime.now().toIso8601String(),
       }).select('*, job_listings(*, firms(*))').single();
 
-      return Application.fromJson(response);
+      final application = Application.fromJson(response);
+
+      // Cache the new application
+      await _db.cacheApplication(application.toCacheCompanion());
+
+      return application;
     }, errorMessage: 'Error submitting application');
   }
 
-  /// Check if user has already applied to a job
+  /// Queue an application for sync when offline
+  Future<Application?> _queueApplicationForSync({
+    required String jobListingId,
+    required String coverLetter,
+    required String outreachApproach,
+  }) async {
+    // Get cached candidate profile
+    final cachedProfile = await _db.getCandidateProfileByUserId(currentUserId!);
+    if (cachedProfile == null) return null;
+
+    // Get cached job listing for snapshot
+    final cachedJob = await _db.getJobListingById(jobListingId);
+    final cachedFirm = cachedJob != null ? await _db.getFirmById(cachedJob.firmId) : null;
+
+    // Generate a temporary ID for the pending application
+    final tempId = 'pending_${DateTime.now().millisecondsSinceEpoch}';
+
+    final applicationSnapshot = {
+      'job_title': cachedJob?.title ?? 'Unknown',
+      'firm_name': cachedFirm?.name ?? 'Unknown',
+      'school_name': cachedProfile.schoolName,
+      'major': cachedProfile.major,
+      'gpa': cachedProfile.gpa,
+      'graduation_year': cachedProfile.graduationYear,
+    };
+
+    // Create the application payload for sync
+    final payload = {
+      'candidate_profile_id': cachedProfile.id,
+      'job_listing_id': jobListingId,
+      'firm_id': cachedJob?.firmId,
+      'cover_letter': coverLetter,
+      'outreach_approach': outreachApproach,
+      'snapshot': applicationSnapshot,
+      'status': 'pending',
+      'applied_at': DateTime.now().toIso8601String(),
+    };
+
+    // Queue for sync
+    await _sync.queueCreate(
+      entityTable: 'applications',
+      recordId: tempId,
+      data: payload,
+    );
+
+    // Create a local pending application
+    final pendingApplication = Application(
+      id: tempId,
+      candidateProfileId: cachedProfile.id,
+      jobListingId: jobListingId,
+      firmId: cachedJob?.firmId,
+      status: ApplicationStatus.pending,
+      coverLetter: coverLetter,
+      outreachApproach: outreachApproach,
+      snapshot: applicationSnapshot,
+      appliedAt: DateTime.now(),
+      jobListing: cachedJob?.toJobListing(firm: cachedFirm?.toFirm()),
+    );
+
+    // Cache the pending application
+    await _db.cacheApplication(pendingApplication.toCacheCompanion());
+
+    return pendingApplication;
+  }
+
+  /// Check if user has already applied to a job (checks local cache too)
   Future<bool> hasApplied(String jobListingId) async {
-    if (!isAvailable || currentUserId == null) return false;
+    if (currentUserId == null) return false;
+
+    // First check local cache
+    final cachedProfile = await _db.getCandidateProfileByUserId(currentUserId!);
+    if (cachedProfile != null) {
+      final hasLocalApplication = await _db.hasAppliedToJob(
+        cachedProfile.id,
+        jobListingId,
+      );
+      if (hasLocalApplication) return true;
+    }
+
+    // If offline or unavailable, rely on local cache only
+    if (!_connectivity.isOnline || !isAvailable) {
+      return false;
+    }
 
     final result = await safeExecute<bool>(() async {
       final candidateProfile = await table('candidate_profiles')

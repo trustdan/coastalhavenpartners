@@ -8,6 +8,9 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/recruiter_provider.dart';
 import '../../../data/models/models.dart';
+import '../../../services/connectivity_service.dart';
+import '../../../services/sync_service.dart';
+import '../../../data/local/database.dart';
 
 /// Settings Screen - Account settings, preferences, and app info
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -205,6 +208,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+          AppSpacing.sectionGap,
+
+          // Data & Sync Section
+          _buildSectionHeader('Data & Sync'),
+          _buildDataSyncSection(context, isDark),
           AppSpacing.sectionGap,
 
           // Support Section
@@ -510,6 +518,187 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: 'Error loading status',
             titleColor: AppColors.error,
             onTap: () => ref.invalidate(currentRecruiterProfileProvider),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataSyncSection(BuildContext context, bool isDark) {
+    final connectivity = ConnectivityService.instance;
+    final syncService = SyncService.instance;
+    final db = AppDatabase();
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return FutureBuilder<int>(
+          future: db.getPendingSyncCount(),
+          builder: (context, snapshot) {
+            final pendingCount = snapshot.data ?? 0;
+            final isOnline = connectivity.isOnline;
+
+            return _buildSettingsCard(
+              context,
+              isDark,
+              children: [
+                // Connection Status
+                ListTile(
+                  leading: Icon(
+                    isOnline ? Icons.cloud_done : Icons.cloud_off,
+                    color: isOnline ? AppColors.success : AppColors.warning,
+                  ),
+                  title: Text('Connection Status', style: AppTextStyles.labelMedium),
+                  subtitle: Text(
+                    isOnline ? 'Online' : 'Offline',
+                    style: AppTextStyles.caption.copyWith(
+                      color: isOnline ? AppColors.success : AppColors.warning,
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (isOnline ? AppColors.success : AppColors.warning)
+                          .withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      isOnline ? 'Connected' : 'Offline Mode',
+                      style: AppTextStyles.badge.copyWith(
+                        color: isOnline ? AppColors.success : AppColors.warning,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                _buildDivider(isDark),
+                // Pending Sync Count
+                ListTile(
+                  leading: Icon(
+                    pendingCount > 0 ? Icons.sync_problem : Icons.sync,
+                    color: pendingCount > 0 ? AppColors.warning : AppColors.teal,
+                  ),
+                  title: Text('Pending Changes', style: AppTextStyles.labelMedium),
+                  subtitle: Text(
+                    pendingCount > 0
+                        ? '$pendingCount item${pendingCount > 1 ? 's' : ''} waiting to sync'
+                        : 'All changes synced',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  trailing: pendingCount > 0
+                      ? Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '$pendingCount',
+                            style: AppTextStyles.badge.copyWith(
+                              color: AppColors.warning,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                ),
+                _buildDivider(isDark),
+                // Sync Now Button
+                ListTile(
+                  leading: const Icon(Icons.sync, color: AppColors.teal),
+                  title: Text('Sync Now', style: AppTextStyles.labelMedium),
+                  subtitle: Text(
+                    'Manually sync all pending changes',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  trailing: syncService.isSyncing
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.chevron_right, size: 20),
+                  onTap: isOnline && !syncService.isSyncing
+                      ? () async {
+                          setState(() {}); // Trigger rebuild
+                          try {
+                            final results = await syncService.syncPendingOperations();
+                            final allSuccess = results.every((r) => r.success);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    allSuccess
+                                        ? 'Sync completed successfully'
+                                        : 'Some items failed to sync',
+                                  ),
+                                  backgroundColor:
+                                      allSuccess ? AppColors.success : AppColors.warning,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Sync failed: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          } finally {
+                            setState(() {}); // Trigger rebuild
+                          }
+                        }
+                      : null,
+                ),
+                _buildDivider(isDark),
+                // Clear Cache
+                _buildSettingsTile(
+                  icon: Icons.delete_sweep_outlined,
+                  title: 'Clear Cached Data',
+                  subtitle: 'Remove locally stored data',
+                  onTap: () => _showClearCacheDialog(),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showClearCacheDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Cached Data'),
+        content: const Text(
+          'This will remove all locally stored data. You will need to be online to fetch fresh data. Are you sure?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.warning),
+            onPressed: () async {
+              Navigator.pop(context);
+              final db = AppDatabase();
+              await db.clearAllData();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Cached data cleared'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Clear'),
           ),
         ],
       ),
