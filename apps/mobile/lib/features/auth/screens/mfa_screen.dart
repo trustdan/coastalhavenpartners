@@ -7,6 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
+import '../../../data/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FactorStatus;
 import '../../../widgets/magic_ui/magic_ui.dart';
 
 /// MFA verification screen for two-factor authentication
@@ -28,13 +30,60 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
   Timer? _cooldownTimer;
   String? _errorMessage;
 
+  // MFA state
+  bool _isLoadingFactors = true;
+  String? _factorId;
+  String? _challengeId;
+
   @override
   void initState() {
     super.initState();
-    // Auto-focus first field
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNodes[0].requestFocus();
-    });
+    _initializeMfaChallenge();
+  }
+
+  Future<void> _initializeMfaChallenge() async {
+    try {
+      // Get the user's enrolled factors
+      final factors = await SupabaseService.instance.mfaListFactors();
+
+      // Find a verified TOTP factor
+      final totpFactors = factors.totp.where((f) => f.status == FactorStatus.verified).toList();
+
+      if (totpFactors.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'No MFA factors found. Please set up 2FA first.';
+            _isLoadingFactors = false;
+          });
+        }
+        return;
+      }
+
+      // Use the first verified factor
+      final factor = totpFactors.first;
+      _factorId = factor.id;
+
+      // Create a challenge
+      final challenge = await SupabaseService.instance.mfaChallenge(
+        factorId: factor.id,
+      );
+      _challengeId = challenge.id;
+
+      if (mounted) {
+        setState(() => _isLoadingFactors = false);
+        // Auto-focus first field
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _focusNodes[0].requestFocus();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to initialize MFA: ${e.toString()}';
+          _isLoadingFactors = false;
+        });
+      }
+    }
   }
 
   @override
@@ -113,16 +162,19 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
   }
 
   Future<void> _resendCode() async {
-    if (_resendCooldown > 0) return;
+    if (_resendCooldown > 0 || _factorId == null) return;
 
     try {
-      // TODO: Implement resend MFA code via Supabase
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Create a new challenge (TOTP codes rotate automatically, so we just need a new challenge)
+      final challenge = await SupabaseService.instance.mfaChallenge(
+        factorId: _factorId!,
+      );
+      _challengeId = challenge.id;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('New verification code sent!'),
+            content: Text('Ready for a new code from your authenticator app'),
             backgroundColor: Colors.green,
           ),
         );
@@ -132,7 +184,7 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to resend code: ${e.toString()}'),
+            content: Text('Failed to refresh: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -143,37 +195,79 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
   Future<void> _verifyCode() async {
     if (!_isCodeComplete || _isVerifying) return;
 
+    // Check if we have the required IDs
+    if (_factorId == null || _challengeId == null) {
+      setState(() {
+        _errorMessage = 'MFA not initialized. Please go back and try again.';
+      });
+      return;
+    }
+
     setState(() {
       _isVerifying = true;
       _errorMessage = null;
     });
 
     try {
-      // TODO: Implement MFA verification via Supabase
-      await Future.delayed(const Duration(seconds: 1));
+      // Verify the code with Supabase
+      await SupabaseService.instance.mfaVerify(
+        factorId: _factorId!,
+        challengeId: _challengeId!,
+        code: _code,
+      );
 
-      // Simulate validation - replace with actual Supabase MFA verification
-      if (_code == '123456') {
-        // Success - navigate to appropriate dashboard
+      // Success - get user role and navigate to appropriate dashboard
+      if (mounted) {
+        // Fetch user role from profile
+        final userId = SupabaseService.instance.currentUser?.id;
+        String? userRole;
+
+        if (userId != null) {
+          try {
+            final response = await SupabaseService.instance
+                .table('profiles')
+                .select('role')
+                .eq('id', userId)
+                .maybeSingle();
+            userRole = response?['role'] as String?;
+          } catch (_) {
+            // Default to candidate if we can't fetch role
+          }
+        }
+
         if (mounted) {
-          // TODO: Get user role and navigate accordingly
-          context.go(AppRoutes.candidate);
+          switch (userRole) {
+            case 'recruiter':
+              context.go(AppRoutes.recruiter);
+              break;
+            case 'school':
+              context.go(AppRoutes.school);
+              break;
+            default:
+              context.go(AppRoutes.candidate);
+          }
         }
-      } else {
-        // Invalid code
-        setState(() {
-          _errorMessage = 'Invalid verification code. Please try again.';
-        });
-        // Clear the fields
-        for (final controller in _controllers) {
-          controller.clear();
-        }
-        _focusNodes[0].requestFocus();
       }
     } catch (e) {
+      // Invalid code or verification failed
       setState(() {
-        _errorMessage = 'Verification failed: ${e.toString()}';
+        _errorMessage = 'Invalid verification code. Please try again.';
       });
+      // Clear the fields
+      for (final controller in _controllers) {
+        controller.clear();
+      }
+      _focusNodes[0].requestFocus();
+
+      // Create a new challenge for next attempt
+      try {
+        final challenge = await SupabaseService.instance.mfaChallenge(
+          factorId: _factorId!,
+        );
+        _challengeId = challenge.id;
+      } catch (_) {
+        // Ignore challenge refresh errors
+      }
     } finally {
       if (mounted) {
         setState(() => _isVerifying = false);
@@ -185,17 +279,95 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
     // Show recovery code dialog
     showDialog(
       context: context,
-      builder: (context) => _RecoveryCodeDialog(
+      builder: (dialogContext) => _RecoveryCodeDialog(
         onSubmit: (recoveryCode) async {
-          // TODO: Implement recovery code verification
-          Navigator.of(context).pop();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Recovery code functionality coming soon'),
-                backgroundColor: Colors.orange,
-              ),
-            );
+          Navigator.of(dialogContext).pop();
+
+          // Show loading indicator
+          setState(() {
+            _isVerifying = true;
+            _errorMessage = null;
+          });
+
+          try {
+            // Verify recovery code
+            final result = await SupabaseService.instance.verifyRecoveryCode(recoveryCode);
+
+            if (result['success'] == true) {
+              // Recovery code is valid - unenroll MFA to allow access
+              // The user will need to set up MFA again
+              if (_factorId != null) {
+                try {
+                  await SupabaseService.instance.mfaUnenroll(factorId: _factorId!);
+                } catch (e) {
+                  // Log but continue - the important thing is they verified
+                  debugPrint('Warning: Could not unenroll MFA: $e');
+                }
+              }
+
+              // Show warning about MFA being disabled
+              if (mounted) {
+                final remainingCodes = result['remaining_codes'] ?? 0;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Recovery code accepted. MFA has been disabled. '
+                      'You have $remainingCodes recovery codes remaining. '
+                      'Please re-enable 2FA in settings.',
+                    ),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+
+                // Navigate to dashboard based on user role
+                final userId = SupabaseService.instance.currentUser?.id;
+                String? userRole;
+
+                if (userId != null) {
+                  try {
+                    final response = await SupabaseService.instance
+                        .table('profiles')
+                        .select('role')
+                        .eq('id', userId)
+                        .maybeSingle();
+                    userRole = response?['role'] as String?;
+                  } catch (_) {
+                    // Default to candidate
+                  }
+                }
+
+                if (mounted) {
+                  switch (userRole) {
+                    case 'recruiter':
+                      context.go(AppRoutes.recruiter);
+                      break;
+                    case 'school':
+                      context.go(AppRoutes.school);
+                      break;
+                    default:
+                      context.go(AppRoutes.candidate);
+                  }
+                }
+              }
+            } else {
+              // Invalid recovery code
+              if (mounted) {
+                setState(() {
+                  _errorMessage = result['message'] ?? 'Invalid recovery code';
+                });
+              }
+            }
+          } catch (e) {
+            if (mounted) {
+              setState(() {
+                _errorMessage = 'Error verifying recovery code: ${e.toString()}';
+              });
+            }
+          } finally {
+            if (mounted) {
+              setState(() => _isVerifying = false);
+            }
           }
         },
       ),
@@ -214,7 +386,9 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
           onPressed: () => context.go(AppRoutes.login),
         ),
       ),
-      body: SafeArea(
+      body: _isLoadingFactors
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: SingleChildScrollView(

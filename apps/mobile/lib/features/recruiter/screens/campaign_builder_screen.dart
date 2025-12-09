@@ -13,13 +13,11 @@ import '../../../core/providers/recruiter_provider.dart';
 class CampaignBuilderScreen extends ConsumerStatefulWidget {
   final String? campaignId; // For editing existing campaigns
 
-  const CampaignBuilderScreen({
-    super.key,
-    this.campaignId,
-  });
+  const CampaignBuilderScreen({super.key, this.campaignId});
 
   @override
-  ConsumerState<CampaignBuilderScreen> createState() => _CampaignBuilderScreenState();
+  ConsumerState<CampaignBuilderScreen> createState() =>
+      _CampaignBuilderScreenState();
 }
 
 class _CampaignBuilderScreenState extends ConsumerState<CampaignBuilderScreen> {
@@ -110,7 +108,9 @@ Best regards,
   Future<void> _loadExistingCampaign() async {
     setState(() => _isLoading = true);
     try {
-      final campaign = await RecruiterRepository.instance.getCampaign(widget.campaignId!);
+      final campaign = await RecruiterRepository.instance.getCampaign(
+        widget.campaignId!,
+      );
       if (campaign != null && mounted) {
         setState(() {
           _existingCampaignId = campaign.id;
@@ -146,9 +146,9 @@ Best regards,
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading campaign: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading campaign: $e')));
       }
     } finally {
       if (mounted) {
@@ -238,9 +238,9 @@ Best regards,
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving campaign: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving campaign: $e')));
       }
     } finally {
       if (mounted) {
@@ -279,7 +279,9 @@ Best regards,
   Future<void> _executeSendCampaign() async {
     setState(() => _isSaving = true);
     try {
-      final status = _scheduledFor != null ? CampaignStatus.scheduled : CampaignStatus.sent;
+      final status = _scheduledFor != null
+          ? CampaignStatus.scheduled
+          : CampaignStatus.sent;
 
       if (_existingCampaignId != null) {
         // Update existing campaign
@@ -327,9 +329,9 @@ Best regards,
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) {
@@ -344,7 +346,9 @@ Best regards,
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.campaignId != null ? 'Edit Campaign' : 'New Campaign'),
+        title: Text(
+          widget.campaignId != null ? 'Edit Campaign' : 'New Campaign',
+        ),
         actions: [
           if (_isSaving)
             const Padding(
@@ -358,10 +362,7 @@ Best regards,
               ),
             )
           else
-            TextButton(
-              onPressed: _saveDraft,
-              child: const Text('Save Draft'),
-            ),
+            TextButton(onPressed: _saveDraft, child: const Text('Save Draft')),
         ],
       ),
       body: _isLoading
@@ -423,18 +424,26 @@ Best regards,
                     decoration: BoxDecoration(
                       color: isActive || isCompleted
                           ? AppColors.teal
-                          : (isDark ? AppColors.borderDark : AppColors.borderLight),
+                          : (isDark
+                                ? AppColors.borderDark
+                                : AppColors.borderLight),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: isCompleted
-                          ? const Icon(Icons.check, size: 16, color: Colors.white)
+                          ? const Icon(
+                              Icons.check,
+                              size: 16,
+                              color: Colors.white,
+                            )
                           : Text(
                               '${index + 1}',
                               style: AppTextStyles.badge.copyWith(
                                 color: isActive || isCompleted
                                     ? Colors.white
-                                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                               ),
                             ),
                     ),
@@ -446,7 +455,9 @@ Best regards,
                       color: isActive
                           ? AppColors.teal
                           : Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isActive
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -525,13 +536,15 @@ Best regards,
           // Template selection
           Text('Choose a Template', style: AppTextStyles.labelLarge),
           AppSpacing.itemGap,
-          ..._templates.map((template) => _buildTemplateOption(
-                context,
-                isDark,
-                id: template.$1,
-                title: template.$2,
-                description: template.$3,
-              )),
+          ..._templates.map(
+            (template) => _buildTemplateOption(
+              context,
+              isDark,
+              id: template.$1,
+              title: template.$2,
+              description: template.$3,
+            ),
+          ),
         ],
       ),
     );
@@ -733,13 +746,13 @@ Best regards,
           children: [
             Expanded(
               child: DropdownButtonFormField<int>(
-                value: _minYear,
+                initialValue: _minYear,
                 decoration: const InputDecoration(labelText: 'From'),
                 items: List.generate(5, (i) => 2022 + i)
-                    .map((year) => DropdownMenuItem(
-                          value: year,
-                          child: Text('$year'),
-                        ))
+                    .map(
+                      (year) =>
+                          DropdownMenuItem(value: year, child: Text('$year')),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
@@ -754,14 +767,14 @@ Best regards,
             const SizedBox(width: 16),
             Expanded(
               child: DropdownButtonFormField<int>(
-                value: _maxYear,
+                initialValue: _maxYear,
                 decoration: const InputDecoration(labelText: 'To'),
                 items: List.generate(5, (i) => 2022 + i)
                     .where((year) => year >= _minYear)
-                    .map((year) => DropdownMenuItem(
-                          value: year,
-                          child: Text('$year'),
-                        ))
+                    .map(
+                      (year) =>
+                          DropdownMenuItem(value: year, child: Text('$year')),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
@@ -1026,12 +1039,7 @@ Best regards,
             ),
           ),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: AppTextStyles.labelMedium,
-          ),
-        ),
+        Expanded(child: Text(value, style: AppTextStyles.labelMedium)),
       ],
     );
   }
@@ -1156,7 +1164,9 @@ Best regards,
                     )
                   : ShimmerButton(
                       onPressed: _sendCampaign,
-                      text: _scheduledFor != null ? 'Schedule' : 'Send Campaign',
+                      text: _scheduledFor != null
+                          ? 'Schedule'
+                          : 'Send Campaign',
                     ),
             ),
           ],
@@ -1167,8 +1177,18 @@ Best regards,
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }

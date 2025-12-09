@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/analytics_provider.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
 
 /// Login screen
@@ -45,6 +46,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Check auth state for errors
       final authState = ref.read(authStateProvider);
       if (authState.hasValue && authState.value!.error != null) {
+        // Track login failure
+        ref.read(analyticsNotifierProvider.notifier).logLoginFailed(
+              error: authState.value!.error!,
+            );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -53,14 +58,87 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           );
         }
+      } else {
+        // Track successful login
+        ref.read(analyticsNotifierProvider.notifier).logLogin(loginMethod: 'email');
       }
       // Navigation is handled by router redirect based on auth state
     } catch (e) {
+      // Track login failure
+      ref.read(analyticsNotifierProvider.notifier).logLoginFailed(error: e.toString());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Login failed: ${e.toString()}'),
             backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authStateProvider.notifier).signInWithGoogle();
+      // OAuth opens browser, auth state listener handles the rest
+      // Track login attempt (success tracked when auth state changes)
+      ref.read(analyticsNotifierProvider.notifier).logLogin(loginMethod: 'google');
+    } catch (e) {
+      ref.read(analyticsNotifierProvider.notifier).logLoginFailed(error: 'google: ${e.toString()}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google sign-in failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleDiscordSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authStateProvider.notifier).signInWithDiscord();
+      ref.read(analyticsNotifierProvider.notifier).logLogin(loginMethod: 'discord');
+    } catch (e) {
+      ref.read(analyticsNotifierProvider.notifier).logLoginFailed(error: 'discord: ${e.toString()}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Discord sign-in failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleLinkedInSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authStateProvider.notifier).signInWithLinkedIn();
+      ref.read(analyticsNotifierProvider.notifier).logLogin(loginMethod: 'linkedin');
+    } catch (e) {
+      ref.read(analyticsNotifierProvider.notifier).logLoginFailed(error: 'linkedin: ${e.toString()}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('LinkedIn sign-in failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -279,9 +357,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // TODO: Google sign in
-                        },
+                        onPressed: _isLoading ? null : _handleGoogleSignIn,
                         icon: const Icon(Icons.g_mobiledata, size: 24),
                         label: const Text('Google'),
                         style: OutlinedButton.styleFrom(
@@ -292,9 +368,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // TODO: Discord sign in
-                        },
+                        onPressed: _isLoading ? null : _handleDiscordSignIn,
                         icon: const Icon(Icons.discord, size: 20),
                         label: const Text('Discord'),
                         style: OutlinedButton.styleFrom(
@@ -305,9 +379,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // TODO: LinkedIn sign in
-                        },
+                        onPressed: _isLoading ? null : _handleLinkedInSignIn,
                         icon: const Icon(Icons.link, size: 20),
                         label: const Text('LinkedIn'),
                         style: OutlinedButton.styleFrom(

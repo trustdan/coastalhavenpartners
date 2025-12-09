@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'base_repository.dart';
@@ -33,18 +32,21 @@ class ProfileRepository extends BaseRepository {
       return _getCachedProfile(currentUserId!);
     }
 
-    final result = await safeExecute<Profile?>(() async {
-      final response = await table('profiles')
-          .select()
-          .eq('id', currentUserId!)
-          .single();
-      final profile = Profile.fromJson(response);
+    final result = await safeExecute<Profile?>(
+      () async {
+        final response = await table(
+          'profiles',
+        ).select().eq('id', currentUserId!).single();
+        final profile = Profile.fromJson(response);
 
-      // Cache the profile
-      await _db.cacheProfile(profile.toCacheCompanion());
+        // Cache the profile
+        await _db.cacheProfile(profile.toCacheCompanion());
 
-      return profile;
-    }, errorMessage: 'Error fetching current profile', rethrowError: false);
+        return profile;
+      },
+      errorMessage: 'Error fetching current profile',
+      rethrowError: false,
+    );
 
     // If network failed, return cached data
     if (result == null) {
@@ -71,20 +73,23 @@ class ProfileRepository extends BaseRepository {
       return _getCachedProfile(userId);
     }
 
-    final result = await safeExecute<Profile?>(() async {
-      final response = await table('profiles')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
-      if (response == null) return null;
+    final result = await safeExecute<Profile?>(
+      () async {
+        final response = await table(
+          'profiles',
+        ).select().eq('id', userId).maybeSingle();
+        if (response == null) return null;
 
-      final profile = Profile.fromJson(response);
+        final profile = Profile.fromJson(response);
 
-      // Cache the profile
-      await _db.cacheProfile(profile.toCacheCompanion());
+        // Cache the profile
+        await _db.cacheProfile(profile.toCacheCompanion());
 
-      return profile;
-    }, errorMessage: 'Error fetching profile', rethrowError: false);
+        return profile;
+      },
+      errorMessage: 'Error fetching profile',
+      rethrowError: false,
+    );
 
     // If network failed, return cached data
     if (result == null) {
@@ -105,13 +110,15 @@ class ProfileRepository extends BaseRepository {
     if (!isAvailable) return;
 
     await safeExecute<void>(() async {
-      await table('profiles').update({
-        if (fullName != null) 'full_name': fullName,
-        if (linkedinUrl != null) 'linkedin_url': linkedinUrl,
-        if (phone != null) 'phone': phone,
-        if (role != null) 'role': role.name,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', userId);
+      await table('profiles')
+          .update({
+            if (fullName != null) 'full_name': fullName,
+            if (linkedinUrl != null) 'linkedin_url': linkedinUrl,
+            if (phone != null) 'phone': phone,
+            if (role != null) 'role': role.name,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId);
 
       // Refresh cache
       await getProfile(userId);
@@ -135,20 +142,24 @@ class ProfileRepository extends BaseRepository {
       return _getCachedCandidateProfile(currentUserId!);
     }
 
-    final result = await safeExecute<CandidateProfile?>(() async {
-      final response = await table('candidate_profiles')
-          .select('*, profiles!candidate_profiles_user_id_fkey(*)')
-          .eq('user_id', currentUserId!)
-          .maybeSingle();
-      if (response == null) return null;
+    final result = await safeExecute<CandidateProfile?>(
+      () async {
+        final response = await table('candidate_profiles')
+            .select('*, profiles!candidate_profiles_user_id_fkey(*)')
+            .eq('user_id', currentUserId!)
+            .maybeSingle();
+        if (response == null) return null;
 
-      final profile = CandidateProfile.fromJson(response);
+        final profile = CandidateProfile.fromJson(response);
 
-      // Cache the profile
-      await _db.cacheCandidateProfile(profile.toCacheCompanion());
+        // Cache the profile
+        await _db.cacheCandidateProfile(profile.toCacheCompanion());
 
-      return profile;
-    }, errorMessage: 'Error fetching candidate profile', rethrowError: false);
+        return profile;
+      },
+      errorMessage: 'Error fetching candidate profile',
+      rethrowError: false,
+    );
 
     // If network failed, return cached data
     if (result == null) {
@@ -177,20 +188,24 @@ class ProfileRepository extends BaseRepository {
       return cached?.toCandidateProfile();
     }
 
-    final result = await safeExecute<CandidateProfile?>(() async {
-      final response = await table('candidate_profiles')
-          .select('*, profiles!candidate_profiles_user_id_fkey(*)')
-          .eq('id', profileId)
-          .maybeSingle();
-      if (response == null) return null;
+    final result = await safeExecute<CandidateProfile?>(
+      () async {
+        final response = await table('candidate_profiles')
+            .select('*, profiles!candidate_profiles_user_id_fkey(*)')
+            .eq('id', profileId)
+            .maybeSingle();
+        if (response == null) return null;
 
-      final profile = CandidateProfile.fromJson(response);
+        final profile = CandidateProfile.fromJson(response);
 
-      // Cache the profile
-      await _db.cacheCandidateProfile(profile.toCacheCompanion());
+        // Cache the profile
+        await _db.cacheCandidateProfile(profile.toCacheCompanion());
 
-      return profile;
-    }, errorMessage: 'Error fetching candidate profile', rethrowError: false);
+        return profile;
+      },
+      errorMessage: 'Error fetching candidate profile',
+      rethrowError: false,
+    );
 
     // If network failed, return cached data
     if (result == null) {
@@ -209,10 +224,9 @@ class ProfileRepository extends BaseRepository {
 
     if (!_connectivity.isOnline || !isAvailable) return false;
 
-    final response = await table('candidate_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
+    final response = await table(
+      'candidate_profiles',
+    ).select('id').eq('user_id', userId).maybeSingle();
     return response != null;
   }
 
@@ -232,13 +246,16 @@ class ProfileRepository extends BaseRepository {
     return safeExecute<String?>(() async {
       // Use RPC function if available, otherwise direct insert
       try {
-        final result = await client!.rpc('create_candidate_profile', params: {
-          'p_user_id': currentUserId,
-          'p_school_name': schoolName,
-          'p_major': major,
-          'p_gpa': gpa,
-          'p_graduation_year': graduationYear,
-        });
+        final result = await client!.rpc(
+          'create_candidate_profile',
+          params: {
+            'p_user_id': currentUserId,
+            'p_school_name': schoolName,
+            'p_major': major,
+            'p_gpa': gpa,
+            'p_graduation_year': graduationYear,
+          },
+        );
         final profileId = result as String?;
 
         // Update additional fields
@@ -259,17 +276,20 @@ class ProfileRepository extends BaseRepository {
       } catch (e) {
         // Fallback to direct insert
         debugPrint('RPC failed, using direct insert: $e');
-        final response = await table('candidate_profiles').insert({
-          'user_id': currentUserId,
-          'school_name': schoolName,
-          'major': major,
-          'gpa': gpa,
-          'graduation_year': graduationYear,
-          'education_level': educationLevel?.name,
-          'bio': bio,
-          'target_roles': targetRoles,
-          'preferred_locations': preferredLocations,
-        }).select('id').single();
+        final response = await table('candidate_profiles')
+            .insert({
+              'user_id': currentUserId,
+              'school_name': schoolName,
+              'major': major,
+              'gpa': gpa,
+              'graduation_year': graduationYear,
+              'education_level': educationLevel?.name,
+              'bio': bio,
+              'target_roles': targetRoles,
+              'preferred_locations': preferredLocations,
+            })
+            .select('id')
+            .single();
 
         // Refresh cache
         await getCurrentCandidateProfile();
@@ -298,21 +318,24 @@ class ProfileRepository extends BaseRepository {
     if (!isAvailable) return;
 
     await safeExecute<void>(() async {
-      await table('candidate_profiles').update({
-        if (schoolName != null) 'school_name': schoolName,
-        if (major != null) 'major': major,
-        if (gpa != null) 'gpa': gpa,
-        if (graduationYear != null) 'graduation_year': graduationYear,
-        if (educationLevel != null) 'education_level': educationLevel.name,
-        if (bio != null) 'bio': bio,
-        if (resumeUrl != null) 'resume_url': resumeUrl,
-        if (transcriptUrl != null) 'transcript_url': transcriptUrl,
-        if (schedulingUrl != null) 'scheduling_url': schedulingUrl,
-        if (targetRoles != null) 'target_roles': targetRoles,
-        if (preferredLocations != null) 'preferred_locations': preferredLocations,
-        if (tags != null) 'tags': tags,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', profileId);
+      await table('candidate_profiles')
+          .update({
+            if (schoolName != null) 'school_name': schoolName,
+            if (major != null) 'major': major,
+            if (gpa != null) 'gpa': gpa,
+            if (graduationYear != null) 'graduation_year': graduationYear,
+            if (educationLevel != null) 'education_level': educationLevel.name,
+            if (bio != null) 'bio': bio,
+            if (resumeUrl != null) 'resume_url': resumeUrl,
+            if (transcriptUrl != null) 'transcript_url': transcriptUrl,
+            if (schedulingUrl != null) 'scheduling_url': schedulingUrl,
+            if (targetRoles != null) 'target_roles': targetRoles,
+            if (preferredLocations != null)
+              'preferred_locations': preferredLocations,
+            if (tags != null) 'tags': tags,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', profileId);
 
       // Refresh cache
       await getCurrentCandidateProfile();
@@ -336,20 +359,24 @@ class ProfileRepository extends BaseRepository {
       return _getCachedRecruiterProfile(currentUserId!);
     }
 
-    final result = await safeExecute<RecruiterProfile?>(() async {
-      final response = await table('recruiter_profiles')
-          .select('*, profiles!recruiter_profiles_user_id_fkey(*)')
-          .eq('user_id', currentUserId!)
-          .maybeSingle();
-      if (response == null) return null;
+    final result = await safeExecute<RecruiterProfile?>(
+      () async {
+        final response = await table('recruiter_profiles')
+            .select('*, profiles!recruiter_profiles_user_id_fkey(*)')
+            .eq('user_id', currentUserId!)
+            .maybeSingle();
+        if (response == null) return null;
 
-      final profile = RecruiterProfile.fromJson(response);
+        final profile = RecruiterProfile.fromJson(response);
 
-      // Cache the profile
-      await _db.cacheRecruiterProfile(profile.toCacheCompanion());
+        // Cache the profile
+        await _db.cacheRecruiterProfile(profile.toCacheCompanion());
 
-      return profile;
-    }, errorMessage: 'Error fetching recruiter profile', rethrowError: false);
+        return profile;
+      },
+      errorMessage: 'Error fetching recruiter profile',
+      rethrowError: false,
+    );
 
     // If network failed, return cached data
     if (result == null) {
@@ -378,20 +405,24 @@ class ProfileRepository extends BaseRepository {
       return cached?.toRecruiterProfile();
     }
 
-    final result = await safeExecute<RecruiterProfile?>(() async {
-      final response = await table('recruiter_profiles')
-          .select('*, profiles!recruiter_profiles_user_id_fkey(*)')
-          .eq('id', profileId)
-          .maybeSingle();
-      if (response == null) return null;
+    final result = await safeExecute<RecruiterProfile?>(
+      () async {
+        final response = await table('recruiter_profiles')
+            .select('*, profiles!recruiter_profiles_user_id_fkey(*)')
+            .eq('id', profileId)
+            .maybeSingle();
+        if (response == null) return null;
 
-      final profile = RecruiterProfile.fromJson(response);
+        final profile = RecruiterProfile.fromJson(response);
 
-      // Cache the profile
-      await _db.cacheRecruiterProfile(profile.toCacheCompanion());
+        // Cache the profile
+        await _db.cacheRecruiterProfile(profile.toCacheCompanion());
 
-      return profile;
-    }, errorMessage: 'Error fetching recruiter profile', rethrowError: false);
+        return profile;
+      },
+      errorMessage: 'Error fetching recruiter profile',
+      rethrowError: false,
+    );
 
     // If network failed, return cached data
     if (result == null) {
@@ -410,10 +441,9 @@ class ProfileRepository extends BaseRepository {
 
     if (!_connectivity.isOnline || !isAvailable) return false;
 
-    final response = await table('recruiter_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
+    final response = await table(
+      'recruiter_profiles',
+    ).select('id').eq('user_id', userId).maybeSingle();
     return response != null;
   }
 
@@ -430,16 +460,19 @@ class ProfileRepository extends BaseRepository {
     if (!isAvailable || currentUserId == null) return null;
 
     return safeExecute<String?>(() async {
-      final response = await table('recruiter_profiles').insert({
-        'user_id': currentUserId,
-        'firm_name': firmName,
-        'job_title': jobTitle,
-        'firm_type': firmType,
-        'bio': bio,
-        'linkedin_url': linkedinUrl,
-        'specialties': specialties,
-        'locations': locations,
-      }).select('id').single();
+      final response = await table('recruiter_profiles')
+          .insert({
+            'user_id': currentUserId,
+            'firm_name': firmName,
+            'job_title': jobTitle,
+            'firm_type': firmType,
+            'bio': bio,
+            'linkedin_url': linkedinUrl,
+            'specialties': specialties,
+            'locations': locations,
+          })
+          .select('id')
+          .single();
 
       // Refresh cache
       await getCurrentRecruiterProfile();
@@ -465,19 +498,21 @@ class ProfileRepository extends BaseRepository {
     if (!isAvailable) return;
 
     await safeExecute<void>(() async {
-      await table('recruiter_profiles').update({
-        if (firmName != null) 'firm_name': firmName,
-        if (jobTitle != null) 'job_title': jobTitle,
-        if (firmType != null) 'firm_type': firmType,
-        if (bio != null) 'bio': bio,
-        if (linkedinUrl != null) 'linkedin_url': linkedinUrl,
-        if (profilePhotoUrl != null) 'profile_photo_url': profilePhotoUrl,
-        if (companyWebsite != null) 'company_website': companyWebsite,
-        if (yearsExperience != null) 'years_experience': yearsExperience,
-        if (specialties != null) 'specialties': specialties,
-        if (locations != null) 'locations': locations,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', profileId);
+      await table('recruiter_profiles')
+          .update({
+            if (firmName != null) 'firm_name': firmName,
+            if (jobTitle != null) 'job_title': jobTitle,
+            if (firmType != null) 'firm_type': firmType,
+            if (bio != null) 'bio': bio,
+            if (linkedinUrl != null) 'linkedin_url': linkedinUrl,
+            if (profilePhotoUrl != null) 'profile_photo_url': profilePhotoUrl,
+            if (companyWebsite != null) 'company_website': companyWebsite,
+            if (yearsExperience != null) 'years_experience': yearsExperience,
+            if (specialties != null) 'specialties': specialties,
+            if (locations != null) 'locations': locations,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', profileId);
 
       // Refresh cache
       await getCurrentRecruiterProfile();
@@ -506,10 +541,9 @@ class ProfileRepository extends BaseRepository {
   Future<bool> hasSchoolProfile(String userId) async {
     if (!isAvailable) return false;
 
-    final response = await table('school_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
+    final response = await table(
+      'school_profiles',
+    ).select('id').eq('user_id', userId).maybeSingle();
     return response != null;
   }
 
@@ -525,15 +559,18 @@ class ProfileRepository extends BaseRepository {
     if (!isAvailable || currentUserId == null) return null;
 
     return safeExecute<String?>(() async {
-      final response = await table('school_profiles').insert({
-        'user_id': currentUserId,
-        'school_name': schoolName,
-        'department_name': departmentName ?? 'Career Services',
-        'contact_email': contactEmail,
-        'contact_phone': contactPhone,
-        'website': website,
-        'school_domain': schoolDomain,
-      }).select('id').single();
+      final response = await table('school_profiles')
+          .insert({
+            'user_id': currentUserId,
+            'school_name': schoolName,
+            'department_name': departmentName ?? 'Career Services',
+            'contact_email': contactEmail,
+            'contact_phone': contactPhone,
+            'website': website,
+            'school_domain': schoolDomain,
+          })
+          .select('id')
+          .single();
       return response['id'] as String;
     }, errorMessage: 'Error creating school profile');
   }
@@ -551,15 +588,17 @@ class ProfileRepository extends BaseRepository {
     if (!isAvailable) return;
 
     await safeExecute<void>(() async {
-      await table('school_profiles').update({
-        if (schoolName != null) 'school_name': schoolName,
-        if (departmentName != null) 'department_name': departmentName,
-        if (contactEmail != null) 'contact_email': contactEmail,
-        if (contactPhone != null) 'contact_phone': contactPhone,
-        if (website != null) 'website': website,
-        if (schoolDomain != null) 'school_domain': schoolDomain,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', profileId);
+      await table('school_profiles')
+          .update({
+            if (schoolName != null) 'school_name': schoolName,
+            if (departmentName != null) 'department_name': departmentName,
+            if (contactEmail != null) 'contact_email': contactEmail,
+            if (contactPhone != null) 'contact_phone': contactPhone,
+            if (website != null) 'website': website,
+            if (schoolDomain != null) 'school_domain': schoolDomain,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', profileId);
     }, errorMessage: 'Error updating school profile');
   }
 
@@ -577,34 +616,34 @@ class ProfileRepository extends BaseRepository {
     if (!isAvailable || currentUserId == null) return null;
 
     return safeExecute<String?>(() async {
-      // Create a unique file path
+      // Determine the correct bucket based on document type
+      // Storage buckets are: 'resumes' and 'transcripts'
+      final bucketName = documentType == 'resume' ? 'resumes' : 'transcripts';
+
+      // Create a unique file path (RLS expects user_id as first folder)
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final extension = fileName.split('.').last;
-      final storagePath = '$currentUserId/$documentType/${timestamp}_$fileName';
+      final storagePath = '$currentUserId/${timestamp}_$fileName';
 
       // Upload to Supabase storage
       await client!.storage
-          .from('documents')
+          .from(bucketName)
           .uploadBinary(
             storagePath,
             fileBytes,
             fileOptions: FileOptions(
-              contentType: 'application/$extension',
+              contentType: 'application/pdf',
               upsert: true,
             ),
           );
 
       // Get the public URL
-      final url = client!.storage.from('documents').getPublicUrl(storagePath);
+      final url = client!.storage.from(bucketName).getPublicUrl(storagePath);
 
       // Update the candidate profile with the new document URL
       if (documentType == 'resume') {
         final profile = await getCurrentCandidateProfile();
         if (profile != null) {
-          await updateCandidateProfile(
-            profileId: profile.id,
-            resumeUrl: url,
-          );
+          await updateCandidateProfile(profileId: profile.id, resumeUrl: url);
         }
       } else if (documentType == 'transcript') {
         final profile = await getCurrentCandidateProfile();
@@ -624,22 +663,37 @@ class ProfileRepository extends BaseRepository {
   Future<bool> deleteDocument(String documentUrl) async {
     if (!isAvailable) return false;
 
-    final result = await safeExecute<bool>(() async {
-      // Extract the path from the URL
-      final uri = Uri.parse(documentUrl);
-      final pathSegments = uri.pathSegments;
+    final result = await safeExecute<bool>(
+      () async {
+        // Extract the path from the URL
+        final uri = Uri.parse(documentUrl);
+        final pathSegments = uri.pathSegments;
 
-      // Find the path after 'documents/'
-      final documentsIndex = pathSegments.indexOf('documents');
-      if (documentsIndex == -1 || documentsIndex >= pathSegments.length - 1) {
-        return false;
-      }
+        // Determine which bucket the file is in (resumes or transcripts)
+        String? bucketName;
+        int bucketIndex = -1;
 
-      final storagePath = pathSegments.sublist(documentsIndex + 1).join('/');
+        for (final bucket in ['resumes', 'transcripts']) {
+          final index = pathSegments.indexOf(bucket);
+          if (index != -1) {
+            bucketName = bucket;
+            bucketIndex = index;
+            break;
+          }
+        }
 
-      await client!.storage.from('documents').remove([storagePath]);
-      return true;
-    }, errorMessage: 'Error deleting document', rethrowError: false);
+        if (bucketName == null || bucketIndex >= pathSegments.length - 1) {
+          return false;
+        }
+
+        final storagePath = pathSegments.sublist(bucketIndex + 1).join('/');
+
+        await client!.storage.from(bucketName).remove([storagePath]);
+        return true;
+      },
+      errorMessage: 'Error deleting document',
+      rethrowError: false,
+    );
     return result ?? false;
   }
 }

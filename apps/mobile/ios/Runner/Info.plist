@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Mobile</string>
+	<string>Coastal Haven</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>mobile</string>
+	<string>Coastal Haven</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -44,6 +44,53 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- Push Notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- Firebase -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+
+	<!-- Photo Library (for profile photo upload) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Coastal Haven needs access to your photo library to upload a profile picture.</string>
+
+	<!-- Camera (optional - for taking profile photos) -->
+	<key>NSCameraUsageDescription</key>
+	<string>Coastal Haven needs camera access to take a profile picture.</string>
+
+	<!-- File Access (for document uploads) -->
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Coastal Haven needs access to your documents to upload resumes and transcripts.</string>
+
+	<!-- Face ID (for biometric auth if needed later) -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Coastal Haven can use Face ID to securely log you in.</string>
+
+	<!-- Deep Links / URL Schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.coastalhavenpartners.ios</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>coastalhaven</string>
+				<string>com.coastalhavenpartners.ios</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Universal Links - Associated Domains configured in Xcode -->
+	<key>FlutterDeepLinkingEnabled</key>
 	<true/>
 </dict>
 </plist>

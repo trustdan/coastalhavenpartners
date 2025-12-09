@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FactorStatus;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/analytics_provider.dart';
 import '../../../core/providers/recruiter_provider.dart';
+import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart';
+import '../../../data/services/supabase_service.dart';
 import '../../../services/connectivity_service.dart';
 import '../../../services/sync_service.dart';
 import '../../../data/local/database.dart';
@@ -89,6 +93,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+          AppSpacing.sectionGap,
+
+          // Security Section
+          _buildSectionHeader('Security'),
+          _buildSecuritySection(context, isDark),
           AppSpacing.sectionGap,
 
           // Verification Section (Recruiter only)
@@ -396,6 +405,137 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       indent: 56,
       color: isDark ? AppColors.borderDark : AppColors.borderLight,
     );
+  }
+
+  Widget _buildSecuritySection(BuildContext context, bool isDark) {
+    return FutureBuilder(
+      future: SupabaseService.instance.mfaListFactors(),
+      builder: (context, snapshot) {
+        bool hasMfaEnabled = false;
+        bool isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+        if (snapshot.hasData) {
+          final factors = snapshot.data!;
+          hasMfaEnabled = factors.totp.any((f) => f.status == FactorStatus.verified);
+        }
+
+        return _buildSettingsCard(
+          context,
+          isDark,
+          children: [
+            ListTile(
+              leading: Icon(
+                hasMfaEnabled ? Icons.security : Icons.security_outlined,
+                color: hasMfaEnabled ? AppColors.success : AppColors.teal,
+              ),
+              title: Text('Two-Factor Authentication', style: AppTextStyles.labelMedium),
+              subtitle: Text(
+                hasMfaEnabled ? 'Enabled - Your account is protected' : 'Add extra security to your account',
+                style: AppTextStyles.caption.copyWith(
+                  color: hasMfaEnabled ? AppColors.success : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : hasMfaEnabled
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'ON',
+                            style: AppTextStyles.badge.copyWith(
+                              color: AppColors.success,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.chevron_right, size: 20),
+              onTap: isLoading
+                  ? null
+                  : () {
+                      if (hasMfaEnabled) {
+                        _showDisableMfaDialog();
+                      } else {
+                        _navigateToMfaSetup();
+                      }
+                    },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _navigateToMfaSetup() async {
+    final result = await context.push<bool>(AppRoutes.mfaSetup);
+    if (result == true && mounted) {
+      // Refresh the security section
+      setState(() {});
+    }
+  }
+
+  void _showDisableMfaDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Disable Two-Factor Authentication?'),
+        content: const Text(
+          'This will make your account less secure. You can always re-enable it later.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.warning),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _disableMfa();
+            },
+            child: const Text('Disable'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _disableMfa() async {
+    try {
+      // Get the user's factors and unenroll them
+      final factors = await SupabaseService.instance.mfaListFactors();
+      final verifiedFactors = factors.totp.where((f) => f.status == FactorStatus.verified);
+
+      for (final factor in verifiedFactors) {
+        await SupabaseService.instance.mfaUnenroll(factorId: factor.id);
+      }
+
+      if (mounted) {
+        setState(() {}); // Refresh UI
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Two-factor authentication disabled'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to disable 2FA: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildVerificationSection(BuildContext context, bool isDark) {
@@ -770,97 +910,292 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showChangePasswordDialog() {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isLoading = false;
+    String? errorMessage;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Current Password',
-                border: OutlineInputBorder(),
-              ),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Change Password'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            errorMessage!,
+                            style: AppTextStyles.caption.copyWith(color: AppColors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextFormField(
+                  controller: currentPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Current Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your current password';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a new password';
+                    }
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm New Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value != newPasswordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+              ],
             ),
-            SizedBox(height: 16),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                border: OutlineInputBorder(),
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
             ),
-            SizedBox(height: 16),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Confirm New Password',
-                border: OutlineInputBorder(),
-              ),
+            FilledButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      setDialogState(() {
+                        isLoading = true;
+                        errorMessage = null;
+                      });
+
+                      final result = await ref.read(authStateProvider.notifier).changePassword(
+                            currentPassword: currentPasswordController.text,
+                            newPassword: newPasswordController.text,
+                          );
+
+                      if (!dialogContext.mounted) return;
+
+                      if (result.success) {
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Password updated successfully'),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                      } else {
+                        setDialogState(() {
+                          isLoading = false;
+                          errorMessage = result.error ?? 'Failed to update password';
+                        });
+                      }
+                    },
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Update'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password updated successfully')),
-              );
-            },
-            child: const Text('Update'),
-          ),
-        ],
       ),
     );
   }
 
   void _showChangeEmailDialog() {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isLoading = false;
+    String? errorMessage;
+
+    // Get current email to display
+    final currentEmail = ref.read(currentUserProvider)?.email ?? '';
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Email'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'New Email',
-                border: OutlineInputBorder(),
-              ),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Change Email'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Current email: $currentEmail',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            errorMessage!,
+                            style: AppTextStyles.caption.copyWith(color: AppColors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextFormField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'New Email',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a new email';
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    if (value == currentEmail) {
+                      return 'New email must be different';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Current Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'A verification link will be sent to your new email address.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 16),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Current Password',
-                border: OutlineInputBorder(),
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      setDialogState(() {
+                        isLoading = true;
+                        errorMessage = null;
+                      });
+
+                      final result = await ref.read(authStateProvider.notifier).changeEmail(
+                            newEmail: emailController.text.trim(),
+                            password: passwordController.text,
+                          );
+
+                      if (!dialogContext.mounted) return;
+
+                      if (result.success) {
+                        Navigator.pop(dialogContext);
+                        if (mounted) {
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Verification email sent to your new address'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      } else {
+                        setDialogState(() {
+                          isLoading = false;
+                          errorMessage = result.error ?? 'Failed to update email';
+                        });
+                      }
+                    },
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Update'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Verification email sent')),
-              );
-            },
-            child: const Text('Update'),
-          ),
-        ],
       ),
     );
   }
@@ -920,6 +1255,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(context);
+              // Track logout
+              ref.read(analyticsNotifierProvider.notifier).logLogout();
               await ref.read(authStateProvider.notifier).signOut();
               if (mounted) {
                 context.go('/login');
@@ -933,33 +1270,128 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showDeleteAccountDialog() {
+    final TextEditingController confirmController = TextEditingController();
+    bool isConfirmValid = false;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text(
-          'This action cannot be undone. All your data will be permanently deleted. Are you sure you want to proceed?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please contact support to delete your account'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Delete Account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This action cannot be undone. All your data will be permanently deleted, including:',
+              ),
+              const SizedBox(height: 12),
+              const Text('• Your profile information'),
+              const Text('• All uploaded documents'),
+              const Text('• Messages and conversations'),
+              const Text('• Any other account data'),
+              const SizedBox(height: 16),
+              const Text(
+                'Type "DELETE" to confirm:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmController,
+                decoration: const InputDecoration(
+                  hintText: 'Type DELETE',
+                  border: OutlineInputBorder(),
                 ),
-              );
-            },
-            child: const Text('Delete'),
+                onChanged: (value) {
+                  setDialogState(() {
+                    isConfirmValid = value.toUpperCase() == 'DELETE';
+                  });
+                },
+              ),
+            ],
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              onPressed: isConfirmValid
+                  ? () async {
+                      Navigator.pop(context);
+                      await _performAccountDeletion();
+                    }
+                  : null,
+              child: const Text('Delete My Account'),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _performAccountDeletion() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Expanded(child: Text('Deleting your account...')),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final supabase = SupabaseService.instance;
+      final result = await supabase.deleteAccount();
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (result['success'] == true) {
+        // Sign out locally and navigate to login
+        await supabase.signOut();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Your account has been deleted'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Navigate to login screen
+          context.go('/login');
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to delete account'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _openUrl(String url) async {

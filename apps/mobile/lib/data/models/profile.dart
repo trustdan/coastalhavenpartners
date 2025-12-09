@@ -8,6 +8,34 @@ part 'profile.g.dart';
 Object? _readProfile(Map<dynamic, dynamic> json, String key) =>
     json['profiles'] ?? json['profile'];
 
+/// Custom converter for CandidateStatus enum to handle snake_case from DB
+class CandidateStatusConverter implements JsonConverter<CandidateStatus?, String?> {
+  const CandidateStatusConverter();
+
+  @override
+  CandidateStatus? fromJson(String? json) {
+    if (json == null) return null;
+    return CandidateStatus.fromString(json);
+  }
+
+  @override
+  String? toJson(CandidateStatus? object) => object?.value;
+}
+
+/// Custom converter for EducationLevel enum
+class EducationLevelConverter implements JsonConverter<EducationLevel?, String?> {
+  const EducationLevelConverter();
+
+  @override
+  EducationLevel? fromJson(String? json) {
+    if (json == null) return null;
+    return EducationLevel.fromString(json);
+  }
+
+  @override
+  String? toJson(EducationLevel? object) => object?.value;
+}
+
 /// Base user profile model
 @freezed
 sealed class Profile with _$Profile {
@@ -44,7 +72,7 @@ sealed class CandidateProfile with _$CandidateProfile {
     @JsonKey(name: 'graduation_year') required int graduationYear,
     @JsonKey(name: 'undergrad_degree_type') String? undergradDegreeType,
     @JsonKey(name: 'undergrad_specialty') String? undergradSpecialty,
-    @JsonKey(name: 'education_level') EducationLevel? educationLevel,
+    @JsonKey(name: 'education_level') @EducationLevelConverter() EducationLevel? educationLevel,
     // Graduate education
     @JsonKey(name: 'grad_school') String? gradSchool,
     @JsonKey(name: 'grad_major') String? gradMajor,
@@ -61,7 +89,7 @@ sealed class CandidateProfile with _$CandidateProfile {
     @JsonKey(name: 'preferred_locations') List<String>? preferredLocations,
     List<String>? tags,
     // Verification status
-    CandidateStatus? status,
+    @CandidateStatusConverter() CandidateStatus? status,
     @JsonKey(name: 'email_verified') @Default(false) bool emailVerified,
     @JsonKey(name: 'school_verified') @Default(false) bool schoolVerified,
     @JsonKey(name: 'gpa_verified') @Default(false) bool gpaVerified,

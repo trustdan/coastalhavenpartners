@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/providers/analytics_provider.dart';
 import '../../../data/models/models.dart';
 
 /// Conversation Screen - Shows message thread between two users
@@ -12,10 +13,7 @@ import '../../../data/models/models.dart';
 class ConversationScreen extends ConsumerStatefulWidget {
   final String conversationId;
 
-  const ConversationScreen({
-    super.key,
-    required this.conversationId,
-  });
+  const ConversationScreen({super.key, required this.conversationId});
 
   @override
   ConsumerState<ConversationScreen> createState() => _ConversationScreenState();
@@ -27,7 +25,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   final FocusNode _focusNode = FocusNode();
   Timer? _pollingTimer;
   bool _isSending = false;
-  List<Message> _localMessages = [];
+  final List<Message> _localMessages = [];
 
   @override
   void initState() {
@@ -94,12 +92,19 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         }
       });
 
+      // Track message sent
+      ref.read(analyticsNotifierProvider.notifier).logMessageSent(
+            conversationId: widget.conversationId,
+          );
+
       // Refresh messages from server
       ref.invalidate(conversationMessagesProvider(widget.conversationId));
     } catch (e) {
       // Mark as failed
       setState(() {
-        final index = _localMessages.indexWhere((m) => m.id == optimisticMessage.id);
+        final index = _localMessages.indexWhere(
+          (m) => m.id == optimisticMessage.id,
+        );
         if (index != -1) {
           _localMessages[index] = optimisticMessage.copyWith(
             isPending: false,
@@ -138,7 +143,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     final currentUser = ref.watch(currentUserProvider);
     final currentUserId = currentUser?.id ?? '';
     final conversationsAsync = ref.watch(conversationsProvider);
-    final messagesAsync = ref.watch(conversationMessagesProvider(widget.conversationId));
+    final messagesAsync = ref.watch(
+      conversationMessagesProvider(widget.conversationId),
+    );
 
     // Find the conversation for header info
     final conversation = conversationsAsync.maybeWhen(
@@ -149,8 +156,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
       orElse: () => null,
     );
 
-    final otherPartyName = conversation?.getOtherPartyName(currentUserId) ?? 'Unknown';
-    final organization = conversation?.getOtherPartyOrganization(currentUserId) ?? '';
+    final otherPartyName =
+        conversation?.getOtherPartyName(currentUserId) ?? 'Unknown';
+    final organization =
+        conversation?.getOtherPartyOrganization(currentUserId) ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -161,8 +170,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
               radius: 18,
               backgroundColor: AppColors.teal.withValues(alpha: 0.1),
               child: Text(
-                otherPartyName.isNotEmpty ? otherPartyName.substring(0, 1) : '?',
-                style: AppTextStyles.labelMedium.copyWith(color: AppColors.teal),
+                otherPartyName.isNotEmpty
+                    ? otherPartyName.substring(0, 1)
+                    : '?',
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.teal,
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -229,7 +242,11 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     Text('Error loading messages: $error'),
                     const SizedBox(height: 16),
@@ -245,8 +262,11 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
               data: (serverMessages) {
                 // Combine server messages with local optimistic messages
                 final allMessages = [...serverMessages, ..._localMessages];
-                allMessages.sort((a, b) =>
-                    (a.createdAt ?? DateTime.now()).compareTo(b.createdAt ?? DateTime.now()));
+                allMessages.sort(
+                  (a, b) => (a.createdAt ?? DateTime.now()).compareTo(
+                    b.createdAt ?? DateTime.now(),
+                  ),
+                );
 
                 // Remove duplicates (local messages that are now on server)
                 final messageIds = serverMessages.map((m) => m.id).toSet();
@@ -269,12 +289,16 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   itemCount: allMessages.length,
                   itemBuilder: (context, index) {
                     final message = allMessages[index];
                     final isMe = message.isFromMe(currentUserId);
-                    final showDate = index == 0 ||
+                    final showDate =
+                        index == 0 ||
                         !_isSameDay(
                           allMessages[index - 1].createdAt ?? DateTime.now(),
                           message.createdAt ?? DateTime.now(),
@@ -288,7 +312,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                             child: Text(
                               _formatDate(message.createdAt ?? DateTime.now()),
                               style: AppTextStyles.caption.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -329,7 +355,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         filled: true,
-                        fillColor: isDark ? AppColors.cardDark : AppColors.backgroundLight,
+                        fillColor: isDark
+                            ? AppColors.cardDark
+                            : AppColors.backgroundLight,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
@@ -416,9 +444,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
             onPressed: () {
               Navigator.pop(context);
               context.pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('User blocked')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('User blocked')));
             },
             child: const Text('Block'),
           ),
@@ -447,8 +475,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
   String _monthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }
@@ -529,17 +567,9 @@ class _MessageBubble extends StatelessWidget {
                       color: Colors.redAccent,
                     )
                   else if (message.isRead)
-                    const Icon(
-                      Icons.done_all,
-                      size: 14,
-                      color: Colors.white,
-                    )
+                    const Icon(Icons.done_all, size: 14, color: Colors.white)
                   else
-                    const Icon(
-                      Icons.done,
-                      size: 14,
-                      color: Colors.white70,
-                    ),
+                    const Icon(Icons.done, size: 14, color: Colors.white70),
                 ],
               ],
             ),
@@ -550,7 +580,9 @@ class _MessageBubble extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
-    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final hour = time.hour > 12
+        ? time.hour - 12
+        : (time.hour == 0 ? 12 : time.hour);
     final amPm = time.hour >= 12 ? 'PM' : 'AM';
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute $amPm';

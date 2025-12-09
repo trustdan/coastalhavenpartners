@@ -61,14 +61,21 @@ dependencies:
   url_launcher: any
   flutter_secure_storage: any
   cached_network_image: any
+  crypto: any
 
   # Icons (match web app)
   lucide_icons: any
+
+  # QR Code
+  qr_flutter: any
 
   # Push Notifications
   firebase_core: any
   firebase_messaging: any
   flutter_local_notifications: any
+
+  # Analytics
+  firebase_analytics: any
 
   # Offline Support
   drift: ^2.24.0
@@ -77,6 +84,9 @@ dependencies:
   path_provider: any
   path: any
   connectivity_plus: ^6.1.4
+
+  # Deep Links
+  app_links: any
 
   # Serialization (needed at runtime)
   freezed_annotation: any

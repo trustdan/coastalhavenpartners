@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/analytics_provider.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
 
 /// Candidate signup screen
@@ -55,6 +56,9 @@ class _SignupCandidateScreenState extends ConsumerState<SignupCandidateScreen> {
 
     setState(() => _isLoading = true);
 
+    // Track signup started
+    ref.read(analyticsNotifierProvider.notifier).logSignUpStarted(role: 'candidate');
+
     try {
       await ref.read(authStateProvider.notifier).signUp(
             email: _emailController.text.trim(),
@@ -71,6 +75,11 @@ class _SignupCandidateScreenState extends ConsumerState<SignupCandidateScreen> {
       // Check auth state for errors
       final authState = ref.read(authStateProvider);
       if (authState.hasValue && authState.value!.error != null) {
+        // Track signup failure
+        ref.read(analyticsNotifierProvider.notifier).logSignUpFailed(
+              role: 'candidate',
+              error: authState.value!.error!,
+            );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -80,15 +89,85 @@ class _SignupCandidateScreenState extends ConsumerState<SignupCandidateScreen> {
           );
         }
       } else if (mounted) {
-        // Navigate to email verification
-        context.go(AppRoutes.verifyEmail);
+        // Track signup success
+        ref.read(analyticsNotifierProvider.notifier).logSignUpCompleted(
+              role: 'candidate',
+              signUpMethod: 'email',
+            );
+        // Navigate to email verification with email param
+        final email = Uri.encodeComponent(_emailController.text.trim());
+        context.go('${AppRoutes.verifyEmail}?email=$email');
       }
     } catch (e) {
+      // Track signup failure
+      ref.read(analyticsNotifierProvider.notifier).logSignUpFailed(
+            role: 'candidate',
+            error: e.toString(),
+          );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Signup failed: ${e.toString()}'),
             backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignUp() async {
+    setState(() => _isLoading = true);
+    ref.read(analyticsNotifierProvider.notifier).logSignUpStarted(role: 'candidate');
+    try {
+      await ref.read(authStateProvider.notifier).signInWithGoogle();
+      // OAuth opens browser, auth state listener handles the rest
+      ref.read(analyticsNotifierProvider.notifier).logSignUpCompleted(
+            role: 'candidate',
+            signUpMethod: 'google',
+          );
+    } catch (e) {
+      ref.read(analyticsNotifierProvider.notifier).logSignUpFailed(
+            role: 'candidate',
+            error: 'google: ${e.toString()}',
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google sign-up failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleLinkedInSignUp() async {
+    setState(() => _isLoading = true);
+    ref.read(analyticsNotifierProvider.notifier).logSignUpStarted(role: 'candidate');
+    try {
+      await ref.read(authStateProvider.notifier).signInWithLinkedIn();
+      ref.read(analyticsNotifierProvider.notifier).logSignUpCompleted(
+            role: 'candidate',
+            signUpMethod: 'linkedin',
+          );
+    } catch (e) {
+      ref.read(analyticsNotifierProvider.notifier).logSignUpFailed(
+            role: 'candidate',
+            error: 'linkedin: ${e.toString()}',
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('LinkedIn sign-up failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -387,9 +466,7 @@ class _SignupCandidateScreenState extends ConsumerState<SignupCandidateScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // TODO: Google sign up
-                        },
+                        onPressed: _isLoading ? null : _handleGoogleSignUp,
                         icon: const Icon(Icons.g_mobiledata, size: 24),
                         label: const Text('Google'),
                         style: OutlinedButton.styleFrom(
@@ -400,9 +477,7 @@ class _SignupCandidateScreenState extends ConsumerState<SignupCandidateScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // TODO: LinkedIn sign up
-                        },
+                        onPressed: _isLoading ? null : _handleLinkedInSignUp,
                         icon: const Icon(Icons.link, size: 20),
                         label: const Text('LinkedIn'),
                         style: OutlinedButton.styleFrom(

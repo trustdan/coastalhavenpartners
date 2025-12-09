@@ -50,7 +50,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       builder: (context) => AlertDialog(
         title: const Text('Unsaved Changes'),
         content: const Text(
-            'You have unsaved changes. Are you sure you want to leave?'),
+          'You have unsaved changes. Are you sure you want to leave?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -84,10 +85,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           title: const Text('Edit Profile'),
           actions: [
             if (_hasChanges)
-              TextButton(
-                onPressed: _saveProfile,
-                child: const Text('Save'),
-              ),
+              TextButton(onPressed: _saveProfile, child: const Text('Save')),
           ],
           bottom: TabBar(
             controller: _tabController,
@@ -141,10 +139,15 @@ class _BasicInfoTab extends StatefulWidget {
 class _BasicInfoTabState extends State<_BasicInfoTab> {
   final _firstNameController = TextEditingController(text: 'John');
   final _lastNameController = TextEditingController(text: 'Smith');
-  final _linkedInController = TextEditingController(text: 'linkedin.com/in/johnsmith');
-  final _schedulingController = TextEditingController(text: 'calendly.com/johnsmith');
+  final _linkedInController = TextEditingController(
+    text: 'linkedin.com/in/johnsmith',
+  );
+  final _schedulingController = TextEditingController(
+    text: 'calendly.com/johnsmith',
+  );
   final _bioController = TextEditingController(
-    text: 'Passionate about finance and technology with a strong background in investment analysis.',
+    text:
+        'Passionate about finance and technology with a strong background in investment analysis.',
   );
 
   @override
@@ -174,7 +177,9 @@ class _BasicInfoTabState extends State<_BasicInfoTab> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: isDark ? AppColors.cardDark : AppColors.cardLight,
+                  backgroundColor: isDark
+                      ? AppColors.cardDark
+                      : AppColors.cardLight,
                   child: Text(
                     'JS',
                     style: AppTextStyles.h1.copyWith(color: AppColors.teal),
@@ -313,7 +318,9 @@ class _EducationTab extends StatefulWidget {
 
 class _EducationTabState extends State<_EducationTab> {
   // Undergrad fields
-  final _schoolController = TextEditingController(text: 'University of Pennsylvania');
+  final _schoolController = TextEditingController(
+    text: 'University of Pennsylvania',
+  );
   final _majorController = TextEditingController(text: 'Finance');
   final _gpaController = TextEditingController(text: '3.85');
   String _degreeType = 'B.S.';
@@ -321,14 +328,25 @@ class _EducationTabState extends State<_EducationTab> {
 
   // Graduate fields
   bool _hasGradDegree = true;
-  final _gradSchoolController = TextEditingController(text: 'Wharton School of Business');
-  final _gradMajorController = TextEditingController(text: 'Finance & Strategy');
+  final _gradSchoolController = TextEditingController(
+    text: 'Wharton School of Business',
+  );
+  final _gradMajorController = TextEditingController(
+    text: 'Finance & Strategy',
+  );
   final _gradGpaController = TextEditingController(text: '3.90');
   String _gradDegreeType = 'MBA';
   int _gradGradYear = 2027;
 
   final List<String> _degreeTypes = ['B.A.', 'B.S.', 'B.B.A.', 'Other'];
-  final List<String> _gradDegreeTypes = ['MBA', 'M.S.', 'M.A.', 'Ph.D.', 'J.D.', 'Other'];
+  final List<String> _gradDegreeTypes = [
+    'MBA',
+    'M.S.',
+    'M.A.',
+    'Ph.D.',
+    'J.D.',
+    'Other',
+  ];
 
   @override
   void dispose() {
@@ -433,7 +451,7 @@ class _EducationTabState extends State<_EducationTab> {
     bool isGrad = false,
   }) {
     final currentYear = DateTime.now().year;
-    final years = List.generate(10, (i) => currentYear + i - 2);
+    final years = List.generate(26, (i) => currentYear + i - 20);
 
     return Container(
       padding: AppSpacing.cardPadding,
@@ -464,7 +482,7 @@ class _EducationTabState extends State<_EducationTab> {
               Expanded(
                 flex: 2,
                 child: DropdownButtonFormField<String>(
-                  value: degreeType,
+                  initialValue: degreeType,
                   decoration: const InputDecoration(
                     labelText: 'Degree',
                     border: OutlineInputBorder(),
@@ -498,9 +516,13 @@ class _EducationTabState extends State<_EducationTab> {
                 child: TextField(
                   controller: gpaController,
                   onChanged: (_) => widget.onChanged(),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*\.?\d{0,2}'),
+                    ),
                   ],
                   decoration: const InputDecoration(
                     labelText: 'GPA',
@@ -511,7 +533,7 @@ class _EducationTabState extends State<_EducationTab> {
               AppSpacing.hGapMd,
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: gradYear,
+                  initialValue: gradYear,
                   decoration: InputDecoration(
                     labelText: isGrad ? 'Expected' : 'Class of',
                     border: const OutlineInputBorder(),
@@ -544,7 +566,7 @@ class _DocumentsTabState extends State<_DocumentsTab> {
   // Mock document state
   String? _resumeName = 'John_Smith_Resume.pdf';
   String? _resumeDate = 'Dec 5, 2024';
-  String? _resumeSize = '156 KB';
+  final String _resumeSize = '156 KB';
   final List<_Document> _transcripts = [];
 
   @override
@@ -568,7 +590,9 @@ class _DocumentsTabState extends State<_DocumentsTab> {
             size: _resumeSize,
             onUpload: _isUploading ? null : _uploadResume,
             onView: _resumeName != null ? _viewResume : null,
-            onReplace: _resumeName != null && !_isUploading ? _replaceResume : null,
+            onReplace: _resumeName != null && !_isUploading
+                ? _replaceResume
+                : null,
           ),
           AppSpacing.sectionGap,
 
@@ -617,18 +641,12 @@ class _DocumentsTabState extends State<_DocumentsTab> {
             decoration: BoxDecoration(
               color: AppColors.info.withValues(alpha: 0.1),
               borderRadius: AppRadius.card,
-              border: Border.all(
-                color: AppColors.info.withValues(alpha: 0.3),
-              ),
+              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.info_outline,
-                  size: 20,
-                  color: AppColors.info,
-                ),
+                const Icon(Icons.info_outline, size: 20, color: AppColors.info),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -821,10 +839,7 @@ class _DocumentsTabState extends State<_DocumentsTab> {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 12),
-          Text(
-            title,
-            style: AppTextStyles.labelMedium,
-          ),
+          Text(title, style: AppTextStyles.labelMedium),
           const SizedBox(height: 4),
           Text(
             subtitle,
@@ -875,11 +890,13 @@ class _DocumentsTabState extends State<_DocumentsTab> {
       documentType: 'transcript',
       onSuccess: (fileName, url) {
         setState(() {
-          _transcripts.add(_Document(
-            name: fileName,
-            date: _formatDate(DateTime.now()),
-            size: 'Uploaded',
-          ));
+          _transcripts.add(
+            _Document(
+              name: fileName,
+              date: _formatDate(DateTime.now()),
+              size: 'Uploaded',
+            ),
+          );
           _transcriptUrls.add(url);
         });
         widget.onChanged();
@@ -981,7 +998,9 @@ class _DocumentsTabState extends State<_DocumentsTab> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${documentType.substring(0, 1).toUpperCase()}${documentType.substring(1)} uploaded successfully'),
+              content: Text(
+                '${documentType.substring(0, 1).toUpperCase()}${documentType.substring(1)} uploaded successfully',
+              ),
               backgroundColor: AppColors.success,
             ),
           );
@@ -1030,7 +1049,20 @@ class _DocumentsTabState extends State<_DocumentsTab> {
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
@@ -1246,7 +1278,10 @@ class _PreferencesTabState extends State<_PreferencesTab> {
   }
 
   Widget _buildVisibilityCard(
-      BuildContext context, bool isDark, List<Widget> children) {
+    BuildContext context,
+    bool isDark,
+    List<Widget> children,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.cardLight,
@@ -1259,12 +1294,14 @@ class _PreferencesTabState extends State<_PreferencesTab> {
         children: children
             .asMap()
             .entries
-            .map((entry) => Column(
-                  children: [
-                    entry.value,
-                    if (entry.key < children.length - 1) const Divider(height: 1),
-                  ],
-                ))
+            .map(
+              (entry) => Column(
+                children: [
+                  entry.value,
+                  if (entry.key < children.length - 1) const Divider(height: 1),
+                ],
+              ),
+            )
             .toList(),
       ),
     );
@@ -1284,10 +1321,7 @@ class _PreferencesTabState extends State<_PreferencesTab> {
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-      ),
+      trailing: Switch(value: value, onChanged: onChanged),
     );
   }
 }

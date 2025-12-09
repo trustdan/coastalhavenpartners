@@ -5,6 +5,8 @@ import 'app.dart';
 import 'data/services/supabase_service.dart';
 import 'data/services/local_storage_service.dart';
 import 'data/services/notification_service.dart';
+import 'data/services/deep_link_service.dart';
+import 'data/services/analytics_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/sync_service.dart';
 
@@ -43,6 +45,20 @@ void main() async {
     await NotificationService.instance.initialize();
   } catch (e) {
     debugPrint('Push notifications initialization skipped: $e');
+  }
+
+  // Initialize deep link handling
+  try {
+    await DeepLinkService.instance.initialize();
+  } catch (e) {
+    debugPrint('Deep link service initialization failed: $e');
+  }
+
+  // Initialize analytics (will skip if Firebase not configured)
+  try {
+    await AnalyticsService.instance.initialize();
+  } catch (e) {
+    debugPrint('Analytics initialization skipped: $e');
   }
 
   // Initialize connectivity monitoring for offline support

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/services/analytics_service.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/onboarding/screens/role_selection_screen.dart';
@@ -11,6 +12,7 @@ import '../../features/auth/screens/signup_school_screen.dart';
 import '../../features/auth/screens/verify_email_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/mfa_screen.dart';
+import '../../features/auth/screens/mfa_setup_screen.dart';
 import '../../features/auth/screens/complete_profile_candidate_screen.dart';
 import '../../features/auth/screens/complete_profile_recruiter_screen.dart';
 import '../../features/auth/screens/complete_profile_school_screen.dart';
@@ -52,6 +54,7 @@ class AppRoutes {
   static const verifyEmail = '/verify-email';
   static const forgotPassword = '/forgot-password';
   static const mfa = '/mfa';
+  static const mfaSetup = '/mfa/setup';
   static const completeProfileCandidate = '/complete-profile/candidate';
   static const completeProfileRecruiter = '/complete-profile/recruiter';
   static const completeProfileSchool = '/complete-profile/school';
@@ -102,10 +105,16 @@ final authChangeNotifierProvider = Provider<AuthChangeNotifier>((ref) {
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authChangeNotifier = ref.watch(authChangeNotifierProvider);
 
+  // Get analytics observer if available
+  final analyticsObserver = AnalyticsService.instance.observer;
+
   return GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
     refreshListenable: authChangeNotifier,
+    observers: [
+      if (analyticsObserver != null) analyticsObserver,
+    ],
 
     // Redirect logic based on auth state
     redirect: (context, state) {
@@ -204,7 +213,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
-        builder: (context, state) => const VerifyEmailScreen(),
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'];
+          return VerifyEmailScreen(email: email);
+        },
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
@@ -213,6 +225,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.mfa,
         builder: (context, state) => const MfaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.mfaSetup,
+        builder: (context, state) => const MfaSetupScreen(),
       ),
 
       // Profile Completion
@@ -429,7 +445,7 @@ class CandidateShell extends StatelessWidget {
           NavigationDestination(
             icon: Icon(Icons.description_outlined),
             selectedIcon: Icon(Icons.description),
-            label: 'Applications',
+            label: 'Apply',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outline),

@@ -8,10 +8,7 @@ import '../../../widgets/magic_ui/magic_ui.dart';
 class FilterBottomSheet extends StatefulWidget {
   final Function(List<String>) onApply;
 
-  const FilterBottomSheet({
-    super.key,
-    required this.onApply,
-  });
+  const FilterBottomSheet({super.key, required this.onApply});
 
   @override
   State<FilterBottomSheet> createState() => _FilterBottomSheetState();
@@ -82,11 +79,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
     // GPA filter
     if (_gpaRange.start > 3.0 || _gpaRange.end < 4.0) {
-      filters.add('GPA ${_gpaRange.start.toStringAsFixed(1)}-${_gpaRange.end.toStringAsFixed(1)}');
+      filters.add(
+        'GPA ${_gpaRange.start.toStringAsFixed(1)}-${_gpaRange.end.toStringAsFixed(1)}',
+      );
     }
 
     // Schools
-    if (_selectedSchools.isNotEmpty && _selectedSchools.length < _schools.length) {
+    if (_selectedSchools.isNotEmpty &&
+        _selectedSchools.length < _schools.length) {
       if (_selectedSchools.length <= 2) {
         filters.addAll(_selectedSchools);
       } else {
@@ -171,10 +171,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Filters', style: AppTextStyles.h3),
-                TextButton(
-                  onPressed: _reset,
-                  child: const Text('Reset'),
-                ),
+                TextButton(onPressed: _reset, child: const Text('Reset')),
               ],
             ),
           ),
@@ -266,8 +263,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           color: isSelected
                               ? AppColors.teal
                               : (isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight),
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
                         ),
                       );
                     }).toList(),
@@ -281,7 +278,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<int>(
-                          value: _minYear,
+                          initialValue: _minYear,
                           decoration: const InputDecoration(
                             labelText: 'From',
                             contentPadding: EdgeInsets.symmetric(
@@ -290,10 +287,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             ),
                           ),
                           items: List.generate(5, (i) => 2022 + i)
-                              .map((year) => DropdownMenuItem(
-                                    value: year,
-                                    child: Text('$year'),
-                                  ))
+                              .map(
+                                (year) => DropdownMenuItem(
+                                  value: year,
+                                  child: Text('$year'),
+                                ),
+                              )
                               .toList(),
                           onChanged: (value) {
                             if (value != null) {
@@ -310,7 +309,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: DropdownButtonFormField<int>(
-                          value: _maxYear,
+                          initialValue: _maxYear,
                           decoration: const InputDecoration(
                             labelText: 'To',
                             contentPadding: EdgeInsets.symmetric(
@@ -320,10 +319,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           ),
                           items: List.generate(5, (i) => 2022 + i)
                               .where((year) => year >= _minYear)
-                              .map((year) => DropdownMenuItem(
-                                    value: year,
-                                    child: Text('$year'),
-                                  ))
+                              .map(
+                                (year) => DropdownMenuItem(
+                                  value: year,
+                                  child: Text('$year'),
+                                ),
+                              )
                               .toList(),
                           onChanged: (value) {
                             if (value != null) {
@@ -417,9 +418,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: AppTextStyles.labelLarge.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
+      style: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600),
     );
   }
 

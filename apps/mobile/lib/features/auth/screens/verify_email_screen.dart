@@ -13,7 +13,9 @@ import '../../../widgets/magic_ui/magic_ui.dart';
 
 /// Email verification screen shown after signup
 class VerifyEmailScreen extends ConsumerStatefulWidget {
-  const VerifyEmailScreen({super.key});
+  final String? email;
+
+  const VerifyEmailScreen({super.key, this.email});
 
   @override
   ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -42,19 +44,31 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     });
   }
 
+  /// Get the email to display (from param or current user)
+  String? get _displayEmail =>
+      widget.email ?? SupabaseService.instance.currentUser?.email;
+
   Future<void> _resendEmail() async {
     if (_resendCooldown > 0) return;
+
+    final emailToResend = _displayEmail;
+    if (emailToResend == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No email address available'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isResending = true);
 
     try {
-      final user = SupabaseService.instance.currentUser;
-      if (user?.email != null) {
-        await SupabaseService.instance.client?.auth.resend(
-          type: OtpType.signup,
-          email: user!.email!,
-        );
-      }
+      await SupabaseService.instance.client?.auth.resend(
+        type: OtpType.signup,
+        email: emailToResend,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -85,10 +99,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     setState(() => _isChecking = true);
 
     try {
-      // Refresh the session to get updated user data
-      await SupabaseService.instance.client?.auth.refreshSession();
+      // Try to refresh the session to get updated user data
+      final session = await SupabaseService.instance.client?.auth.refreshSession();
 
-      final user = SupabaseService.instance.currentUser;
+      final user = session?.user ?? SupabaseService.instance.currentUser;
 
       if (user?.emailConfirmedAt != null) {
         // Email is verified - get user role and navigate
@@ -121,6 +135,23 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         }
       }
     } catch (e) {
+      // Session missing means user needs to log in after email verification
+      // This is expected when email confirmation is required before session creation
+      if (e.toString().contains('AuthSessionMissing') ||
+          e.toString().contains('session missing')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Email verified! Please log in to continue.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Redirect to login
+          context.go(AppRoutes.login);
+        }
+        return;
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -224,8 +255,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      SupabaseService.instance.currentUser?.email ??
-                          'your@email.com',
+                      _displayEmail ?? 'your@email.com',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.textSecondaryDark,
                       ),

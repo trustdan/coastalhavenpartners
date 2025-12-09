@@ -217,9 +217,115 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
   }
 
+  /// Change password (requires current password verification)
+  Future<({bool success, String? error})> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      // Verify current password first
+      final isValid = await SupabaseService.instance.reauthenticate(currentPassword);
+      if (!isValid) {
+        return (success: false, error: 'Current password is incorrect');
+      }
+
+      // Update to new password
+      await SupabaseService.instance.updatePassword(newPassword);
+      return (success: true, error: null);
+    } on AuthException catch (e) {
+      return (success: false, error: e.message);
+    } catch (e) {
+      return (success: false, error: e.toString());
+    }
+  }
+
+  /// Change email (requires password verification)
+  Future<({bool success, String? error})> changeEmail({
+    required String newEmail,
+    required String password,
+  }) async {
+    try {
+      // Verify password first
+      final isValid = await SupabaseService.instance.reauthenticate(password);
+      if (!isValid) {
+        return (success: false, error: 'Password is incorrect');
+      }
+
+      // Update email (Supabase will send verification to new email)
+      await SupabaseService.instance.updateEmail(newEmail);
+      return (success: true, error: null);
+    } on AuthException catch (e) {
+      return (success: false, error: e.message);
+    } catch (e) {
+      return (success: false, error: e.toString());
+    }
+  }
+
   /// Clear any errors
   void clearError() {
     state = AsyncData(_currentValue?.copyWith(error: null) ?? const AuthState());
+  }
+
+  // ==================== OAuth Sign-In Methods ====================
+
+  /// Sign in with Google
+  /// Opens a browser for Google OAuth flow
+  /// Returns true if the OAuth flow was initiated successfully
+  Future<bool> signInWithGoogle() async {
+    state = AsyncData(_currentValue?.copyWith(isLoading: true, error: null) ??
+        const AuthState(isLoading: true));
+
+    try {
+      final success = await SupabaseService.instance.signInWithGoogle();
+      // The auth state listener will handle the signed-in event
+      // We just need to reset loading state if OAuth didn't start
+      if (!success) {
+        state = AsyncData(_currentValue?.copyWith(isLoading: false) ??
+            const AuthState());
+      }
+      return success;
+    } catch (e) {
+      state = AsyncData(AuthState(error: 'Google sign-in failed: ${e.toString()}'));
+      return false;
+    }
+  }
+
+  /// Sign in with Discord
+  /// Opens a browser for Discord OAuth flow
+  Future<bool> signInWithDiscord() async {
+    state = AsyncData(_currentValue?.copyWith(isLoading: true, error: null) ??
+        const AuthState(isLoading: true));
+
+    try {
+      final success = await SupabaseService.instance.signInWithDiscord();
+      if (!success) {
+        state = AsyncData(_currentValue?.copyWith(isLoading: false) ??
+            const AuthState());
+      }
+      return success;
+    } catch (e) {
+      state = AsyncData(AuthState(error: 'Discord sign-in failed: ${e.toString()}'));
+      return false;
+    }
+  }
+
+  /// Sign in with LinkedIn
+  /// Opens a browser for LinkedIn OAuth flow
+  Future<bool> signInWithLinkedIn() async {
+    state = AsyncData(_currentValue?.copyWith(isLoading: true, error: null) ??
+        const AuthState(isLoading: true));
+
+    try {
+      final success = await SupabaseService.instance.signInWithLinkedIn();
+      if (!success) {
+        state = AsyncData(_currentValue?.copyWith(isLoading: false) ??
+            const AuthState());
+      }
+      return success;
+    } catch (e) {
+      state = AsyncData(AuthState(error: 'LinkedIn sign-in failed: ${e.toString()}'));
+      return false;
+    }
   }
 }
 

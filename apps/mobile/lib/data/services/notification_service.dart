@@ -296,13 +296,12 @@ class NotificationService {
       if (client != null) {
         final userId = client.auth.currentUser?.id;
         if (userId != null) {
-          // Upsert device token in Supabase
-          await client.from('device_tokens').upsert({
-            'user_id': userId,
-            'token': token,
-            'platform': Platform.isAndroid ? 'android' : 'ios',
-            'updated_at': DateTime.now().toIso8601String(),
-          }, onConflict: 'user_id,token');
+          // Use the upsert_device_token RPC function
+          await client.rpc('upsert_device_token', params: {
+            'p_user_id': userId,
+            'p_token': token,
+            'p_platform': Platform.isAndroid ? 'android' : 'ios',
+          });
           debugPrint('FCM token registered with backend');
         }
       }

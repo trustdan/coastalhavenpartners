@@ -78,6 +78,60 @@ class _CompleteProfileRecruiterScreenState
   bool _domainVerified = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Check auth on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthStatus();
+    });
+  }
+
+  void _checkAuthStatus() {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      // Show dialog explaining they need to sign up first
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Row(
+            children: [
+              Icon(Icons.account_circle_outlined, color: AppColors.warning),
+              const SizedBox(width: 8),
+              Text('Sign Up Required', style: TextStyle(color: AppColors.textPrimaryDark)),
+            ],
+          ),
+          content: Text(
+            'You need to create an account before completing your profile.\n\n'
+            'This ensures your information is saved securely.',
+            style: TextStyle(color: AppColors.textSecondaryDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.go(AppRoutes.splash);
+              },
+              child: const Text('Go Back'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.go(AppRoutes.signupRecruiter);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.teal,
+              ),
+              child: const Text('Sign Up'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  @override
   void dispose() {
     _firmNameController.dispose();
     _firmWebsiteController.dispose();

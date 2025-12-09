@@ -55,7 +55,17 @@
       "Bash(flutter pub:*)",
       "Bash(flutter clean:*)",
       "Bash(flutter attach:*)",
-      "Bash(powershell -Command \"echo ''r'' | flutter attach -d emulator-5554\")"
+      "Bash(powershell -Command \"echo ''r'' | flutter attach -d emulator-5554\")",
+      "Bash(powershell -Command \"Set-Location ''c:\\Users\\Dan\\coastalhavenpartners\\apps\\mobile''; flutter devices\")",
+      "Bash(powershell -Command \"Set-Location ''c:\\Users\\Dan\\coastalhavenpartners\\apps\\mobile''; flutter emulators\")",
+      "Bash(powershell -Command \"flutter emulators --launch Medium_Phone_API_36\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 15; Set-Location ''c:\\Users\\Dan\\coastalhavenpartners\\apps\\mobile''; flutter devices\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 20\")",
+      "Bash(powershell -Command \"echo ''''r''''\")",
+      "Bash(Out-File -FilePath .pipeflutter_hot_reload -Encoding ascii)",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 10\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 45\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 30\")"
     ],
     "deny": [],
     "ask": []

@@ -85,7 +85,9 @@ class _SignupSchoolScreenState extends ConsumerState<SignupSchoolScreen> {
           );
         }
       } else if (mounted) {
-        context.go(AppRoutes.verifyEmail);
+        // Navigate to email verification with email param
+        final email = Uri.encodeComponent(_emailController.text.trim());
+        context.go('${AppRoutes.verifyEmail}?email=$email');
       }
     } catch (e) {
       if (mounted) {

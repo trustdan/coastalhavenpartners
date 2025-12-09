@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/services/profile_service.dart';
+import '../../../data/repositories/profile_repository.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
 
 /// List of target universities for autocomplete
@@ -126,7 +128,63 @@ class _CompleteProfileCandidateScreenState
 
   // Step 3: Documents
   String? _resumeFileName;
+  String? _resumeUrl;
+  bool _isUploading = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check auth on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthStatus();
+    });
+  }
+
+  void _checkAuthStatus() {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      // Show dialog explaining they need to sign up first
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Row(
+            children: [
+              Icon(Icons.account_circle_outlined, color: AppColors.warning),
+              const SizedBox(width: 8),
+              Text('Sign Up Required', style: TextStyle(color: AppColors.textPrimaryDark)),
+            ],
+          ),
+          content: Text(
+            'You need to create an account before completing your profile.\n\n'
+            'This ensures your information is saved securely.',
+            style: TextStyle(color: AppColors.textSecondaryDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.go(AppRoutes.splash);
+              },
+              child: const Text('Go Back'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.go(AppRoutes.signupCandidate);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.teal,
+              ),
+              child: const Text('Sign Up'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -205,17 +263,115 @@ class _CompleteProfileCandidateScreenState
   }
 
   Future<void> _pickResume() async {
-    // TODO: Implement file picker
-    // For now, just simulate file selection
-    setState(() {
-      _resumeFileName = 'resume.pdf';
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('File picker will be implemented with file_picker package'),
-        backgroundColor: AppColors.info,
-      ),
-    );
+    if (_isUploading) return;
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.first;
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File size exceeds 5MB limit'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (file.bytes == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to read file'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+
+      setState(() => _isUploading = true);
+
+      // Show upload progress
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                Text('Uploading ${file.name}...'),
+              ],
+            ),
+            duration: const Duration(seconds: 30),
+          ),
+        );
+      }
+
+      // Upload to Supabase storage
+      final url = await ProfileRepository.instance.uploadDocument(
+        file.bytes!,
+        file.name,
+        'resume',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (url != null) {
+        setState(() {
+          _resumeFileName = file.name;
+          _resumeUrl = url;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Resume uploaded successfully'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to upload resume'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
   }
 
   Future<void> _completeProfile() async {
@@ -246,6 +402,7 @@ class _CompleteProfileCandidateScreenState
         preferredLocations: _selectedLocations.toList(),
         email: user.email,
         fullName: user.userMetadata?['full_name'] as String?,
+        resumeUrl: _resumeUrl,
       );
 
       if (mounted) {
@@ -546,8 +703,8 @@ class _CompleteProfileCandidateScreenState
                   labelText: 'Graduation Year *',
                   prefixIcon: Icon(Icons.calendar_today_outlined),
                 ),
-                items: List.generate(8, (index) {
-                  final year = DateTime.now().year - 2 + index;
+                items: List.generate(26, (index) {
+                  final year = DateTime.now().year - 20 + index;
                   return DropdownMenuItem(
                     value: year,
                     child: Text(year.toString()),
@@ -684,7 +841,7 @@ class _CompleteProfileCandidateScreenState
 
         // Upload area
         InkWell(
-          onTap: _pickResume,
+          onTap: _isUploading ? null : _pickResume,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Container(
             padding: const EdgeInsets.all(32),
@@ -699,14 +856,23 @@ class _CompleteProfileCandidateScreenState
             ),
             child: Column(
               children: [
-                Icon(
-                  _resumeFileName != null ? Icons.check_circle : Icons.upload_file,
-                  size: 48,
-                  color: _resumeFileName != null ? AppColors.teal : AppColors.textMutedDark,
-                ),
+                if (_isUploading)
+                  const SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  )
+                else
+                  Icon(
+                    _resumeFileName != null ? Icons.check_circle : Icons.upload_file,
+                    size: 48,
+                    color: _resumeFileName != null ? AppColors.teal : AppColors.textMutedDark,
+                  ),
                 const SizedBox(height: 16),
                 Text(
-                  _resumeFileName ?? 'Tap to upload your resume',
+                  _isUploading
+                      ? 'Uploading...'
+                      : (_resumeFileName ?? 'Tap to upload your resume'),
                   style: AppTextStyles.bodyLarge.copyWith(
                     color: _resumeFileName != null
                         ? AppColors.textPrimaryDark
@@ -720,7 +886,7 @@ class _CompleteProfileCandidateScreenState
                     color: AppColors.textMutedDark,
                   ),
                 ),
-                if (_resumeFileName != null) ...[
+                if (_resumeFileName != null && !_isUploading) ...[
                   const SizedBox(height: 16),
                   TextButton.icon(
                     onPressed: _pickResume,
