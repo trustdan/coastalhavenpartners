@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { ArrowLeft, Loader2, Eye, Users, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { MFASettings } from '@/components/auth/mfa-settings'
+import { ChangePasswordForm } from '@/components/auth/change-password'
 import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
 import { NotificationSettings } from '@/components/settings/notification-settings'
 import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
@@ -408,6 +409,7 @@ export default function RecruiterSettingsPage() {
 
         {/* Security Settings */}
         <MFASettings />
+        <ChangePasswordForm />
 
         {/* Messaging Preferences */}
         {messagingPrefs && (

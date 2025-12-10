@@ -285,6 +285,14 @@ function LoginForm() {
             required
             placeholder="••••••••"
           />
+          <div className="mt-1 text-right">
+            <Link
+              href="/login/forgot-password"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </div>
 
         <Button type="submit" className="w-full" disabled={loading || googleLoading || linkedInLoading || discordLoading}>

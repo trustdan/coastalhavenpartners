@@ -19,6 +19,7 @@ import { validateFieldsForProfanity, FIELD_DISPLAY_NAMES } from '@/lib/profanity
 import Link from 'next/link'
 import { GraduationCap } from 'lucide-react'
 import { MFASettings } from '@/components/auth/mfa-settings'
+import { ChangePasswordForm } from '@/components/auth/change-password'
 import { MessagingPreferencesForm } from '@/components/settings/messaging-preferences'
 import { NotificationSettings } from '@/components/settings/notification-settings'
 import { getMessagingPreferences, type MessagingPreferences as MessagingPrefsType } from '@/app/(portal)/messages/actions'
@@ -753,6 +754,7 @@ export default function EditProfilePage() {
 
             {/* Security Settings */}
             <MFASettings />
+            <ChangePasswordForm />
 
             {/* Messaging Preferences */}
             {messagingPrefs && (
