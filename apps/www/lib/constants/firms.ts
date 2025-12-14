@@ -68,6 +68,7 @@ export const FIRM_SORT_OPTIONS = [
   { value: 'city', label: 'City' },
   { value: 'region', label: 'Region' },
   { value: 'focus_sector', label: 'Focus' },
+  { value: 'contact_email', label: 'Contact' },
   { value: 'founded_year', label: 'Founded' },
 ] as const
 

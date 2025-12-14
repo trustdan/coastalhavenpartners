@@ -93,14 +93,14 @@ function SortableHeader({
   return (
     <button
       onClick={() => onSort(sortKey)}
-      className="flex items-center gap-1 text-left text-sm font-medium hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors group"
+      className="flex items-center gap-1.5 text-left text-sm font-medium hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors group"
     >
       {label}
-      <span className="text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300">
+      <span className={isActive ? 'text-neutral-700 dark:text-neutral-300' : 'text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300'}>
         {isActive ? (
           isAsc ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />
         ) : (
-          <ArrowUpDown className="h-3.5 w-3.5 opacity-0 group-hover:opacity-50" />
+          <ArrowUpDown className="h-3.5 w-3.5 opacity-40 group-hover:opacity-70" />
         )}
       </span>
     </button>
@@ -344,7 +344,15 @@ export function FirmsTable({
                     onSort={handleSort}
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Contact</th>
+                <th className="px-4 py-3 text-left">
+                  <SortableHeader
+                    label="Contact"
+                    sortKey="contact_email"
+                    currentSort={currentSort}
+                    currentOrder={currentOrder}
+                    onSort={handleSort}
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-medium w-24">Actions</th>
               </tr>
             </thead>
