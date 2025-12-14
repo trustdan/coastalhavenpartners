@@ -92,7 +92,27 @@ export function FirmsFilters() {
     setSearchTimeout(timeout)
   }
 
-  const currentCategory = searchParams.get('category') || '__all__'
+  const currentCategory = searchParams.get('category') || ''
+
+  // Determine which tab is active - empty string or no category means "All"
+  const getTabActive = (tabValue: string) => {
+    if (tabValue === '__all__') {
+      return !currentCategory || currentCategory === ''
+    }
+    return currentCategory === tabValue
+  }
+
+  const handleCategoryClick = (value: string) => {
+    // Navigate directly without transition for more reliable behavior
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === '__all__' || !value) {
+      params.delete('category')
+    } else {
+      params.set('category', value)
+    }
+    params.delete('page') // Reset pagination
+    router.push(`?${params.toString()}`)
+  }
 
   return (
     <div className="space-y-4">
@@ -101,12 +121,11 @@ export function FirmsFilters() {
         {CATEGORY_TABS.map((tab) => (
           <button
             key={tab.value}
-            onClick={() => updateFilter('category', tab.value)}
-            disabled={isPending}
+            onClick={() => handleCategoryClick(tab.value)}
             title={tab.full}
             className={cn(
               'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-              currentCategory === tab.value
+              getTabActive(tab.value)
                 ? 'bg-blue-600 text-white'
                 : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 border'
             )}

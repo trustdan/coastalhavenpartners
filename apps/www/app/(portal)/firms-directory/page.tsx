@@ -107,6 +107,10 @@ export default async function FirmsDirectory({
 
   const totalPages = count ? Math.ceil(count / limit) : 1
 
+  // Create a stable key for the table that changes when filters change
+  // This forces React to re-mount the component with fresh state
+  const tableKey = `${category || ''}-${region || ''}-${state || ''}-${priority || ''}-${search || ''}-${sortBy}-${sortOrder}`
+
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between">
@@ -122,6 +126,7 @@ export default async function FirmsDirectory({
       <FirmsFilters />
 
       <FirmsTable
+        key={tableKey}
         firms={(firms as Firm[]) || []}
         savedFirmIds={savedFirmIds}
         currentPage={page}
