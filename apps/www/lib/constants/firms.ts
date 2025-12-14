@@ -64,7 +64,10 @@ export const PRIORITY_LABELS: Record<number, { label: string; stars: string; col
 export const FIRM_SORT_OPTIONS = [
   { value: 'priority', label: 'Priority' },
   { value: 'name', label: 'Name' },
+  { value: 'firm_type', label: 'Category' },
   { value: 'city', label: 'City' },
+  { value: 'region', label: 'Region' },
+  { value: 'focus_sector', label: 'Focus' },
   { value: 'founded_year', label: 'Founded' },
 ] as const
 

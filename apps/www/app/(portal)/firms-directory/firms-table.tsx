@@ -13,6 +13,10 @@ import {
   MapPin,
   Users,
   Calendar,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -70,6 +74,39 @@ function CategoryBadge({ category }: { category: string | null }) {
   )
 }
 
+function SortableHeader({
+  label,
+  sortKey,
+  currentSort,
+  currentOrder,
+  onSort,
+}: {
+  label: string
+  sortKey: string
+  currentSort: string
+  currentOrder: string
+  onSort: (sortKey: string) => void
+}) {
+  const isActive = currentSort === sortKey
+  const isAsc = currentOrder === 'asc'
+
+  return (
+    <button
+      onClick={() => onSort(sortKey)}
+      className="flex items-center gap-1 text-left text-sm font-medium hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors group"
+    >
+      {label}
+      <span className="text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300">
+        {isActive ? (
+          isAsc ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />
+        ) : (
+          <ArrowUpDown className="h-3.5 w-3.5 opacity-0 group-hover:opacity-50" />
+        )}
+      </span>
+    </button>
+  )
+}
+
 function FirmRow({
   firm,
   isSaved,
@@ -88,7 +125,7 @@ function FirmRow({
   }
 
   return (
-    <tr className="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+    <tr className="hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors select-none">
       <td className="px-4 py-4">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
@@ -125,31 +162,28 @@ function FirmRow({
             {[firm.city, firm.state].filter(Boolean).join(', ')}
           </div>
         )}
+      </td>
+      <td className="px-4 py-4">
         {firm.region && (
-          <span className="mt-1 inline-block rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
+          <span className="inline-block rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
             {firm.region}
           </span>
         )}
       </td>
-      <td className="px-4 py-4">
-        <div className="space-y-1 text-sm text-neutral-600 dark:text-neutral-400">
-          {firm.employee_count && (
-            <div className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
-              {firm.employee_count}
-            </div>
-          )}
-          {firm.founded_year && (
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" />
-              Est. {firm.founded_year}
-            </div>
-          )}
-        </div>
-      </td>
       <td className="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-400">
         {firm.focus_sector && (
           <span className="line-clamp-2">{firm.focus_sector}</span>
+        )}
+      </td>
+      <td className="px-4 py-4 select-text">
+        {firm.contact_email && (
+          <a
+            href={`mailto:${firm.contact_email}`}
+            className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            <span className="truncate max-w-[150px]">{firm.contact_email}</span>
+          </a>
         )}
       </td>
       <td className="px-4 py-4">
@@ -210,6 +244,24 @@ export function FirmsTable({
   const searchParams = useSearchParams()
   const [localSavedIds, setLocalSavedIds] = useState(savedFirmIds)
 
+  const currentSort = searchParams.get('sort') || 'priority'
+  const currentOrder = searchParams.get('order') || 'asc'
+
+  const handleSort = (sortKey: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (currentSort === sortKey) {
+      // Toggle order if same column
+      params.set('order', currentOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      // New column, default to ascending
+      params.set('sort', sortKey)
+      params.set('order', 'asc')
+    }
+    // Reset to page 1 when sorting changes
+    params.delete('page')
+    router.push('?' + params.toString())
+  }
+
   const handleToggleSave = async (firmId: string, currentlySaved: boolean) => {
     // Optimistic update
     const newSavedIds = new Set(localSavedIds)
@@ -245,13 +297,54 @@ export function FirmsTable({
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm dark:bg-neutral-900">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b bg-neutral-50 dark:bg-neutral-800">
+            <thead className="border-b bg-neutral-50 dark:bg-neutral-800 select-none">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium">Firm</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Category</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Location</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Details</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Focus</th>
+                <th className="px-4 py-3 text-left">
+                  <SortableHeader
+                    label="Firm"
+                    sortKey="name"
+                    currentSort={currentSort}
+                    currentOrder={currentOrder}
+                    onSort={handleSort}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <SortableHeader
+                    label="Category"
+                    sortKey="firm_type"
+                    currentSort={currentSort}
+                    currentOrder={currentOrder}
+                    onSort={handleSort}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <SortableHeader
+                    label="Location"
+                    sortKey="city"
+                    currentSort={currentSort}
+                    currentOrder={currentOrder}
+                    onSort={handleSort}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <SortableHeader
+                    label="Region"
+                    sortKey="region"
+                    currentSort={currentSort}
+                    currentOrder={currentOrder}
+                    onSort={handleSort}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <SortableHeader
+                    label="Focus"
+                    sortKey="focus_sector"
+                    currentSort={currentSort}
+                    currentOrder={currentOrder}
+                    onSort={handleSort}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium">Contact</th>
                 <th className="px-4 py-3 text-left text-sm font-medium w-24">Actions</th>
               </tr>
             </thead>
@@ -267,7 +360,7 @@ export function FirmsTable({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={7} className="px-6 py-12 text-center">
                     <Building2 className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700" />
                     <p className="mt-4 text-neutral-600 dark:text-neutral-400">
                       No firms found matching your criteria
