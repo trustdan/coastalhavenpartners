@@ -1,6 +1,19 @@
-# Claude summary
+# Summary
 
+**Database:** 500+ boutique and mid-market financial firms across the East Coast (excluding NYC) that actively recruit from top business schools.
 
+**Categories:** Private Equity, Venture Capital, Hedge Funds, Investment Banking, Asset Management, Family Offices, and Endowments across 16 geographic markets.
+
+**Key Regional Highlights:**
+
+- **Boston/New England:** Asset management capital with $8T+ AUM (Fidelity, Wellington, State Street) + premier biotech VC cluster
+- **Connecticut:** Hedge fund corridor with 347 active managers and 32 of top 500 global hedge funds
+- **South Florida:** 158 financial firms relocated from NYC since 2020, managing ~$1 trillion combined
+- **Washington DC/NoVA:** Defense tech PE/VC ecosystem anchored by Carlyle Group
+- **Nashville:** Undisputed healthcare PE/IB capital
+- **Research Triangle:** Life sciences VC leader
+
+**Priority Tiers:** Firms organized by Tier 1 (top recruiting), Tier 2 (strong regional), and Tier 3 (emerging/niche).
 
 ---
 

@@ -70,6 +70,22 @@ export const FIRM_SORT_OPTIONS = [
   { value: 'focus_sector', label: 'Focus' },
   { value: 'contact_email', label: 'Contact' },
   { value: 'founded_year', label: 'Founded' },
+  { value: 'aum_fund_size', label: 'AUM/Fund Size' },
+  { value: 'deal_size_criteria', label: 'Deal Size' },
+  { value: 'employee_count', label: 'Team Size' },
 ] as const
 
 export type FirmSortOption = (typeof FIRM_SORT_OPTIONS)[number]['value']
+
+// Optional columns that users can toggle on/off
+// Excludes UW Foster Relevance intentionally
+export const OPTIONAL_COLUMNS = [
+  { key: 'aum_fund_size', label: 'AUM / Fund Size', sortable: true },
+  { key: 'deal_size_criteria', label: 'Deal Size / Criteria', sortable: true },
+  { key: 'founded_year', label: 'Year Founded', sortable: true },
+  { key: 'employee_count', label: 'Team Size', sortable: true },
+  { key: 'description', label: 'Description', sortable: false },
+  { key: 'notes', label: 'Notes', sortable: false },
+] as const
+
+export type OptionalColumnKey = (typeof OPTIONAL_COLUMNS)[number]['key']

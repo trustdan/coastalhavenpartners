@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { PRIORITY_LABELS } from '@/lib/constants/firms'
+import { PRIORITY_LABELS, OPTIONAL_COLUMNS, type OptionalColumnKey } from '@/lib/constants/firms'
 import { saveFirm, unsaveFirm } from './firm-actions'
 import type { Database } from '@/lib/types/database.types'
 
@@ -37,6 +37,7 @@ interface FirmsTableProps {
   currentPage: number
   totalPages: number
   totalCount: number
+  selectedColumns: OptionalColumnKey[]
 }
 
 function PriorityBadge({ priority }: { priority: number | null }) {
@@ -107,14 +108,32 @@ function SortableHeader({
   )
 }
 
+function OptionalCell({ firm, columnKey }: { firm: Firm; columnKey: OptionalColumnKey }) {
+  const value = firm[columnKey as keyof Firm]
+  if (!value) return null
+
+  // Special rendering for certain columns
+  if (columnKey === 'description' || columnKey === 'notes') {
+    return <span className="line-clamp-2">{String(value)}</span>
+  }
+
+  if (columnKey === 'founded_year') {
+    return <span>Est. {value}</span>
+  }
+
+  return <span>{String(value)}</span>
+}
+
 function FirmRow({
   firm,
   isSaved,
   onToggleSave,
+  selectedColumns,
 }: {
   firm: Firm
   isSaved: boolean
   onToggleSave: (firmId: string, currentlySaved: boolean) => void
+  selectedColumns: OptionalColumnKey[]
 }) {
   const [isPending, startTransition] = useTransition()
 
@@ -144,11 +163,6 @@ function FirmRow({
               <span className="font-medium">{firm.name}</span>
               <PriorityBadge priority={firm.priority} />
             </div>
-            {firm.description && (
-              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
-                {firm.description}
-              </p>
-            )}
           </div>
         </div>
       </td>
@@ -186,6 +200,12 @@ function FirmRow({
           </a>
         )}
       </td>
+      {/* Optional columns */}
+      {selectedColumns.map((columnKey) => (
+        <td key={columnKey} className="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-400">
+          <OptionalCell firm={firm} columnKey={columnKey} />
+        </td>
+      ))}
       <td className="px-4 py-4">
         <div className="flex items-center gap-2">
           <TooltipProvider>
@@ -239,6 +259,7 @@ export function FirmsTable({
   currentPage,
   totalPages,
   totalCount,
+  selectedColumns,
 }: FirmsTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -246,6 +267,10 @@ export function FirmsTable({
 
   const currentSort = searchParams.get('sort') || 'priority'
   const currentOrder = searchParams.get('order') || 'asc'
+
+  // Calculate total columns for empty state colspan
+  const baseColumnCount = 7 // Firm, Category, Location, Region, Focus, Contact, Actions
+  const totalColumnCount = baseColumnCount + selectedColumns.length
 
   const handleSort = (sortKey: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -353,6 +378,26 @@ export function FirmsTable({
                     onSort={handleSort}
                   />
                 </th>
+                {/* Optional columns */}
+                {selectedColumns.map((columnKey) => {
+                  const column = OPTIONAL_COLUMNS.find(c => c.key === columnKey)
+                  if (!column) return null
+                  return (
+                    <th key={columnKey} className="px-4 py-3 text-left">
+                      {column.sortable ? (
+                        <SortableHeader
+                          label={column.label}
+                          sortKey={columnKey}
+                          currentSort={currentSort}
+                          currentOrder={currentOrder}
+                          onSort={handleSort}
+                        />
+                      ) : (
+                        <span className="text-sm font-medium">{column.label}</span>
+                      )}
+                    </th>
+                  )
+                })}
                 <th className="px-4 py-3 text-left text-sm font-medium w-24">Actions</th>
               </tr>
             </thead>
@@ -364,11 +409,12 @@ export function FirmsTable({
                     firm={firm}
                     isSaved={localSavedIds.has(firm.id)}
                     onToggleSave={handleToggleSave}
+                    selectedColumns={selectedColumns}
                   />
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={totalColumnCount} className="px-6 py-12 text-center">
                     <Building2 className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700" />
                     <p className="mt-4 text-neutral-600 dark:text-neutral-400">
                       No firms found matching your criteria

@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { FirmsFilters } from './firms-filters'
 import { FirmsTable } from './firms-table'
+import { ColumnSelector } from './column-selector'
+import { OPTIONAL_COLUMNS, type OptionalColumnKey } from '@/lib/constants/firms'
 import type { Database } from '@/lib/types/database.types'
 
 type Firm = Database['public']['Tables']['firms']['Row']
@@ -43,6 +45,13 @@ export default async function FirmsDirectory({
   const sortOrder = typeof params.order === 'string' ? params.order : 'asc'
   const page = typeof params.page === 'string' ? parseInt(params.page) : 1
   const limit = 25
+
+  // Parse optional columns
+  const columnsParam = typeof params.columns === 'string' ? params.columns : ''
+  const validColumnKeys = OPTIONAL_COLUMNS.map(c => c.key)
+  const selectedColumns = columnsParam
+    .split(',')
+    .filter((col): col is OptionalColumnKey => validColumnKeys.includes(col as OptionalColumnKey))
 
   // Build query
   let query = supabase
@@ -100,11 +109,14 @@ export default async function FirmsDirectory({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Firms Directory</h1>
-        <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          {count || 0} firms in our network
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Firms Directory</h1>
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+            {count || 0} firms in our network
+          </p>
+        </div>
+        <ColumnSelector selectedColumns={selectedColumns} />
       </div>
 
       <FirmsFilters />
@@ -115,6 +127,7 @@ export default async function FirmsDirectory({
         currentPage={page}
         totalPages={totalPages}
         totalCount={count || 0}
+        selectedColumns={selectedColumns}
       />
     </div>
   )
