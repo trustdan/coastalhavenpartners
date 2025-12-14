@@ -1,5 +1,5 @@
 /**
- * Imports firms from research/PNW-firms-database.csv into Supabase
+ * Imports firms from research/comprehensive-firms.csv into Supabase
  * Run with: npx tsx scripts/import-firms.ts
  */
 
@@ -92,9 +92,11 @@ function mapCategory(category: string): string {
     'Venture Capital': 'Venture Capital',
     'Hedge Fund': 'Hedge Fund',
     'Asset Manager': 'Asset Management',
+    'Asset Management': 'Asset Management',
     'Family Office': 'Family Office',
     'Trust Company': 'Trust Company',
     'Corporate Venture': 'Corporate Venture',
+    'Restructuring': 'Restructuring',
   }
   return mapping[category] || category
 }
@@ -111,9 +113,9 @@ async function importFirms() {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   // Find CSV file (works from apps/www or root)
-  let csvPath = path.join(process.cwd(), 'research', 'PNW-firms-database.csv')
+  let csvPath = path.join(process.cwd(), 'research', 'comprehensive-firms.csv')
   if (!fs.existsSync(csvPath)) {
-    csvPath = path.join(process.cwd(), '..', '..', 'research', 'PNW-firms-database.csv')
+    csvPath = path.join(process.cwd(), '..', '..', 'research', 'comprehensive-firms.csv')
   }
   if (!fs.existsSync(csvPath)) {
     console.error('CSV file not found at:', csvPath)

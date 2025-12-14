@@ -9,11 +9,20 @@ export const FIRM_CATEGORIES = [
   'Family Office',
   'Trust Company',
   'Corporate Venture',
+  'Restructuring',
+  'Sovereign Wealth Fund',
 ] as const
 
 export type FirmCategory = (typeof FIRM_CATEGORIES)[number]
 
 export const FIRM_REGIONS = [
+  'NYC',
+  'London',
+  'Hong Kong',
+  'Singapore',
+  'Tokyo',
+  'Paris',
+  'Frankfurt',
   'PNW',
   'Bay Area',
   'Los Angeles',
@@ -29,19 +38,33 @@ export const FIRM_REGIONS = [
 export type FirmRegion = (typeof FIRM_REGIONS)[number]
 
 export const FIRM_STATES = [
+  // US States
+  'NY',
+  'CA',
+  'IL',
+  'MA',
+  'TX',
   'WA',
   'OR',
-  'CA',
+  'FL',
+  'VA',
+  'MN',
+  'WI',
+  'MO',
   'ID',
   'MT',
   'CO',
   'UT',
   'AZ',
   'NV',
-  'TX',
-  'IL',
-  'NY',
-  'MA',
+  // International
+  'UK',
+  'HK',
+  'SG',
+  'Japan',
+  'China',
+  'France',
+  'Germany',
 ] as const
 
 export type FirmState = (typeof FIRM_STATES)[number]

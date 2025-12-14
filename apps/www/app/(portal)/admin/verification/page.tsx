@@ -7,6 +7,7 @@ import { ResumeVerificationCard } from './resume-verification-card'
 import { BulkVerifyButton, ReprocessFlaggedButton } from './bulk-verify-button'
 import { ResumeBulkVerifyButton, ResumeReprocessFlaggedButton } from './resume-bulk-verify-button'
 import { VerificationAuditLog } from './verification-audit-log'
+import { VerifiedCandidateCard } from './verified-candidate-card'
 import type { Database } from '@/lib/types/database.types'
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
@@ -602,30 +603,18 @@ export default async function AdminVerificationPage() {
       {/* Recently Verified */}
       {fullyVerified.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-green-700 dark:text-green-300">
-            Fully Verified ({fullyVerified.length})
-          </h2>
-          <div className="rounded-xl border border-green-200 bg-green-50/50 p-4 dark:border-green-900/50 dark:bg-green-900/10">
-            <div className="divide-y">
-              {fullyVerified.slice(0, 5).map((candidate) => (
-                <div key={candidate.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium">{candidate.profiles?.full_name}</p>
-                    <p className="text-sm text-neutral-500">
-                      {candidate.school_name} · {candidate.major} · {candidate.gpa.toFixed(2)} GPA
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <span>All verified</span>
-                  </div>
-                </div>
-              ))}
-              {fullyVerified.length > 5 && (
-                <p className="pt-3 text-sm text-neutral-500">
-                  And {fullyVerified.length - 5} more fully verified candidates
-                </p>
-              )}
-            </div>
+          <div>
+            <h2 className="text-xl font-semibold text-green-700 dark:text-green-300">
+              Fully Verified ({fullyVerified.length})
+            </h2>
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+              Click to expand and re-review documents if approved in error
+            </p>
+          </div>
+          <div className="space-y-2">
+            {fullyVerified.map((candidate) => (
+              <VerifiedCandidateCard key={candidate.id} candidate={candidate} />
+            ))}
           </div>
         </div>
       )}

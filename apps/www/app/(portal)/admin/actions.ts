@@ -792,3 +792,87 @@ export async function manuallyVerifyResumeVerification(
 
   revalidatePath('/admin/verification')
 }
+
+// =============================================
+// RE-REVIEW VERIFIED DOCUMENTS
+// (allows admins to re-review documents that were approved in error)
+// =============================================
+
+export async function reflagTranscriptForReview(transcriptId: string, reason?: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  // First unverify the transcript itself
+  const { error: transcriptError } = await supabaseAdmin
+    .from('candidate_transcripts')
+    .update({
+      is_verified: false,
+      gpa_verified: false,
+    })
+    .eq('id', transcriptId)
+
+  if (transcriptError) throw new Error(transcriptError.message)
+
+  // Check if there's an existing verification record
+  const { data: existingVerification } = await supabaseUntyped
+    .from('transcript_verifications')
+    .select('id')
+    .eq('transcript_id', transcriptId)
+    .single()
+
+  if (existingVerification) {
+    // Update existing verification to flagged status
+    const { error: updateError } = await supabaseUntyped
+      .from('transcript_verifications')
+      .update({
+        status: 'flagged',
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+        review_notes: reason || 'Re-flagged for review by admin',
+      })
+      .eq('transcript_id', transcriptId)
+
+    if (updateError) throw new Error(updateError.message)
+  }
+
+  revalidatePath('/admin/verification')
+}
+
+export async function reflagResumeForReview(resumeId: string, reason?: string) {
+  const { user, supabaseAdmin } = await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  // First unverify the resume itself
+  const { error: resumeError } = await supabaseAdmin
+    .from('candidate_resumes')
+    .update({
+      is_verified: false,
+    })
+    .eq('id', resumeId)
+
+  if (resumeError) throw new Error(resumeError.message)
+
+  // Check if there's an existing verification record
+  const { data: existingVerification } = await supabaseUntyped
+    .from('resume_verifications')
+    .select('id')
+    .eq('resume_id', resumeId)
+    .single()
+
+  if (existingVerification) {
+    // Update existing verification to flagged status
+    const { error: updateError } = await supabaseUntyped
+      .from('resume_verifications')
+      .update({
+        status: 'flagged',
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+        review_notes: reason || 'Re-flagged for review by admin',
+      })
+      .eq('resume_id', resumeId)
+
+    if (updateError) throw new Error(updateError.message)
+  }
+
+  revalidatePath('/admin/verification')
+}
