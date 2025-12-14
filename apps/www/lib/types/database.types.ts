@@ -867,6 +867,16 @@ export type Database = {
           slug: string
           updated_at: string | null
           website: string | null
+          city: string | null
+          state: string | null
+          region: string | null
+          focus_sector: string | null
+          aum_fund_size: string | null
+          deal_size_criteria: string | null
+          priority: number | null
+          contact_email: string | null
+          uw_foster_relevance: string | null
+          notes: string | null
         }
         Insert: {
           created_at?: string | null
@@ -884,6 +894,16 @@ export type Database = {
           slug: string
           updated_at?: string | null
           website?: string | null
+          city?: string | null
+          state?: string | null
+          region?: string | null
+          focus_sector?: string | null
+          aum_fund_size?: string | null
+          deal_size_criteria?: string | null
+          priority?: number | null
+          contact_email?: string | null
+          uw_foster_relevance?: string | null
+          notes?: string | null
         }
         Update: {
           created_at?: string | null
@@ -901,8 +921,54 @@ export type Database = {
           slug?: string
           updated_at?: string | null
           website?: string | null
+          city?: string | null
+          state?: string | null
+          region?: string | null
+          focus_sector?: string | null
+          aum_fund_size?: string | null
+          deal_size_criteria?: string | null
+          priority?: number | null
+          contact_email?: string | null
+          uw_foster_relevance?: string | null
+          notes?: string | null
         }
         Relationships: []
+      }
+      saved_firms: {
+        Row: {
+          id: string
+          user_id: string
+          firm_id: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          firm_id: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          firm_id?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_firms_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_firms_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_listings: {
         Row: {

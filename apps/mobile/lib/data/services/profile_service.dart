@@ -161,6 +161,8 @@ class ProfileService {
     String? firmSize,
     String? linkedInUrl,
     String? phone,
+    String? email,
+    String? fullName,
   }) async {
     final client = SupabaseService.instance.client;
     if (client == null) {
@@ -169,6 +171,18 @@ class ProfileService {
     }
 
     try {
+      // IMPORTANT: Ensure the base profile exists first with correct role (foreign key requirement)
+      final profileExists = await ensureProfileExists(
+        userId,
+        role: 'recruiter',
+        email: email,
+        fullName: fullName,
+      );
+      if (!profileExists) {
+        debugPrint('ProfileService: Failed to ensure base profile exists');
+        return null;
+      }
+
       // First check if recruiter profile exists
       final existing = await client
           .from('recruiter_profiles')
@@ -219,6 +233,8 @@ class ProfileService {
     String? contactEmail,
     String? contactPhone,
     String? website,
+    String? email,
+    String? fullName,
   }) async {
     final client = SupabaseService.instance.client;
     if (client == null) {
@@ -227,6 +243,18 @@ class ProfileService {
     }
 
     try {
+      // IMPORTANT: Ensure the base profile exists first with correct role (foreign key requirement)
+      final profileExists = await ensureProfileExists(
+        userId,
+        role: 'school_admin',
+        email: email,
+        fullName: fullName,
+      );
+      if (!profileExists) {
+        debugPrint('ProfileService: Failed to ensure base profile exists');
+        return null;
+      }
+
       // First check if school profile exists
       final existing = await client
           .from('school_profiles')

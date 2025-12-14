@@ -231,6 +231,8 @@ class _CompleteProfileRecruiterScreenState
             ? _linkedInController.text
             : null,
         phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
+        email: user.email,
+        fullName: user.userMetadata?['full_name'] as String?,
       );
 
       // Also update LinkedIn/phone in main profiles table if provided

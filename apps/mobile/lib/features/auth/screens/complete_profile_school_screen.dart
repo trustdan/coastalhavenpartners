@@ -240,6 +240,8 @@ class _CompleteProfileSchoolScreenState
         departmentName: _selectedDepartment,
         contactPhone:
             _phoneController.text.isNotEmpty ? _phoneController.text : null,
+        email: user.email,
+        fullName: user.userMetadata?['full_name'] as String?,
       );
 
       // Also update phone in main profiles table if provided

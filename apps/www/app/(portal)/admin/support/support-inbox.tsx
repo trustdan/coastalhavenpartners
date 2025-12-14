@@ -209,7 +209,7 @@ function MessageCard({ message, onUpdate }: { message: SupportMessage; onUpdate:
           <StatusBadge status={message.status} />
           <span className="font-medium truncate">{message.subject}</span>
           {message.has_attachments && (
-            <Paperclip className="h-4 w-4 text-neutral-400" title="Has attachments" />
+            <Paperclip className="h-4 w-4 text-neutral-400" aria-label="Has attachments" />
           )}
         </div>
         <div className="flex items-center gap-4 text-sm text-neutral-500">

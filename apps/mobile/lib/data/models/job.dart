@@ -15,6 +15,8 @@ Object? _readJobListing(Map<dynamic, dynamic> json, String key) =>
 /// Firm model
 @freezed
 sealed class Firm with _$Firm {
+  const Firm._();
+
   const factory Firm({
     required String id,
     required String name,
@@ -31,9 +33,54 @@ sealed class Firm with _$Firm {
     @JsonKey(name: 'is_visible') @Default(true) bool isVisible,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
+    // Directory-specific fields
+    String? city,
+    String? state,
+    String? region,
+    @JsonKey(name: 'focus_sector') String? focusSector,
+    @JsonKey(name: 'aum_fund_size') String? aumFundSize,
+    @JsonKey(name: 'deal_size_criteria') String? dealSizeCriteria,
+    int? priority,
+    @JsonKey(name: 'contact_email') String? contactEmail,
+    @JsonKey(name: 'uw_foster_relevance') String? uwFosterRelevance,
+    String? notes,
   }) = _Firm;
 
   factory Firm.fromJson(Map<String, dynamic> json) => _$FirmFromJson(json);
+
+  /// Get location string combining city and state
+  String? get locationString {
+    final parts = [city, state].where((p) => p != null && p.isNotEmpty).toList();
+    return parts.isEmpty ? null : parts.join(', ');
+  }
+
+  /// Get priority label
+  String get priorityLabel {
+    switch (priority) {
+      case 1:
+        return 'High Priority';
+      case 2:
+        return 'Medium Priority';
+      case 3:
+        return 'Lower Priority';
+      default:
+        return '';
+    }
+  }
+
+  /// Get priority stars
+  String get priorityStars {
+    switch (priority) {
+      case 1:
+        return '\u2605\u2605\u2605';
+      case 2:
+        return '\u2605\u2605';
+      case 3:
+        return '\u2605';
+      default:
+        return '';
+    }
+  }
 }
 
 /// Job listing model

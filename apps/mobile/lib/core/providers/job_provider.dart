@@ -183,3 +183,225 @@ class SavedJobsNotifier extends AsyncNotifier<List<JobListing>> {
 final savedJobsNotifierProvider = AsyncNotifierProvider<SavedJobsNotifier, List<JobListing>>(
   SavedJobsNotifier.new,
 );
+
+// =====================
+// Firms Directory Providers
+// =====================
+
+/// Parameters for firms directory query
+class FirmsDirectoryParams {
+  final String? category;
+  final String? region;
+  final String? state;
+  final int? priority;
+  final String? searchQuery;
+  final String sortBy;
+  final bool ascending;
+  final int limit;
+  final int offset;
+
+  const FirmsDirectoryParams({
+    this.category,
+    this.region,
+    this.state,
+    this.priority,
+    this.searchQuery,
+    this.sortBy = 'priority',
+    this.ascending = true,
+    this.limit = 25,
+    this.offset = 0,
+  });
+
+  FirmsDirectoryParams copyWith({
+    String? category,
+    String? region,
+    String? state,
+    int? priority,
+    String? searchQuery,
+    String? sortBy,
+    bool? ascending,
+    int? limit,
+    int? offset,
+  }) {
+    return FirmsDirectoryParams(
+      category: category ?? this.category,
+      region: region ?? this.region,
+      state: state ?? this.state,
+      priority: priority ?? this.priority,
+      searchQuery: searchQuery ?? this.searchQuery,
+      sortBy: sortBy ?? this.sortBy,
+      ascending: ascending ?? this.ascending,
+      limit: limit ?? this.limit,
+      offset: offset ?? this.offset,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FirmsDirectoryParams &&
+          category == other.category &&
+          region == other.region &&
+          state == other.state &&
+          priority == other.priority &&
+          searchQuery == other.searchQuery &&
+          sortBy == other.sortBy &&
+          ascending == other.ascending &&
+          limit == other.limit &&
+          offset == other.offset;
+
+  @override
+  int get hashCode => Object.hash(
+        category,
+        region,
+        state,
+        priority,
+        searchQuery,
+        sortBy,
+        ascending,
+        limit,
+        offset,
+      );
+}
+
+/// Notifier for firms directory filter state
+class FirmsDirectoryParamsNotifier extends Notifier<FirmsDirectoryParams> {
+  @override
+  FirmsDirectoryParams build() => const FirmsDirectoryParams();
+
+  void updateParams(FirmsDirectoryParams params) {
+    state = params;
+  }
+
+  void setCategory(String? category) {
+    state = state.copyWith(category: category);
+  }
+
+  void setRegion(String? region) {
+    state = state.copyWith(region: region);
+  }
+
+  void setState(String? stateValue) {
+    state = state.copyWith(state: stateValue);
+  }
+
+  void setPriority(int? priority) {
+    state = state.copyWith(priority: priority);
+  }
+
+  void setSearchQuery(String? query) {
+    state = state.copyWith(searchQuery: query);
+  }
+
+  void setSortBy(String sortBy, {bool? ascending}) {
+    state = state.copyWith(sortBy: sortBy, ascending: ascending);
+  }
+
+  void setOffset(int offset) {
+    state = state.copyWith(offset: offset);
+  }
+
+  void clearFilters() {
+    state = const FirmsDirectoryParams();
+  }
+}
+
+/// Provider for current firms directory filter state
+final firmsDirectoryParamsProvider = NotifierProvider<FirmsDirectoryParamsNotifier, FirmsDirectoryParams>(
+  FirmsDirectoryParamsNotifier.new,
+);
+
+/// Provider for firms directory with filters
+final firmsDirectoryProvider = FutureProvider.family<List<Firm>, FirmsDirectoryParams>(
+  (ref, params) async {
+    final repo = ref.watch(jobRepositoryProvider);
+    return repo.getFirmsDirectory(
+      category: params.category,
+      region: params.region,
+      state: params.state,
+      priority: params.priority,
+      searchQuery: params.searchQuery,
+      sortBy: params.sortBy,
+      ascending: params.ascending,
+      limit: params.limit,
+      offset: params.offset,
+    );
+  },
+);
+
+/// Provider for firms directory using current filter state
+final currentFirmsDirectoryProvider = FutureProvider<List<Firm>>((ref) async {
+  final params = ref.watch(firmsDirectoryParamsProvider);
+  return ref.watch(firmsDirectoryProvider(params).future);
+});
+
+/// Provider for saved firm IDs
+final savedFirmIdsProvider = FutureProvider<Set<String>>((ref) async {
+  final repo = ref.watch(jobRepositoryProvider);
+  return repo.getSavedFirmIds();
+});
+
+/// Provider for saved firms list
+final savedFirmsProvider = FutureProvider<List<Firm>>((ref) async {
+  final repo = ref.watch(jobRepositoryProvider);
+  return repo.getSavedFirms();
+});
+
+/// Check if a firm is saved
+final isFirmSavedProvider = FutureProvider.family<bool, String>((ref, firmId) async {
+  final repo = ref.watch(jobRepositoryProvider);
+  return repo.isFirmSaved(firmId);
+});
+
+/// Notifier for managing saved firms
+class SavedFirmsNotifier extends AsyncNotifier<Set<String>> {
+  @override
+  Future<Set<String>> build() async {
+    final repo = ref.watch(jobRepositoryProvider);
+    return repo.getSavedFirmIds();
+  }
+
+  /// Save a firm
+  Future<bool> saveFirm(String firmId) async {
+    final repo = ref.read(jobRepositoryProvider);
+    final success = await repo.saveFirm(firmId);
+    if (success) {
+      // Optimistically add to set
+      final current = state.hasValue ? state.value! : <String>{};
+      state = AsyncData({...current, firmId});
+      // Invalidate related providers
+      ref.invalidate(isFirmSavedProvider(firmId));
+      ref.invalidate(savedFirmsProvider);
+    }
+    return success;
+  }
+
+  /// Unsave a firm
+  Future<bool> unsaveFirm(String firmId) async {
+    final repo = ref.read(jobRepositoryProvider);
+    final success = await repo.unsaveFirm(firmId);
+    if (success) {
+      // Optimistically remove from set
+      final current = state.hasValue ? state.value! : <String>{};
+      state = AsyncData(current.where((id) => id != firmId).toSet());
+      // Invalidate related providers
+      ref.invalidate(isFirmSavedProvider(firmId));
+      ref.invalidate(savedFirmsProvider);
+    }
+    return success;
+  }
+
+  /// Toggle save status
+  Future<void> toggleSave(String firmId, bool currentlySaved) async {
+    if (currentlySaved) {
+      await unsaveFirm(firmId);
+    } else {
+      await saveFirm(firmId);
+    }
+  }
+}
+
+/// Provider for saved firms notifier
+final savedFirmsNotifierProvider = AsyncNotifierProvider<SavedFirmsNotifier, Set<String>>(
+  SavedFirmsNotifier.new,
+);

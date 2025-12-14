@@ -663,4 +663,192 @@ class JobRepository extends BaseRepository {
 
     return result ?? false;
   }
+
+  // =====================
+  // Firms Directory
+  // =====================
+
+  /// Get firms directory with filters and pagination
+  Future<List<Firm>> getFirmsDirectory({
+    String? category,
+    String? region,
+    String? state,
+    int? priority,
+    String? searchQuery,
+    String sortBy = 'priority',
+    bool ascending = true,
+    int limit = 25,
+    int offset = 0,
+  }) async {
+    if (!isAvailable) {
+      return _getCachedFirms();
+    }
+
+    final result = await safeExecute<List<Firm>>(() async {
+      var query = table('firms').select().eq('is_visible', true);
+
+      // Apply filters
+      if (category != null && category.isNotEmpty) {
+        query = query.eq('firm_type', category);
+      }
+      if (region != null && region.isNotEmpty) {
+        query = query.eq('region', region);
+      }
+      if (state != null && state.isNotEmpty) {
+        query = query.eq('state', state);
+      }
+      if (priority != null) {
+        query = query.eq('priority', priority);
+      }
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        query = query.or(
+          'name.ilike.%$searchQuery%,description.ilike.%$searchQuery%,focus_sector.ilike.%$searchQuery%',
+        );
+      }
+
+      // Apply sorting and pagination
+      final response = await query
+          .order(sortBy, ascending: ascending)
+          .order('name', ascending: true)
+          .range(offset, offset + limit - 1);
+
+      final firms = (response as List).map((e) => Firm.fromJson(e)).toList();
+
+      // Cache the results on first page
+      if (offset == 0) {
+        await _cacheFirms(firms);
+      }
+
+      return firms;
+    }, errorMessage: 'Error fetching firms directory', rethrowError: false);
+
+    return result ?? _getCachedFirms();
+  }
+
+  /// Get count of firms matching filters
+  Future<int> getFirmsCount({
+    String? category,
+    String? region,
+    String? state,
+    int? priority,
+    String? searchQuery,
+  }) async {
+    if (!isAvailable) return 0;
+
+    final result = await safeExecute<int>(() async {
+      var query = table('firms').select().eq('is_visible', true);
+
+      if (category != null && category.isNotEmpty) {
+        query = query.eq('firm_type', category);
+      }
+      if (region != null && region.isNotEmpty) {
+        query = query.eq('region', region);
+      }
+      if (state != null && state.isNotEmpty) {
+        query = query.eq('state', state);
+      }
+      if (priority != null) {
+        query = query.eq('priority', priority);
+      }
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        query = query.or(
+          'name.ilike.%$searchQuery%,description.ilike.%$searchQuery%,focus_sector.ilike.%$searchQuery%',
+        );
+      }
+
+      // Execute and count results
+      final response = await query;
+      return (response as List).length;
+    }, errorMessage: 'Error counting firms', rethrowError: false);
+
+    return result ?? 0;
+  }
+
+  // =====================
+  // Saved Firms
+  // =====================
+
+  /// Get saved firms for current user
+  Future<List<Firm>> getSavedFirms({int limit = 50}) async {
+    if (!isAvailable || currentUserId == null) return [];
+
+    final result = await safeExecute<List<Firm>>(() async {
+      final response = await table('saved_firms')
+          .select('firm_id, created_at, firms(*)')
+          .eq('user_id', currentUserId!)
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return (response as List)
+          .where((e) => e['firms'] != null)
+          .map((e) => Firm.fromJson(e['firms']))
+          .toList();
+    }, errorMessage: 'Error fetching saved firms', rethrowError: false);
+
+    return result ?? [];
+  }
+
+  /// Save a firm for current user
+  Future<bool> saveFirm(String firmId) async {
+    if (!isAvailable || currentUserId == null) return false;
+
+    final result = await safeExecute<bool>(() async {
+      await table('saved_firms').insert({
+        'user_id': currentUserId!,
+        'firm_id': firmId,
+      });
+      return true;
+    }, errorMessage: 'Error saving firm', rethrowError: false);
+
+    return result ?? false;
+  }
+
+  /// Unsave a firm for current user
+  Future<bool> unsaveFirm(String firmId) async {
+    if (!isAvailable || currentUserId == null) return false;
+
+    final result = await safeExecute<bool>(() async {
+      await table('saved_firms')
+          .delete()
+          .eq('user_id', currentUserId!)
+          .eq('firm_id', firmId);
+      return true;
+    }, errorMessage: 'Error unsaving firm', rethrowError: false);
+
+    return result ?? false;
+  }
+
+  /// Check if a firm is saved by current user
+  Future<bool> isFirmSaved(String firmId) async {
+    if (!isAvailable || currentUserId == null) return false;
+
+    final result = await safeExecute<bool>(() async {
+      final response = await table('saved_firms')
+          .select('id')
+          .eq('user_id', currentUserId!)
+          .eq('firm_id', firmId)
+          .maybeSingle();
+
+      return response != null;
+    }, errorMessage: 'Error checking saved firm status', rethrowError: false);
+
+    return result ?? false;
+  }
+
+  /// Get IDs of all saved firms for current user
+  Future<Set<String>> getSavedFirmIds() async {
+    if (!isAvailable || currentUserId == null) return {};
+
+    final result = await safeExecute<Set<String>>(() async {
+      final response = await table('saved_firms')
+          .select('firm_id')
+          .eq('user_id', currentUserId!);
+
+      return (response as List)
+          .map((e) => e['firm_id'] as String)
+          .toSet();
+    }, errorMessage: 'Error fetching saved firm IDs', rethrowError: false);
+
+    return result ?? {};
+  }
 }

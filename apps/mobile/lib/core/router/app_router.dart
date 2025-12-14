@@ -39,6 +39,7 @@ import '../../features/messaging/screens/new_conversation_screen.dart';
 import '../../features/shared/screens/settings_screen.dart';
 import '../../features/shared/screens/notifications_screen.dart';
 import '../../features/shared/screens/verification_appeal_screen.dart';
+import '../../features/shared/screens/firms_directory_screen.dart';
 import '../../features/school/screens/school_dashboard.dart';
 import '../../features/school/screens/students_screen.dart';
 import '../../features/school/widgets/school_shell.dart';
@@ -99,6 +100,7 @@ class AppRoutes {
   static const messagesNew = '/messages/new';
   static const notifications = '/notifications';
   static const verificationAppeal = '/verification-appeal';
+  static const firmsDirectory = '/firms';
   // Note: Individual conversation routes use /messages/:conversationId
 }
 
@@ -544,6 +546,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
+
+      // Firms Directory (accessible from any portal)
+      GoRoute(
+        path: AppRoutes.firmsDirectory,
+        builder: (context, state) => const FirmsDirectoryScreen(),
+      ),
     ],
 
     errorBuilder: (context, state) => Scaffold(
@@ -584,9 +592,9 @@ class CandidateShell extends StatelessWidget {
             label: 'Apply',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat_bubble),
-            label: 'Messages',
+            icon: Icon(Icons.analytics_outlined),
+            selectedIcon: Icon(Icons.analytics),
+            label: 'Analytics',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
@@ -602,8 +610,10 @@ class CandidateShell extends StatelessWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith(AppRoutes.candidateJobs)) return 1;
     if (location.startsWith(AppRoutes.candidateApplications)) return 2;
-    if (location.startsWith(AppRoutes.candidateMessages)) return 3;
-    if (location.startsWith(AppRoutes.candidateProfile)) return 4;
+    if (location.startsWith(AppRoutes.candidateAnalytics)) return 3;
+    if (location.startsWith(AppRoutes.candidateProfile) ||
+        location.startsWith(AppRoutes.candidateEditProfile) ||
+        location.startsWith(AppRoutes.candidateSettings)) return 4;
     return 0;
   }
 
@@ -619,7 +629,7 @@ class CandidateShell extends StatelessWidget {
         context.go(AppRoutes.candidateApplications);
         break;
       case 3:
-        context.go(AppRoutes.candidateMessages);
+        context.go(AppRoutes.candidateAnalytics);
         break;
       case 4:
         context.go(AppRoutes.candidateProfile);

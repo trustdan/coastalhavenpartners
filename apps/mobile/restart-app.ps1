@@ -2,7 +2,6 @@
 # Recompiles and restarts the Flutter app on the emulator
 
 param(
-    [switch]$Clean,      # Run flutter clean first
     [switch]$Release,    # Build in release mode
     [string]$Device      # Specific device ID (optional)
 )
@@ -13,12 +12,10 @@ Set-Location $scriptDir
 
 Write-Host "🔄 Restarting Flutter app..." -ForegroundColor Cyan
 
-# Optional clean
-if ($Clean) {
-    Write-Host "🧹 Running flutter clean..." -ForegroundColor Yellow
-    flutter clean
-    flutter pub get
-}
+# Always clean to avoid PDB lock issues on Windows
+Write-Host "🧹 Running flutter clean..." -ForegroundColor Yellow
+flutter clean
+flutter pub get
 
 # Build device argument
 $deviceArg = if ($Device) { "-d $Device" } else { "" }
