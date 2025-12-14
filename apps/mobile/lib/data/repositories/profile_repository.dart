@@ -659,6 +659,66 @@ class ProfileRepository extends BaseRepository {
     }, errorMessage: 'Error uploading document');
   }
 
+  /// Upload a profile photo to Supabase storage
+  /// Returns the public URL of the uploaded photo
+  Future<String?> uploadProfilePhoto(
+    Uint8List photoBytes,
+    String fileName,
+  ) async {
+    if (!isAvailable || currentUserId == null) return null;
+
+    return safeExecute<String?>(() async {
+      // Storage bucket for profile photos
+      const bucketName = 'profile-photos';
+
+      // Create a unique file path (RLS expects user_id as first folder)
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = fileName.split('.').last.toLowerCase();
+      final storagePath = '$currentUserId/${timestamp}_profile.$extension';
+
+      // Determine content type
+      String contentType;
+      switch (extension) {
+        case 'png':
+          contentType = 'image/png';
+          break;
+        case 'gif':
+          contentType = 'image/gif';
+          break;
+        case 'webp':
+          contentType = 'image/webp';
+          break;
+        default:
+          contentType = 'image/jpeg';
+      }
+
+      // Upload to Supabase storage
+      await client!.storage
+          .from(bucketName)
+          .uploadBinary(
+            storagePath,
+            photoBytes,
+            fileOptions: FileOptions(
+              contentType: contentType,
+              upsert: true,
+            ),
+          );
+
+      // Get the public URL
+      final url = client!.storage.from(bucketName).getPublicUrl(storagePath);
+
+      // Update the profile with the new photo URL
+      await table('profiles')
+          .update({
+            'avatar_url': url,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', currentUserId!);
+
+      return url;
+    }, errorMessage: 'Error uploading profile photo');
+  }
+
   /// Delete a document from Supabase storage
   Future<bool> deleteDocument(String documentUrl) async {
     if (!isAvailable) return false;

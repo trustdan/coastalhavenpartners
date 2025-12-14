@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -150,6 +151,12 @@ class _BasicInfoTabState extends State<_BasicInfoTab> {
         'Passionate about finance and technology with a strong background in investment analysis.',
   );
 
+  // Photo handling
+  final ImagePicker _imagePicker = ImagePicker();
+  Uint8List? _photoBytes;
+  String? _photoUrl;
+  bool _isUploadingPhoto = false;
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -175,25 +182,54 @@ class _BasicInfoTabState extends State<_BasicInfoTab> {
           Center(
             child: Stack(
               children: [
+                // Profile photo circle
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: isDark
                       ? AppColors.cardDark
                       : AppColors.cardLight,
-                  child: Text(
-                    'JS',
-                    style: AppTextStyles.h1.copyWith(color: AppColors.teal),
-                  ),
+                  backgroundImage: _photoBytes != null
+                      ? MemoryImage(_photoBytes!)
+                      : (_photoUrl != null ? NetworkImage(_photoUrl!) : null),
+                  child: _photoBytes == null && _photoUrl == null
+                      ? Text(
+                          'JS',
+                          style: AppTextStyles.h1.copyWith(color: AppColors.teal),
+                        )
+                      : null,
                 ),
+                // Upload progress overlay
+                if (_isUploadingPhoto)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Camera button
                 Positioned(
                   bottom: 0,
                   right: 0,
                   child: GestureDetector(
-                    onTap: _pickPhoto,
+                    onTap: _isUploadingPhoto ? null : _pickPhoto,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.teal,
+                        color: _isUploadingPhoto
+                            ? AppColors.teal.withValues(alpha: 0.5)
+                            : AppColors.teal,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: Theme.of(context).scaffoldBackgroundColor,
@@ -273,9 +309,162 @@ class _BasicInfoTabState extends State<_BasicInfoTab> {
     );
   }
 
-  void _pickPhoto() {
-    // TODO: Implement photo picker
+  Future<void> _pickPhoto() async {
+    // Show bottom sheet with camera/gallery options
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.outline,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Choose Photo',
+                style: AppTextStyles.h4,
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.teal.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.camera_alt, color: AppColors.teal),
+                ),
+                title: const Text('Take a Photo'),
+                subtitle: const Text('Use your camera'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.info.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.photo_library, color: AppColors.info),
+                ),
+                title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select an existing photo'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+              if (_photoBytes != null || _photoUrl != null) ...[
+                const Divider(),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.delete_outline, color: AppColors.error),
+                  ),
+                  title: const Text('Remove Photo'),
+                  subtitle: const Text('Delete current photo'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _removePhoto();
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      // Read the file bytes
+      final bytes = await pickedFile.readAsBytes();
+
+      setState(() {
+        _photoBytes = bytes;
+        _photoUrl = null; // Clear remote URL when new local photo is selected
+      });
+
+      widget.onChanged();
+
+      // Auto-upload the photo
+      await _uploadPhoto(bytes, pickedFile.name);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking photo: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removePhoto() {
+    setState(() {
+      _photoBytes = null;
+      _photoUrl = null;
+    });
     widget.onChanged();
+  }
+
+  Future<void> _uploadPhoto(Uint8List bytes, String fileName) async {
+    setState(() => _isUploadingPhoto = true);
+
+    try {
+      final url = await ProfileRepository.instance.uploadProfilePhoto(
+        bytes,
+        fileName,
+      );
+
+      if (url != null && mounted) {
+        setState(() {
+          _photoUrl = url;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading photo: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingPhoto = false);
+      }
+    }
   }
 
   Widget _buildSectionTitle(String title) {

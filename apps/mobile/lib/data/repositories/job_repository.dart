@@ -561,4 +561,106 @@ class JobRepository extends BaseRepository {
           .eq('id', applicationId);
     }, errorMessage: 'Error updating application status');
   }
+
+  // =====================
+  // Saved Jobs
+  // =====================
+
+  /// Get saved jobs for current candidate
+  Future<List<JobListing>> getSavedJobs({int limit = 50}) async {
+    if (!isAvailable || currentUserId == null) return [];
+
+    final result = await safeExecute<List<JobListing>>(() async {
+      // First get candidate profile ID
+      final candidateProfile = await table('candidate_profiles')
+          .select('id')
+          .eq('user_id', currentUserId!)
+          .maybeSingle();
+
+      if (candidateProfile == null) return <JobListing>[];
+
+      final response = await table('saved_jobs')
+          .select('job_listing_id, job_listings(*, firms(*))')
+          .eq('candidate_profile_id', candidateProfile['id'])
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return (response as List)
+          .where((e) => e['job_listings'] != null)
+          .map((e) => JobListing.fromJson(e['job_listings']))
+          .toList();
+    }, errorMessage: 'Error fetching saved jobs', rethrowError: false);
+
+    return result ?? [];
+  }
+
+  /// Save a job for current candidate
+  Future<bool> saveJob(String jobListingId) async {
+    if (!isAvailable || currentUserId == null) return false;
+
+    final result = await safeExecute<bool>(() async {
+      final candidateProfile = await table('candidate_profiles')
+          .select('id')
+          .eq('user_id', currentUserId!)
+          .maybeSingle();
+
+      if (candidateProfile == null) return false;
+
+      await table('saved_jobs').insert({
+        'candidate_profile_id': candidateProfile['id'],
+        'job_listing_id': jobListingId,
+      });
+
+      return true;
+    }, errorMessage: 'Error saving job', rethrowError: false);
+
+    return result ?? false;
+  }
+
+  /// Unsave a job for current candidate
+  Future<bool> unsaveJob(String jobListingId) async {
+    if (!isAvailable || currentUserId == null) return false;
+
+    final result = await safeExecute<bool>(() async {
+      final candidateProfile = await table('candidate_profiles')
+          .select('id')
+          .eq('user_id', currentUserId!)
+          .maybeSingle();
+
+      if (candidateProfile == null) return false;
+
+      await table('saved_jobs')
+          .delete()
+          .eq('candidate_profile_id', candidateProfile['id'])
+          .eq('job_listing_id', jobListingId);
+
+      return true;
+    }, errorMessage: 'Error unsaving job', rethrowError: false);
+
+    return result ?? false;
+  }
+
+  /// Check if current candidate has saved a job
+  Future<bool> isJobSaved(String jobListingId) async {
+    if (!isAvailable || currentUserId == null) return false;
+
+    final result = await safeExecute<bool>(() async {
+      final candidateProfile = await table('candidate_profiles')
+          .select('id')
+          .eq('user_id', currentUserId!)
+          .maybeSingle();
+
+      if (candidateProfile == null) return false;
+
+      final response = await table('saved_jobs')
+          .select('id')
+          .eq('candidate_profile_id', candidateProfile['id'])
+          .eq('job_listing_id', jobListingId)
+          .maybeSingle();
+
+      return response != null;
+    }, errorMessage: 'Error checking saved job status', rethrowError: false);
+
+    return result ?? false;
+  }
 }

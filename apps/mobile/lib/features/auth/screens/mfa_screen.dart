@@ -240,7 +240,7 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
             case 'recruiter':
               context.go(AppRoutes.recruiter);
               break;
-            case 'school':
+            case 'school_admin':
               context.go(AppRoutes.school);
               break;
             default:
@@ -342,7 +342,7 @@ class _MfaScreenState extends ConsumerState<MfaScreen> {
                     case 'recruiter':
                       context.go(AppRoutes.recruiter);
                       break;
-                    case 'school':
+                    case 'school_admin':
                       context.go(AppRoutes.school);
                       break;
                     default:

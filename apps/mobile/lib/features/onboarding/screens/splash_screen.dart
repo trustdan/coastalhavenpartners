@@ -9,7 +9,7 @@ import '../../../data/services/local_storage_service.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
 
 /// Set to true to show dev testing buttons on splash screen
-const bool _devMode = true;
+const bool _devMode = false;
 
 /// Splash screen shown on app launch
 /// Shows animated logo and navigates based on auth state
@@ -71,28 +71,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final authState = ref.read(authStateProvider);
     final isAuthenticated =
         authState.hasValue && (authState.value?.isAuthenticated ?? false);
-    final userRole = authState.hasValue ? authState.value?.userRole : null;
+
+    // Get role from auth state, with fallback to user metadata
+    String? userRole = authState.hasValue ? authState.value?.userRole : null;
+    if ((userRole == null || userRole.isEmpty) && isAuthenticated) {
+      // Fallback: Check user metadata directly
+      final user = authState.value?.user;
+      userRole = user?.userMetadata?['role'] as String?;
+    }
 
     if (!mounted) return;
 
     if (!hasCompletedOnboarding) {
       // New user - show onboarding
       context.go(AppRoutes.onboarding);
-    } else if (isAuthenticated && userRole != null) {
-      // Authenticated user - go to their dashboard
+    } else if (isAuthenticated && userRole != null && userRole.isNotEmpty) {
+      // Authenticated user with role - go to profile completion
+      // (profile completion screens will redirect to dashboard if profile is already complete)
       switch (userRole) {
         case 'candidate':
-          context.go(AppRoutes.candidate);
+          context.go(AppRoutes.completeProfileCandidate);
           break;
         case 'recruiter':
-          context.go(AppRoutes.recruiter);
+          context.go(AppRoutes.completeProfileRecruiter);
           break;
-        case 'school':
-          context.go(AppRoutes.school);
+        case 'school_admin':
+          context.go(AppRoutes.completeProfileSchool);
           break;
         default:
-          context.go(AppRoutes.login);
+          context.go(AppRoutes.roleSelection);
       }
+    } else if (isAuthenticated && userRole == null) {
+      // Authenticated but no role - go to role selection
+      context.go(AppRoutes.roleSelection);
     } else {
       // Not authenticated - go to login
       context.go(AppRoutes.login);

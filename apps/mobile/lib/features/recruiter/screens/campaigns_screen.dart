@@ -92,6 +92,12 @@ class _CampaignsScreenState extends State<CampaignsScreen>
     return _campaigns.where((c) => c.status == status).toList();
   }
 
+  // Check if a campaign ID is sample data (not a real UUID)
+  bool _isSampleCampaign(String id) {
+    // Sample campaigns have simple numeric IDs, real ones are UUIDs
+    return id.length < 10 && int.tryParse(id) != null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -159,12 +165,103 @@ class _CampaignsScreenState extends State<CampaignsScreen>
       return _buildEmptyState(context, status);
     }
 
+    // Check if showing sample data
+    final hasSampleData = campaigns.any((c) => _isSampleCampaign(c.id));
+
     return ListView.builder(
       padding: AppSpacing.screenPadding,
-      itemCount: campaigns.length,
+      itemCount: campaigns.length + (hasSampleData ? 1 : 0),
       itemBuilder: (context, index) {
-        return _buildCampaignCard(context, isDark, campaigns[index]);
+        // Show sample data banner at the top
+        if (hasSampleData && index == 0) {
+          return _buildSampleDataBanner(context, isDark);
+        }
+        final campaignIndex = hasSampleData ? index - 1 : index;
+        return _buildCampaignCard(context, isDark, campaigns[campaignIndex]);
       },
+    );
+  }
+
+  Widget _buildSampleDataBanner(BuildContext context, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 20,
+            color: AppColors.warning,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sample Campaigns',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'These are example campaigns to show you what the feature looks like.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: _clearSampleData,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.warning,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearSampleData() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Sample Data'),
+        content: const Text(
+          'Remove all sample campaigns? This will show an empty campaigns list until you create real campaigns.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _campaigns.removeWhere((c) => _isSampleCampaign(c.id));
+              });
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                const SnackBar(content: Text('Sample data cleared')),
+              );
+            },
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -213,6 +310,8 @@ class _CampaignsScreenState extends State<CampaignsScreen>
     bool isDark,
     _Campaign campaign,
   ) {
+    final isSample = _isSampleCampaign(campaign.id);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Material(
@@ -220,7 +319,11 @@ class _CampaignsScreenState extends State<CampaignsScreen>
         borderRadius: AppRadius.card,
         child: InkWell(
           onTap: () {
-            context.push('/recruiter/campaigns/${campaign.id}');
+            if (isSample) {
+              _showSampleCampaignDialog(context, campaign);
+            } else {
+              context.push('/recruiter/campaigns/${campaign.id}');
+            }
           },
           onLongPress: () {
             _showCampaignActions(context, campaign);
@@ -409,6 +512,7 @@ class _CampaignsScreenState extends State<CampaignsScreen>
   Widget _buildScheduledInfo(BuildContext context, _Campaign campaign) {
     final scheduledFor = campaign.scheduledFor!;
     final daysUntil = scheduledFor.difference(DateTime.now()).inDays;
+    final isSample = _isSampleCampaign(campaign.id);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -439,7 +543,11 @@ class _CampaignsScreenState extends State<CampaignsScreen>
           ),
           TextButton(
             onPressed: () {
-              context.push('/recruiter/campaigns/${campaign.id}/edit');
+              if (isSample) {
+                _showSampleCampaignDialog(context, campaign);
+              } else {
+                context.push('/recruiter/campaigns/${campaign.id}/edit');
+              }
             },
             child: const Text('Edit'),
           ),
@@ -449,12 +557,18 @@ class _CampaignsScreenState extends State<CampaignsScreen>
   }
 
   Widget _buildDraftActions(BuildContext context, _Campaign campaign) {
+    final isSample = _isSampleCampaign(campaign.id);
+
     return Row(
       children: [
         Expanded(
           child: OutlinedButton(
             onPressed: () {
-              context.push('/recruiter/campaigns/${campaign.id}/edit');
+              if (isSample) {
+                _showSampleCampaignDialog(context, campaign);
+              } else {
+                context.push('/recruiter/campaigns/${campaign.id}/edit');
+              }
             },
             child: const Text('Continue Editing'),
           ),
@@ -469,38 +583,131 @@ class _CampaignsScreenState extends State<CampaignsScreen>
     );
   }
 
+  void _showSampleCampaignDialog(BuildContext context, _Campaign campaign) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: AppColors.warning),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Sample Campaign')),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              campaign.name,
+              style: AppTextStyles.h4,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This is sample data to demonstrate the campaigns feature. '
+              'Create a real campaign to see full details and tracking.',
+              style: AppTextStyles.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            if (campaign.status == CampaignStatus.sent ||
+                campaign.status == CampaignStatus.completed) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildSampleStat('Sent', '${campaign.sentCount}'),
+                  _buildSampleStat('Open Rate', '${campaign.openRate.toStringAsFixed(1)}%'),
+                  _buildSampleStat('Response', '${campaign.responseRate.toStringAsFixed(1)}%'),
+                ],
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/recruiter/campaigns/new');
+            },
+            child: const Text('Create Campaign'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSampleStat(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: AppTextStyles.h4.copyWith(color: AppColors.teal)),
+        Text(label, style: AppTextStyles.caption),
+      ],
+    );
+  }
+
   void _showCampaignActions(BuildContext context, _Campaign campaign) {
+    final isSample = _isSampleCampaign(campaign.id);
+
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (isSample)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: AppColors.warning),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Sample Campaign',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ListTile(
               leading: const Icon(Icons.visibility_outlined),
               title: const Text('View Details'),
               onTap: () {
-                Navigator.pop(context);
-                context.push('/recruiter/campaigns/${campaign.id}');
+                Navigator.pop(sheetContext);
+                if (isSample) {
+                  _showSampleCampaignDialog(context, campaign);
+                } else {
+                  context.push('/recruiter/campaigns/${campaign.id}');
+                }
               },
             ),
-            if (campaign.status == CampaignStatus.draft ||
-                campaign.status == CampaignStatus.scheduled)
+            if ((campaign.status == CampaignStatus.draft ||
+                campaign.status == CampaignStatus.scheduled) && !isSample)
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('Edit Campaign'),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext);
                   context.push('/recruiter/campaigns/${campaign.id}/edit');
                 },
               ),
-            if (campaign.status == CampaignStatus.draft)
+            if (campaign.status == CampaignStatus.draft && !isSample)
               ListTile(
                 leading: const Icon(Icons.send_outlined),
                 title: const Text('Send Now'),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext);
                   _sendCampaign(campaign);
                 },
               ),
@@ -508,7 +715,7 @@ class _CampaignsScreenState extends State<CampaignsScreen>
               leading: const Icon(Icons.copy_outlined),
               title: const Text('Duplicate'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 _duplicateCampaign(campaign);
               },
             ),
@@ -516,7 +723,7 @@ class _CampaignsScreenState extends State<CampaignsScreen>
               leading: Icon(Icons.delete_outline, color: AppColors.error),
               title: Text('Delete', style: TextStyle(color: AppColors.error)),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(sheetContext);
                 _deleteCampaign(campaign);
               },
             ),

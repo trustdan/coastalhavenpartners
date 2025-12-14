@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/providers/candidate_analytics_provider.dart';
 import '../../../data/models/models.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
 
@@ -72,7 +73,7 @@ class CandidateDashboard extends ConsumerWidget {
                 AppSpacing.subsectionGap,
 
                 // Activity Stats
-                _buildActivityStats(context, isDark),
+                _buildActivityStats(context, isDark, ref),
                 AppSpacing.subsectionGap,
 
                 // Matching Jobs
@@ -264,14 +265,44 @@ class CandidateDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivityStats(BuildContext context, bool isDark) {
-    // TODO: These would come from an analytics provider when implemented
+  Widget _buildActivityStats(BuildContext context, bool isDark, WidgetRef ref) {
+    final analyticsAsync = ref.watch(candidateAnalyticsProvider);
+
+    return analyticsAsync.when(
+      loading: () => _buildActivityStatsContent(context, isDark, 0, 0, null),
+      error: (_, __) => _buildActivityStatsContent(context, isDark, 0, 0, null),
+      data: (analytics) => _buildActivityStatsContent(
+        context,
+        isDark,
+        analytics.totalViews,
+        analytics.uniqueFirms,
+        analytics.viewsChange,
+      ),
+    );
+  }
+
+  Widget _buildActivityStatsContent(
+    BuildContext context,
+    bool isDark,
+    int profileViews,
+    int uniqueFirms,
+    double? viewsChange,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Activity',
-          style: AppTextStyles.h4,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Activity',
+              style: AppTextStyles.h4,
+            ),
+            TextButton(
+              onPressed: () => context.push(AppRoutes.candidateAnalytics),
+              child: const Text('View all'),
+            ),
+          ],
         ),
         AppSpacing.itemGap,
         Row(
@@ -281,8 +312,12 @@ class CandidateDashboard extends ConsumerWidget {
                 context,
                 isDark,
                 icon: Icons.visibility_outlined,
-                value: 0,
+                value: profileViews,
                 label: 'Profile Views',
+                trend: viewsChange != null && viewsChange != 0
+                    ? '${viewsChange >= 0 ? '+' : ''}${viewsChange.toStringAsFixed(0)}%'
+                    : null,
+                trendPositive: viewsChange != null && viewsChange >= 0,
               ),
             ),
             AppSpacing.hGapMd,
@@ -291,7 +326,7 @@ class CandidateDashboard extends ConsumerWidget {
                 context,
                 isDark,
                 icon: Icons.business_outlined,
-                value: 0,
+                value: uniqueFirms,
                 label: 'Unique Firms',
               ),
             ),

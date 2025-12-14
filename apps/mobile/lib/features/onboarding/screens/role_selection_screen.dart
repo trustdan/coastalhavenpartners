@@ -99,11 +99,16 @@ class RoleSelectionScreen extends ConsumerWidget {
                       description:
                           'I\'m looking for opportunities in finance',
                       gradientColors: [AppColors.teal, AppColors.emerald],
-                      onTap: () => context.go(
-                        isLoggedIn
-                          ? AppRoutes.completeProfileCandidate
-                          : AppRoutes.signupCandidate,
-                      ),
+                      onTap: () async {
+                        if (isLoggedIn) {
+                          await ref.read(authStateProvider.notifier).updateRole('candidate');
+                          if (context.mounted) {
+                            context.go(AppRoutes.completeProfileCandidate);
+                          }
+                        } else {
+                          context.go(AppRoutes.signupCandidate);
+                        }
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -114,11 +119,16 @@ class RoleSelectionScreen extends ConsumerWidget {
                       title: 'Recruiter',
                       description: 'I\'m hiring elite finance talent',
                       gradientColors: [AppColors.emerald, AppColors.green],
-                      onTap: () => context.go(
-                        isLoggedIn
-                          ? AppRoutes.completeProfileRecruiter
-                          : AppRoutes.signupRecruiter,
-                      ),
+                      onTap: () async {
+                        if (isLoggedIn) {
+                          await ref.read(authStateProvider.notifier).updateRole('recruiter');
+                          if (context.mounted) {
+                            context.go(AppRoutes.completeProfileRecruiter);
+                          }
+                        } else {
+                          context.go(AppRoutes.signupRecruiter);
+                        }
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -129,11 +139,16 @@ class RoleSelectionScreen extends ConsumerWidget {
                       title: 'Career Services',
                       description: 'I support students at my institution',
                       gradientColors: [AppColors.green, AppColors.teal],
-                      onTap: () => context.go(
-                        isLoggedIn
-                          ? AppRoutes.completeProfileSchool
-                          : AppRoutes.signupSchool,
-                      ),
+                      onTap: () async {
+                        if (isLoggedIn) {
+                          await ref.read(authStateProvider.notifier).updateRole('school_admin');
+                          if (context.mounted) {
+                            context.go(AppRoutes.completeProfileSchool);
+                          }
+                        } else {
+                          context.go(AppRoutes.signupSchool);
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -193,7 +208,7 @@ class _RoleCard extends StatelessWidget {
   final String title;
   final String description;
   final List<Color> gradientColors;
-  final VoidCallback onTap;
+  final Future<void> Function() onTap;
 
   const _RoleCard({
     required this.icon,

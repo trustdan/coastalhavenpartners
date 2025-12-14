@@ -105,23 +105,32 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       final user = session?.user ?? SupabaseService.instance.currentUser;
 
       if (user?.emailConfirmedAt != null) {
-        // Email is verified - get user role and navigate
+        // Email is verified - navigate to profile completion based on role
         if (mounted) {
+          // First check auth state
           final authState = ref.read(authStateProvider);
-          final role = authState.hasValue ? authState.value?.userRole : null;
+          String? role = authState.hasValue ? authState.value?.userRole : null;
 
+          // Fallback: Check user metadata directly (role is stored there during signup)
+          if ((role == null || role.isEmpty) && user != null) {
+            role = user.userMetadata?['role'] as String?;
+          }
+
+          // Always go to profile completion first after email verification
+          // The profile completion screen will redirect to dashboard if already complete
           switch (role) {
             case 'candidate':
-              context.go(AppRoutes.candidate);
+              context.go(AppRoutes.completeProfileCandidate);
               break;
             case 'recruiter':
-              context.go(AppRoutes.recruiter);
+              context.go(AppRoutes.completeProfileRecruiter);
               break;
-            case 'school':
-              context.go(AppRoutes.school);
+            case 'school_admin':
+              context.go(AppRoutes.completeProfileSchool);
               break;
             default:
-              context.go(AppRoutes.candidate);
+              // If no role set, go to role selection
+              context.go(AppRoutes.roleSelection);
           }
         }
       } else {

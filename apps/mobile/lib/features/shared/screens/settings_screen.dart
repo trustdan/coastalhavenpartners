@@ -9,7 +9,9 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/analytics_provider.dart';
 import '../../../core/providers/recruiter_provider.dart';
+import '../../../core/providers/settings_provider.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/providers/theme_provider.dart';
 import '../../../data/models/models.dart';
 import '../../../data/services/supabase_service.dart';
 import '../../../services/connectivity_service.dart';
@@ -31,25 +33,10 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  // Notification preferences
-  bool _emailNotifications = true;
-  bool _pushNotifications = true;
-  bool _jobAlerts = true;
-  bool _messageNotifications = true;
-  bool _marketingEmails = false;
-
-  // Privacy preferences
-  bool _profileVisible = true;
-  bool _showOnlineStatus = true;
-  bool _allowMessagesFromRecruiters = true;
-  bool _allowMessagesFromCandidates = true;
-
-  // Appearance
-  String _themeMode = 'system'; // 'light', 'dark', 'system'
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settingsAsync = ref.watch(userSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -70,9 +57,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 subtitle: 'Update your personal information',
                 onTap: () {
                   if (widget.userRole == 'candidate') {
-                    context.push('/candidate/edit-profile');
+                    context.push(AppRoutes.candidateEditProfile);
+                  } else if (widget.userRole == 'recruiter') {
+                    context.push(AppRoutes.recruiterEditProfile);
                   } else {
-                    // TODO: Recruiter edit profile
+                    // School admin - coming soon
                     _showComingSoon();
                   }
                 },
@@ -109,114 +98,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Notifications Section
           _buildSectionHeader('Notifications'),
-          _buildSettingsCard(
-            context,
-            isDark,
-            children: [
-              _buildSwitchTile(
-                icon: Icons.email_outlined,
-                title: 'Email Notifications',
-                value: _emailNotifications,
-                onChanged: (value) => setState(() => _emailNotifications = value),
-              ),
-              _buildDivider(isDark),
-              _buildSwitchTile(
-                icon: Icons.notifications_outlined,
-                title: 'Push Notifications',
-                value: _pushNotifications,
-                onChanged: (value) => setState(() => _pushNotifications = value),
-              ),
-              if (widget.userRole == 'candidate') ...[
-                _buildDivider(isDark),
-                _buildSwitchTile(
-                  icon: Icons.work_outline,
-                  title: 'Job Alerts',
-                  subtitle: 'Get notified about matching opportunities',
-                  value: _jobAlerts,
-                  onChanged: (value) => setState(() => _jobAlerts = value),
-                ),
-              ],
-              _buildDivider(isDark),
-              _buildSwitchTile(
-                icon: Icons.chat_bubble_outline,
-                title: 'Message Notifications',
-                value: _messageNotifications,
-                onChanged: (value) => setState(() => _messageNotifications = value),
-              ),
-              _buildDivider(isDark),
-              _buildSwitchTile(
-                icon: Icons.campaign_outlined,
-                title: 'Marketing Emails',
-                subtitle: 'Receive updates and tips',
-                value: _marketingEmails,
-                onChanged: (value) => setState(() => _marketingEmails = value),
-              ),
-            ],
-          ),
+          _buildNotificationsSection(context, isDark, settingsAsync),
           AppSpacing.sectionGap,
 
           // Privacy Section
           _buildSectionHeader('Privacy'),
-          _buildSettingsCard(
-            context,
-            isDark,
-            children: [
-              _buildSwitchTile(
-                icon: Icons.visibility_outlined,
-                title: 'Profile Visible',
-                subtitle: widget.userRole == 'candidate'
-                    ? 'Allow recruiters to find you'
-                    : 'Allow candidates to see your profile',
-                value: _profileVisible,
-                onChanged: (value) => setState(() => _profileVisible = value),
-              ),
-              _buildDivider(isDark),
-              _buildSwitchTile(
-                icon: Icons.circle,
-                title: 'Show Online Status',
-                value: _showOnlineStatus,
-                onChanged: (value) => setState(() => _showOnlineStatus = value),
-              ),
-              if (widget.userRole == 'candidate') ...[
-                _buildDivider(isDark),
-                _buildSwitchTile(
-                  icon: Icons.message_outlined,
-                  title: 'Allow Messages from Recruiters',
-                  value: _allowMessagesFromRecruiters,
-                  onChanged: (value) => setState(() => _allowMessagesFromRecruiters = value),
-                ),
-              ],
-              if (widget.userRole == 'recruiter') ...[
-                _buildDivider(isDark),
-                _buildSwitchTile(
-                  icon: Icons.message_outlined,
-                  title: 'Allow Messages from Candidates',
-                  value: _allowMessagesFromCandidates,
-                  onChanged: (value) => setState(() => _allowMessagesFromCandidates = value),
-                ),
-              ],
-            ],
-          ),
+          _buildPrivacySection(context, isDark, settingsAsync),
           AppSpacing.sectionGap,
 
           // Appearance Section
           _buildSectionHeader('Appearance'),
-          _buildSettingsCard(
-            context,
-            isDark,
-            children: [
-              _buildSettingsTile(
-                icon: Icons.dark_mode_outlined,
-                title: 'Theme',
-                subtitle: _themeMode == 'system'
-                    ? 'System default'
-                    : _themeMode == 'dark'
-                        ? 'Dark mode'
-                        : 'Light mode',
-                onTap: () => _showThemeDialog(),
-              ),
-            ],
-          ),
+          _buildAppearanceSection(context, isDark),
           AppSpacing.sectionGap,
 
           // Data & Sync Section
@@ -246,6 +138,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.bug_report_outlined,
                 title: 'Report a Bug',
                 onTap: () => _openUrl('mailto:support@coastalhavenpartners.com?subject=Bug%20Report'),
+              ),
+              _buildDivider(isDark),
+              _buildSettingsTile(
+                icon: Icons.support_agent,
+                title: 'Submit Support Request',
+                subtitle: 'Account issues, verification appeals, etc.',
+                onTap: () => context.push(
+                  '${AppRoutes.verificationAppeal}?role=${widget.userRole}',
+                ),
               ),
             ],
           ),
@@ -404,6 +305,201 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       height: 1,
       indent: 56,
       color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    );
+  }
+
+  Widget _buildNotificationsSection(
+    BuildContext context,
+    bool isDark,
+    AsyncValue<UserSettings?> settingsAsync,
+  ) {
+    return settingsAsync.when(
+      data: (settings) {
+        // Use defaults if settings not loaded
+        final emailNotifications = settings?.emailNotifications ?? true;
+        final pushNotifications = settings?.pushNotifications ?? true;
+        final jobAlerts = settings?.jobAlerts ?? true;
+        final messageNotifications = settings?.messageNotifications ?? true;
+        final marketingEmails = settings?.marketingEmails ?? false;
+
+        return _buildSettingsCard(
+          context,
+          isDark,
+          children: [
+            _buildSwitchTile(
+              icon: Icons.email_outlined,
+              title: 'Email Notifications',
+              value: emailNotifications,
+              onChanged: (value) => ref
+                  .read(userSettingsProvider.notifier)
+                  .toggleEmailNotifications(value),
+            ),
+            _buildDivider(isDark),
+            _buildSwitchTile(
+              icon: Icons.notifications_outlined,
+              title: 'Push Notifications',
+              value: pushNotifications,
+              onChanged: (value) => ref
+                  .read(userSettingsProvider.notifier)
+                  .togglePushNotifications(value),
+            ),
+            if (widget.userRole == 'candidate') ...[
+              _buildDivider(isDark),
+              _buildSwitchTile(
+                icon: Icons.work_outline,
+                title: 'Job Alerts',
+                subtitle: 'Get notified about matching opportunities',
+                value: jobAlerts,
+                onChanged: (value) => ref
+                    .read(userSettingsProvider.notifier)
+                    .toggleJobAlerts(value),
+              ),
+            ],
+            _buildDivider(isDark),
+            _buildSwitchTile(
+              icon: Icons.chat_bubble_outline,
+              title: 'Message Notifications',
+              value: messageNotifications,
+              onChanged: (value) => ref
+                  .read(userSettingsProvider.notifier)
+                  .toggleMessageNotifications(value),
+            ),
+            _buildDivider(isDark),
+            _buildSwitchTile(
+              icon: Icons.campaign_outlined,
+              title: 'Marketing Emails',
+              subtitle: 'Receive updates and tips',
+              value: marketingEmails,
+              onChanged: (value) => ref
+                  .read(userSettingsProvider.notifier)
+                  .toggleMarketingEmails(value),
+            ),
+          ],
+        );
+      },
+      loading: () => _buildSettingsCard(
+        context,
+        isDark,
+        children: [
+          const ListTile(
+            leading: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            title: Text('Loading settings...'),
+          ),
+        ],
+      ),
+      error: (_, __) => _buildSettingsCard(
+        context,
+        isDark,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.error_outline, color: AppColors.error),
+            title: const Text('Error loading settings'),
+            trailing: TextButton(
+              onPressed: () => ref.invalidate(userSettingsProvider),
+              child: const Text('Retry'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrivacySection(
+    BuildContext context,
+    bool isDark,
+    AsyncValue<UserSettings?> settingsAsync,
+  ) {
+    return settingsAsync.when(
+      data: (settings) {
+        // Use defaults if settings not loaded
+        final profileVisible = settings?.profileVisible ?? true;
+        final showOnlineStatus = settings?.showOnlineStatus ?? true;
+        final allowMessagesFromRecruiters =
+            settings?.allowMessagesFromRecruiters ?? true;
+        final allowMessagesFromCandidates =
+            settings?.allowMessagesFromCandidates ?? true;
+
+        return _buildSettingsCard(
+          context,
+          isDark,
+          children: [
+            _buildSwitchTile(
+              icon: Icons.visibility_outlined,
+              title: 'Profile Visible',
+              subtitle: widget.userRole == 'candidate'
+                  ? 'Allow recruiters to find you'
+                  : 'Allow candidates to see your profile',
+              value: profileVisible,
+              onChanged: (value) => ref
+                  .read(userSettingsProvider.notifier)
+                  .toggleProfileVisible(value),
+            ),
+            _buildDivider(isDark),
+            _buildSwitchTile(
+              icon: Icons.circle,
+              title: 'Show Online Status',
+              value: showOnlineStatus,
+              onChanged: (value) => ref
+                  .read(userSettingsProvider.notifier)
+                  .toggleShowOnlineStatus(value),
+            ),
+            if (widget.userRole == 'candidate') ...[
+              _buildDivider(isDark),
+              _buildSwitchTile(
+                icon: Icons.message_outlined,
+                title: 'Allow Messages from Recruiters',
+                value: allowMessagesFromRecruiters,
+                onChanged: (value) => ref
+                    .read(userSettingsProvider.notifier)
+                    .toggleAllowMessagesFromRecruiters(value),
+              ),
+            ],
+            if (widget.userRole == 'recruiter') ...[
+              _buildDivider(isDark),
+              _buildSwitchTile(
+                icon: Icons.message_outlined,
+                title: 'Allow Messages from Candidates',
+                value: allowMessagesFromCandidates,
+                onChanged: (value) => ref
+                    .read(userSettingsProvider.notifier)
+                    .toggleAllowMessagesFromCandidates(value),
+              ),
+            ],
+          ],
+        );
+      },
+      loading: () => _buildSettingsCard(
+        context,
+        isDark,
+        children: [
+          const ListTile(
+            leading: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            title: Text('Loading settings...'),
+          ),
+        ],
+      ),
+      error: (_, __) => _buildSettingsCard(
+        context,
+        isDark,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.error_outline, color: AppColors.error),
+            title: const Text('Error loading settings'),
+            trailing: TextButton(
+              onPressed: () => ref.invalidate(userSettingsProvider),
+              child: const Text('Retry'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -628,6 +724,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   style: AppTextStyles.caption.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
+                ),
+              ),
+            ],
+            // Show appeal option if rejected
+            if (isRejected) ...[
+              _buildDivider(isDark),
+              ListTile(
+                leading: const Icon(Icons.support_agent, color: AppColors.info),
+                title: Text('Appeal Decision', style: AppTextStyles.labelMedium),
+                subtitle: Text(
+                  'Submit an appeal if you believe this was an error',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(
+                  '${AppRoutes.verificationAppeal}?role=${widget.userRole}&type=verificationRejected',
                 ),
               ),
             ],
@@ -1200,39 +1314,63 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _buildAppearanceSection(BuildContext context, bool isDark) {
+    final themeMode = ref.watch(themeModeProvider);
+    final themeModeString = switch (themeMode) {
+      ThemeMode.system => 'System default',
+      ThemeMode.light => 'Light mode',
+      ThemeMode.dark => 'Dark mode',
+    };
+
+    return _buildSettingsCard(
+      context,
+      isDark,
+      children: [
+        _buildSettingsTile(
+          icon: Icons.dark_mode_outlined,
+          title: 'Theme',
+          subtitle: themeModeString,
+          onTap: () => _showThemeDialog(),
+        ),
+      ],
+    );
+  }
+
   void _showThemeDialog() {
+    final currentMode = ref.read(themeModeProvider);
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Choose Theme'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            RadioListTile<String>(
+            RadioListTile<ThemeMode>(
               title: const Text('System Default'),
-              value: 'system',
-              groupValue: _themeMode,
+              value: ThemeMode.system,
+              groupValue: currentMode,
               onChanged: (value) {
-                setState(() => _themeMode = value!);
-                Navigator.pop(context);
+                ref.read(themeModeProvider.notifier).setThemeMode(value!);
+                Navigator.pop(dialogContext);
               },
             ),
-            RadioListTile<String>(
+            RadioListTile<ThemeMode>(
               title: const Text('Light Mode'),
-              value: 'light',
-              groupValue: _themeMode,
+              value: ThemeMode.light,
+              groupValue: currentMode,
               onChanged: (value) {
-                setState(() => _themeMode = value!);
-                Navigator.pop(context);
+                ref.read(themeModeProvider.notifier).setThemeMode(value!);
+                Navigator.pop(dialogContext);
               },
             ),
-            RadioListTile<String>(
+            RadioListTile<ThemeMode>(
               title: const Text('Dark Mode'),
-              value: 'dark',
-              groupValue: _themeMode,
+              value: ThemeMode.dark,
+              groupValue: currentMode,
               onChanged: (value) {
-                setState(() => _themeMode = value!);
-                Navigator.pop(context);
+                ref.read(themeModeProvider.notifier).setThemeMode(value!);
+                Navigator.pop(dialogContext);
               },
             ),
           ],

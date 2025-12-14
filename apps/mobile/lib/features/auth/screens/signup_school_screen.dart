@@ -62,7 +62,7 @@ class _SignupSchoolScreenState extends ConsumerState<SignupSchoolScreen> {
       await ref.read(authStateProvider.notifier).signUp(
             email: _emailController.text.trim(),
             password: _passwordController.text,
-            role: 'school',
+            role: 'school_admin',
             userData: {
               'first_name': _firstNameController.text.trim(),
               'last_name': _lastNameController.text.trim(),

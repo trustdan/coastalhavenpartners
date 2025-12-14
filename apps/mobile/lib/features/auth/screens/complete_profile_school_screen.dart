@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/profile_provider.dart';
 import '../../../data/services/profile_service.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
 
@@ -94,7 +95,6 @@ class _CompleteProfileSchoolScreenState
 
   // State
   bool _isLoading = false;
-  bool _eduEmailVerified = false;
 
   @override
   void initState() {
@@ -105,7 +105,7 @@ class _CompleteProfileSchoolScreenState
     });
   }
 
-  void _checkAuthStatus() {
+  Future<void> _checkAuthStatus() async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
       // Show dialog explaining they need to sign up first
@@ -147,6 +147,18 @@ class _CompleteProfileSchoolScreenState
           ],
         ),
       );
+      return;
+    }
+
+    // Check if profile is already complete - redirect to dashboard if so
+    try {
+      final hasProfile = await ref.read(hasRoleProfileProvider.future);
+      if (hasProfile && mounted) {
+        context.go(AppRoutes.school);
+      }
+    } catch (e) {
+      // Error checking profile, allow user to continue with profile completion
+      debugPrint('Error checking profile completion: $e');
     }
   }
 
@@ -207,35 +219,6 @@ class _CompleteProfileSchoolScreenState
     }
   }
 
-  Future<void> _verifyEduEmail() async {
-    setState(() => _isLoading = true);
-
-    try {
-      // TODO: Implement .edu email verification with Supabase
-      await Future.delayed(const Duration(seconds: 1));
-
-      setState(() {
-        _eduEmailVerified = true;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Education email verified'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError('Email verification failed');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   Future<void> _completeProfile() async {
     setState(() => _isLoading = true);
@@ -280,11 +263,10 @@ class _CompleteProfileSchoolScreenState
                 ],
               ),
               content: Text(
-                'Your school admin profile has been saved to Supabase.\n\n'
+                'Your school admin profile has been saved.\n\n'
                 'School: ${_schoolController.text}\n'
                 'Department: ${_selectedDepartment ?? "N/A"}\n'
-                'Role: ${_selectedRole ?? "N/A"}\n'
-                '.edu Verified: ${_eduEmailVerified ? "Yes" : "No"}',
+                'Role: ${_selectedRole ?? "N/A"}',
                 style: TextStyle(color: AppColors.textSecondaryDark),
               ),
               actions: [
@@ -443,62 +425,6 @@ class _CompleteProfileSchoolScreenState
         ),
         const SizedBox(height: 24),
 
-        // Edu email verification banner
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _eduEmailVerified
-                ? AppColors.success.withValues(alpha: 0.1)
-                : AppColors.info.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: _eduEmailVerified
-                  ? AppColors.success.withValues(alpha: 0.3)
-                  : AppColors.info.withValues(alpha: 0.3),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _eduEmailVerified ? Icons.verified : Icons.email_outlined,
-                color: _eduEmailVerified ? AppColors.success : AppColors.info,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _eduEmailVerified
-                          ? 'Education email verified'
-                          : 'Verify your .edu email',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: _eduEmailVerified
-                            ? AppColors.success
-                            : AppColors.textPrimaryDark,
-                      ),
-                    ),
-                    if (!_eduEmailVerified)
-                      Text(
-                        'Verification builds trust with candidates',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondaryDark,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (!_eduEmailVerified)
-                TextButton(
-                  onPressed: _isLoading ? null : _verifyEduEmail,
-                  child: const Text('Verify'),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
         // School autocomplete
         Autocomplete<String>(
           optionsBuilder: (textEditingValue) {
@@ -654,27 +580,6 @@ class _CompleteProfileSchoolScreenState
                       ),
                     ),
                   ),
-                  if (_eduEmailVerified)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.verified, color: AppColors.success, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            '.edu',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                 ],
               ),
               if (_selectedDepartment != null) ...[

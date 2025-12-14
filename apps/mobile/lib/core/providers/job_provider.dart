@@ -117,3 +117,69 @@ final hasAppliedProvider = FutureProvider.family<bool, String>((ref, jobListingI
   final repo = ref.watch(jobRepositoryProvider);
   return repo.hasApplied(jobListingId);
 });
+
+// =====================
+// Saved Jobs Providers
+// =====================
+
+/// Provider for saved jobs list
+final savedJobsProvider = FutureProvider<List<JobListing>>((ref) async {
+  final repo = ref.watch(jobRepositoryProvider);
+  return repo.getSavedJobs();
+});
+
+/// Check if a job is saved
+final isJobSavedProvider = FutureProvider.family<bool, String>((ref, jobListingId) async {
+  final repo = ref.watch(jobRepositoryProvider);
+  return repo.isJobSaved(jobListingId);
+});
+
+/// Notifier for managing saved jobs
+class SavedJobsNotifier extends AsyncNotifier<List<JobListing>> {
+  @override
+  Future<List<JobListing>> build() async {
+    final repo = ref.watch(jobRepositoryProvider);
+    return repo.getSavedJobs();
+  }
+
+  /// Save a job
+  Future<bool> saveJob(String jobListingId) async {
+    final repo = ref.read(jobRepositoryProvider);
+    final success = await repo.saveJob(jobListingId);
+    if (success) {
+      // Refresh the list
+      ref.invalidateSelf();
+      // Also invalidate the isJobSaved provider
+      ref.invalidate(isJobSavedProvider(jobListingId));
+    }
+    return success;
+  }
+
+  /// Unsave a job
+  Future<bool> unsaveJob(String jobListingId) async {
+    final repo = ref.read(jobRepositoryProvider);
+    final success = await repo.unsaveJob(jobListingId);
+    if (success) {
+      // Optimistically remove from current list
+      final current = state.hasValue ? state.value! : <JobListing>[];
+      state = AsyncData(current.where((j) => j.id != jobListingId).toList());
+      // Also invalidate the isJobSaved provider
+      ref.invalidate(isJobSavedProvider(jobListingId));
+    }
+    return success;
+  }
+
+  /// Toggle save status
+  Future<void> toggleSave(String jobListingId, bool currentlySaved) async {
+    if (currentlySaved) {
+      await unsaveJob(jobListingId);
+    } else {
+      await saveJob(jobListingId);
+    }
+  }
+}
+
+/// Provider for saved jobs notifier
+final savedJobsNotifierProvider = AsyncNotifierProvider<SavedJobsNotifier, List<JobListing>>(
+  SavedJobsNotifier.new,
+);

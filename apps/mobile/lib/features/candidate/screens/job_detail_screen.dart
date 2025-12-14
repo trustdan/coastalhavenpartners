@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -76,7 +77,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.share_outlined),
-                    onPressed: _shareJob,
+                    onPressed: () => _shareJob(job),
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
@@ -356,8 +357,23 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     );
   }
 
-  void _shareJob() {
-    // TODO: Implement share functionality
+  void _shareJob(JobListing job) {
+    final jobUrl = 'https://coastalhavenpartners.com/jobs/${job.id}';
+    final shareText = '''
+Check out this ${job.jobType.displayName} opportunity at ${job.firmName}!
+
+${job.title}
+${job.locations?.isNotEmpty == true ? job.locations!.first : ''}
+
+Apply now: $jobUrl
+''';
+
+    SharePlus.instance.share(
+      ShareParams(
+        text: shareText.trim(),
+        subject: '${job.title} at ${job.firmName}',
+      ),
+    );
   }
 
   Future<void> _applyForJob(JobListing job, CandidateProfile? candidateProfile) async {

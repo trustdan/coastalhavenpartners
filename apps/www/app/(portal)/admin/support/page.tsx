@@ -30,7 +30,12 @@ export default async function AdminSupportPage({
   }
 
   if (typeFilter !== 'all') {
-    query = query.eq('message_type', typeFilter)
+    // Handle special 'appeals' filter that groups multiple appeal types
+    if (typeFilter === 'appeals') {
+      query = query.in('message_type', ['verification_appeal', 'document_issue', 'account_access', 'other'])
+    } else {
+      query = query.eq('message_type', typeFilter)
+    }
   }
 
   const { data: messages, error } = await query
@@ -62,6 +67,13 @@ export default async function AdminSupportPage({
     .eq('message_type', 'feedback')
     .eq('status', 'new')
 
+  // Count appeals (includes verification_appeal, document_issue, account_access, other)
+  const { count: appealsCount } = await supabaseAdmin
+    .from('support_messages')
+    .select('*', { count: 'exact', head: true })
+    .in('message_type', ['verification_appeal', 'document_issue', 'account_access', 'other'])
+    .eq('status', 'new')
+
   return (
     <div className="space-y-6">
       <div>
@@ -80,6 +92,7 @@ export default async function AdminSupportPage({
           inProgress: inProgressCount || 0,
           support: supportCount || 0,
           feedback: feedbackCount || 0,
+          appeals: appealsCount || 0,
         }}
       />
     </div>

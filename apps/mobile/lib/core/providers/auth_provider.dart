@@ -101,15 +101,48 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       final client = SupabaseService.instance.client;
       if (client == null) return null;
 
+      // First try to get role from profiles table
       final response = await client
           .from('profiles')
           .select('role')
           .eq('id', userId)
           .maybeSingle();
 
-      return response?['role'] as String?;
-    } catch (e) {
+      final dbRole = response?['role'] as String?;
+      if (dbRole != null && dbRole.isNotEmpty) {
+        return dbRole;
+      }
+
+      // Fallback: Check user metadata (set during signup)
+      final user = SupabaseService.instance.currentUser;
+      if (user != null && user.id == userId) {
+        final metaRole = user.userMetadata?['role'] as String?;
+        if (metaRole != null && metaRole.isNotEmpty) {
+          // Sync role from metadata to profiles table
+          await _syncRoleFromMetadata(userId, metaRole);
+          return metaRole;
+        }
+      }
+
       return null;
+    } catch (e) {
+      debugPrint('AuthProvider: Error fetching user role: $e');
+      return null;
+    }
+  }
+
+  /// Sync role from user metadata to profiles table
+  Future<void> _syncRoleFromMetadata(String userId, String role) async {
+    try {
+      debugPrint('AuthProvider: Syncing role "$role" from metadata to profiles table');
+      await ProfileService.instance.ensureProfileExists(
+        userId,
+        role: role,
+        email: SupabaseService.instance.currentUser?.email,
+        fullName: SupabaseService.instance.currentUser?.userMetadata?['full_name'] as String?,
+      );
+    } catch (e) {
+      debugPrint('AuthProvider: Failed to sync role from metadata: $e');
     }
   }
 
@@ -264,6 +297,22 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   /// Clear any errors
   void clearError() {
     state = AsyncData(_currentValue?.copyWith(error: null) ?? const AuthState());
+  }
+
+  /// Update user role (for logged-in users selecting role from role-selection screen)
+  Future<bool> updateRole(String role) async {
+    final currentState = _currentValue;
+    if (currentState?.user == null) return false;
+
+    try {
+      await ProfileService.instance.updateUserRole(currentState!.user!.id, role);
+      state = AsyncData(currentState.copyWith(userRole: role));
+      debugPrint('AuthProvider: Updated user role to $role');
+      return true;
+    } catch (e) {
+      debugPrint('AuthProvider: Failed to update role: $e');
+      return false;
+    }
   }
 
   // ==================== OAuth Sign-In Methods ====================

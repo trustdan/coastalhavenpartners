@@ -21,7 +21,9 @@ import '../../features/candidate/screens/candidate_profile_screen.dart';
 import '../../features/candidate/screens/edit_profile_screen.dart';
 import '../../features/candidate/screens/job_listings_screen.dart';
 import '../../features/candidate/screens/job_detail_screen.dart';
+import '../../features/candidate/screens/saved_jobs_screen.dart';
 import '../../features/candidate/screens/applications_screen.dart';
+import '../../features/candidate/screens/candidate_analytics_screen.dart';
 import '../../features/recruiter/screens/recruiter_dashboard.dart';
 import '../../features/recruiter/screens/candidate_search_screen.dart';
 import '../../features/recruiter/screens/candidate_detail_screen.dart';
@@ -29,11 +31,17 @@ import '../../features/recruiter/screens/saved_candidates_screen.dart';
 import '../../features/recruiter/screens/campaigns_screen.dart';
 import '../../features/recruiter/screens/campaign_builder_screen.dart';
 import '../../features/recruiter/screens/campaign_detail_screen.dart';
+import '../../features/recruiter/screens/analytics_screen.dart';
+import '../../features/recruiter/screens/edit_recruiter_profile_screen.dart';
 import '../../features/messaging/screens/inbox_screen.dart';
 import '../../features/messaging/screens/conversation_screen.dart';
 import '../../features/messaging/screens/new_conversation_screen.dart';
-import '../../features/shared/screens/placeholder_screen.dart';
 import '../../features/shared/screens/settings_screen.dart';
+import '../../features/shared/screens/notifications_screen.dart';
+import '../../features/shared/screens/verification_appeal_screen.dart';
+import '../../features/school/screens/school_dashboard.dart';
+import '../../features/school/screens/students_screen.dart';
+import '../../features/school/widgets/school_shell.dart';
 import '../providers/auth_provider.dart';
 
 /// Route names as constants
@@ -62,10 +70,12 @@ class AppRoutes {
   // Candidate Portal
   static const candidate = '/candidate';
   static const candidateJobs = '/candidate/jobs';
+  static const candidateSavedJobs = '/candidate/jobs/saved';
   static const candidateApplications = '/candidate/applications';
   static const candidateMessages = '/candidate/messages';
   static const candidateProfile = '/candidate/profile';
   static const candidateEditProfile = '/candidate/edit-profile';
+  static const candidateAnalytics = '/candidate/analytics';
   static const candidateSettings = '/candidate/settings';
 
   // Recruiter Portal
@@ -74,15 +84,21 @@ class AppRoutes {
   static const recruiterCampaigns = '/recruiter/campaigns';
   static const recruiterNewCampaign = '/recruiter/campaigns/new';
   static const recruiterAnalytics = '/recruiter/analytics';
+  static const recruiterEditProfile = '/recruiter/edit-profile';
   static const recruiterSettings = '/recruiter/settings';
 
   // School Portal
   static const school = '/school';
+  static const schoolStudents = '/school/students';
+  static const schoolMessages = '/school/messages';
+  static const schoolSettings = '/school/settings';
 
   // Shared
   static const settings = '/settings';
   static const messages = '/messages';
   static const messagesNew = '/messages/new';
+  static const notifications = '/notifications';
+  static const verificationAppeal = '/verification-appeal';
   // Note: Individual conversation routes use /messages/:conversationId
 }
 
@@ -124,10 +140,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.isLoading;
       final currentPath = state.matchedLocation;
 
+      // Get role from auth state, with fallback to user metadata
+      String? userRole = authValue?.userRole;
+      if ((userRole == null || userRole.isEmpty) && isLoggedIn) {
+        // Fallback: Check user metadata directly (set during signup)
+        userRole = authValue?.user?.userMetadata?['role'] as String?;
+      }
+
       // Don't redirect while loading
       if (isLoading) return null;
 
-      // Public routes that don't require auth
+      // Public routes that don't require auth (but NOT profile completion routes)
       final publicRoutes = [
         AppRoutes.splash,
         AppRoutes.onboarding,
@@ -140,36 +163,70 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.verifyEmail,
         AppRoutes.forgotPassword,
         AppRoutes.mfa,
-        AppRoutes.completeProfileCandidate,
-        AppRoutes.completeProfileRecruiter,
-        AppRoutes.completeProfileSchool,
       ];
 
+      // Profile completion routes - require auth AND matching role
+      final profileCompletionRoutes = {
+        AppRoutes.completeProfileCandidate: 'candidate',
+        AppRoutes.completeProfileRecruiter: 'recruiter',
+        AppRoutes.completeProfileSchool: 'school_admin',
+      };
+
       final isPublicRoute = publicRoutes.contains(currentPath);
+      final isProfileCompletionRoute = profileCompletionRoutes.containsKey(currentPath);
 
       // If not logged in and trying to access protected route
       if (!isLoggedIn && !isPublicRoute) {
+        // Profile completion routes require login
+        if (isProfileCompletionRoute) {
+          return AppRoutes.login;
+        }
         return AppRoutes.login;
       }
 
-      // If logged in and on login/signup pages, redirect to appropriate dashboard
-      // But only if user has a role set - otherwise let them complete their profile
+      // Handle profile completion routes - ensure user has matching role
+      if (isLoggedIn && isProfileCompletionRoute) {
+        final requiredRole = profileCompletionRoutes[currentPath];
+
+        // If user has no role, redirect to role selection
+        if (userRole == null || userRole.isEmpty) {
+          return AppRoutes.roleSelection;
+        }
+
+        // If user's role doesn't match this profile completion screen, redirect to correct one
+        if (userRole != requiredRole) {
+          switch (userRole) {
+            case 'candidate':
+              return AppRoutes.completeProfileCandidate;
+            case 'recruiter':
+              return AppRoutes.completeProfileRecruiter;
+            case 'school_admin':
+              return AppRoutes.completeProfileSchool;
+            default:
+              return AppRoutes.roleSelection;
+          }
+        }
+
+        // Role matches, allow access to profile completion
+        return null;
+      }
+
+      // If logged in and on login/signup pages, redirect to appropriate destination
       if (isLoggedIn && (currentPath == AppRoutes.login ||
           currentPath.startsWith('/signup'))) {
-        final userRole = authValue?.userRole;
-        // Only redirect if user has a role - otherwise let them access signup/complete-profile
+        // If user has a role, redirect to profile completion (it will redirect to dashboard if complete)
         if (userRole != null && userRole.isNotEmpty) {
           switch (userRole) {
             case 'candidate':
-              return AppRoutes.candidate;
+              return AppRoutes.completeProfileCandidate;
             case 'recruiter':
-              return AppRoutes.recruiter;
-            case 'school':
-              return AppRoutes.school;
+              return AppRoutes.completeProfileRecruiter;
+            case 'school_admin':
+              return AppRoutes.completeProfileSchool;
           }
         }
-        // No role set - don't redirect, let them complete signup
-        return null;
+        // No role set - redirect to role selection
+        return AppRoutes.roleSelection;
       }
 
       return null;
@@ -260,6 +317,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const JobListingsScreen(),
             routes: [
               GoRoute(
+                path: 'saved',
+                builder: (context, state) => const SavedJobsScreen(),
+              ),
+              GoRoute(
                 path: ':jobId',
                 builder: (context, state) {
                   final jobId = state.pathParameters['jobId'] ?? '';
@@ -305,6 +366,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.candidateEditProfile,
             builder: (context, state) => const EditProfileScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.candidateAnalytics,
+            builder: (context, state) => const CandidateAnalyticsScreen(),
           ),
           GoRoute(
             path: AppRoutes.candidateSettings,
@@ -366,7 +431,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.recruiterAnalytics,
-            builder: (context, state) => const PlaceholderScreen(title: 'Analytics'),
+            builder: (context, state) => const AnalyticsScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.recruiterEditProfile,
+            builder: (context, state) => const EditRecruiterProfileScreen(),
           ),
           GoRoute(
             path: AppRoutes.recruiterSettings,
@@ -375,10 +444,51 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // School Portal
-      GoRoute(
-        path: AppRoutes.school,
-        builder: (context, state) => const PlaceholderScreen(title: 'School Dashboard'),
+      // School Portal (Shell Route for bottom nav)
+      ShellRoute(
+        builder: (context, state, child) {
+          return SchoolShell(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: AppRoutes.school,
+            builder: (context, state) => const SchoolDashboard(),
+          ),
+          GoRoute(
+            path: AppRoutes.schoolStudents,
+            builder: (context, state) => const StudentsScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.schoolMessages,
+            builder: (context, state) => const InboxScreen(),
+            routes: [
+              GoRoute(
+                path: 'new',
+                builder: (context, state) {
+                  final recipientId = state.uri.queryParameters['recipientId'];
+                  final recipientName = state.uri.queryParameters['recipientName'];
+                  final recipientOrg = state.uri.queryParameters['recipientOrg'];
+                  return NewConversationScreen(
+                    recipientId: recipientId,
+                    recipientName: recipientName,
+                    recipientOrganization: recipientOrg,
+                  );
+                },
+              ),
+              GoRoute(
+                path: ':conversationId',
+                builder: (context, state) {
+                  final conversationId = state.pathParameters['conversationId'] ?? '';
+                  return ConversationScreen(conversationId: conversationId);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: AppRoutes.schoolSettings,
+            builder: (context, state) => const SettingsScreen(userRole: 'school_admin'),
+          ),
+        ],
       ),
 
       // Shared Messages (accessible from any portal)
@@ -407,6 +517,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+
+      // Notifications (accessible from any portal)
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // Verification Appeal (accessible from any portal)
+      GoRoute(
+        path: AppRoutes.verificationAppeal,
+        builder: (context, state) {
+          final userRole = state.uri.queryParameters['role'] ?? 'candidate';
+          final appealType = state.uri.queryParameters['type'];
+          AppealType? initialType;
+          if (appealType != null) {
+            initialType = AppealType.values.firstWhere(
+              (t) => t.name == appealType,
+              orElse: () => AppealType.other,
+            );
+          }
+          return VerificationAppealScreen(
+            userRole: userRole,
+            initialAppealType: initialType,
+          );
+        },
       ),
     ],
 

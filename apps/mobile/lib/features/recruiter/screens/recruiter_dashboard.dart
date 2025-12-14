@@ -35,9 +35,7 @@ class RecruiterDashboard extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Navigate to notifications
-            },
+            onPressed: () => context.push(AppRoutes.notifications),
           ),
         ],
       ),
@@ -562,20 +560,179 @@ class RecruiterDashboard extends ConsumerWidget {
   }
 
   Widget _buildInterestedCandidates(BuildContext context, bool isDark) {
-    // TODO: Implement interested candidates from database
-    // This would be candidates who have expressed interest in the recruiter's firm
-    return const SizedBox.shrink();
-  }
+    // Mock interested candidates - in production would come from database
+    final interestedCandidates = [
+      {'name': 'Alex Thompson', 'school': 'Wharton', 'interest': 'IB Associate'},
+      {'name': 'Jordan Lee', 'school': 'Harvard Business School', 'interest': 'PE Analyst'},
+      {'name': 'Taylor Chen', 'school': 'Stanford GSB', 'interest': 'VC Associate'},
+    ];
 
-  Widget _buildRecentActivity(BuildContext context, bool isDark) {
-    // TODO: Implement recent activity from analytics_events table
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Recent Activity', style: AppTextStyles.h4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Text('Interested in Your Firm', style: AppTextStyles.h4),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${interestedCandidates.length}',
+                    style: AppTextStyles.badge.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () => context.go(AppRoutes.recruiterCandidates),
+              child: const Text('View all'),
+            ),
+          ],
+        ),
+        AppSpacing.itemGap,
+        ...interestedCandidates.map((candidate) => _buildInterestedCandidateTile(
+          context,
+          isDark,
+          candidate['name']!,
+          candidate['school']!,
+          candidate['interest']!,
+        )),
+      ],
+    );
+  }
+
+  Widget _buildInterestedCandidateTile(
+    BuildContext context,
+    bool isDark,
+    String name,
+    String school,
+    String interest,
+  ) {
+    final initials = name.split(' ').map((e) => e[0]).join();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: AppSpacing.listItemPadding,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+        borderRadius: AppRadius.card,
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.success.withValues(alpha: 0.1),
+            child: Text(
+              initials,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.success,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: AppTextStyles.labelMedium),
+                Text(
+                  '$school • Interested in $interest',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.teal.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.favorite, size: 12, color: AppColors.teal),
+                const SizedBox(width: 4),
+                Text(
+                  'Interested',
+                  style: AppTextStyles.badge.copyWith(color: AppColors.teal),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity(BuildContext context, bool isDark) {
+    // Mock recent activity - in production would come from analytics_events table
+    final recentActivities = [
+      {
+        'type': 'profile_view',
+        'title': 'Viewed Sarah Chen\'s profile',
+        'subtitle': 'Stanford, Finance Major',
+        'time': '2 hours ago',
+        'icon': Icons.visibility,
+        'color': AppColors.teal,
+      },
+      {
+        'type': 'message_sent',
+        'title': 'Messaged Michael Park',
+        'subtitle': 'Regarding IB Summer Analyst',
+        'time': '5 hours ago',
+        'icon': Icons.send,
+        'color': AppColors.info,
+      },
+      {
+        'type': 'bookmark',
+        'title': 'Saved Emily Davis',
+        'subtitle': 'Wharton, 3.9 GPA',
+        'time': 'Yesterday',
+        'icon': Icons.bookmark,
+        'color': AppColors.emerald,
+      },
+      {
+        'type': 'campaign',
+        'title': 'Campaign sent',
+        'subtitle': 'Summer 2025 Analyst Search • 15 recipients',
+        'time': '2 days ago',
+        'icon': Icons.campaign,
+        'color': AppColors.warning,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Recent Activity', style: AppTextStyles.h4),
+            TextButton(
+              onPressed: () => context.push(AppRoutes.recruiterAnalytics),
+              child: const Text('View analytics'),
+            ),
+          ],
+        ),
         AppSpacing.itemGap,
         Container(
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark ? AppColors.cardDark : AppColors.cardLight,
             borderRadius: AppRadius.card,
@@ -583,22 +740,79 @@ class RecruiterDashboard extends ConsumerWidget {
               color: isDark ? AppColors.borderDark : AppColors.borderLight,
             ),
           ),
-          child: Row(
-            children: [
-              Icon(Icons.history, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Activity tracking coming soon!',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: recentActivities.length,
+            separatorBuilder: (_, __) => Divider(
+              height: 1,
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+            itemBuilder: (context, index) {
+              final activity = recentActivities[index];
+              return _buildActivityItem(
+                context,
+                isDark,
+                icon: activity['icon'] as IconData,
+                color: activity['color'] as Color,
+                title: activity['title'] as String,
+                subtitle: activity['subtitle'] as String,
+                time: activity['time'] as String,
+              );
+            },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActivityItem(
+    BuildContext context,
+    bool isDark, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required String time,
+  }) {
+    return Padding(
+      padding: AppSpacing.listItemPadding,
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.labelSmall),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Text(
+            time,
+            style: AppTextStyles.caption.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

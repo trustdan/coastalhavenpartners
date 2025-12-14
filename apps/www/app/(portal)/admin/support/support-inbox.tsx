@@ -15,11 +15,19 @@ import {
   Mail,
   User,
   Calendar,
+  ShieldAlert,
+  FileWarning,
+  KeyRound,
+  HelpCircle,
+  Smartphone,
+  Globe,
+  Paperclip,
 } from 'lucide-react'
 import { updateSupportMessageStatus, addAdminNotes, deleteSupportMessage } from './actions'
 
 type SupportStatus = 'new' | 'in_progress' | 'resolved' | 'spam'
-type MessageType = 'technical_support' | 'feedback'
+type MessageType = 'technical_support' | 'feedback' | 'verification_appeal' | 'document_issue' | 'account_access' | 'other'
+type SourceType = 'web' | 'mobile' | 'api'
 
 interface SupportMessage {
   id: string
@@ -34,6 +42,13 @@ interface SupportMessage {
   handled_by: string | null
   handled_at: string | null
   admin_notes: string | null
+  // New appeal-specific fields
+  user_role: string | null
+  appeal_type: string | null
+  additional_info: string | null
+  has_attachments: boolean | null
+  attachment_urls: string[] | null
+  source: SourceType | null
 }
 
 interface SupportInboxProps {
@@ -45,6 +60,7 @@ interface SupportInboxProps {
     inProgress: number
     support: number
     feedback: number
+    appeals: number
   }
 }
 
@@ -67,17 +83,66 @@ function StatusBadge({ status }: { status: SupportStatus }) {
   )
 }
 
+const typeConfig: Record<MessageType, { label: string; color: string; icon: React.ElementType }> = {
+  technical_support: {
+    label: 'Support',
+    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    icon: Wrench
+  },
+  feedback: {
+    label: 'Feedback',
+    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+    icon: MessageSquare
+  },
+  verification_appeal: {
+    label: 'Appeal',
+    color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    icon: ShieldAlert
+  },
+  document_issue: {
+    label: 'Document',
+    color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    icon: FileWarning
+  },
+  account_access: {
+    label: 'Access',
+    color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400',
+    icon: KeyRound
+  },
+  other: {
+    label: 'Other',
+    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    icon: HelpCircle
+  },
+}
+
 function TypeBadge({ type }: { type: MessageType }) {
-  const isSupport = type === 'technical_support'
+  const config = typeConfig[type] || typeConfig.other
+  const Icon = config.icon
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-      isSupport
-        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-        : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
-    }`}>
-      {isSupport ? <Wrench className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
-      {isSupport ? 'Support' : 'Feedback'}
+    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </span>
+  )
+}
+
+function SourceBadge({ source }: { source: SourceType | null }) {
+  if (!source) return null
+
+  const config = {
+    web: { label: 'Web', icon: Globe, color: 'text-blue-600 dark:text-blue-400' },
+    mobile: { label: 'Mobile', icon: Smartphone, color: 'text-green-600 dark:text-green-400' },
+    api: { label: 'API', icon: Globe, color: 'text-purple-600 dark:text-purple-400' },
+  }
+
+  const { label, icon: Icon, color } = config[source]
+
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs ${color}`}>
+      <Icon className="h-3 w-3" />
+      {label}
     </span>
   )
 }
@@ -143,8 +208,12 @@ function MessageCard({ message, onUpdate }: { message: SupportMessage; onUpdate:
           <TypeBadge type={message.message_type} />
           <StatusBadge status={message.status} />
           <span className="font-medium truncate">{message.subject}</span>
+          {message.has_attachments && (
+            <Paperclip className="h-4 w-4 text-neutral-400" title="Has attachments" />
+          )}
         </div>
         <div className="flex items-center gap-4 text-sm text-neutral-500">
+          <SourceBadge source={message.source} />
           <span className="hidden sm:inline">{message.sender_name}</span>
           <span className="hidden md:inline">{formattedDate}</span>
           {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -182,6 +251,65 @@ function MessageCard({ message, onUpdate }: { message: SupportMessage; onUpdate:
               {message.message}
             </p>
           </div>
+
+          {/* Appeal Details - shown for appeal-type messages */}
+          {(message.user_role || message.additional_info || message.has_attachments) && (
+            <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 bg-orange-50 dark:bg-orange-900/10">
+              <h4 className="text-sm font-medium text-orange-800 dark:text-orange-400 mb-3">
+                Appeal Details
+              </h4>
+              <div className="space-y-3 text-sm">
+                {message.user_role && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-neutral-500 dark:text-neutral-400 w-24">User Role:</span>
+                    <span className="capitalize font-medium text-neutral-700 dark:text-neutral-300">
+                      {message.user_role}
+                    </span>
+                  </div>
+                )}
+                {message.appeal_type && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-neutral-500 dark:text-neutral-400 w-24">Appeal Type:</span>
+                    <span className="capitalize font-medium text-neutral-700 dark:text-neutral-300">
+                      {message.appeal_type.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                )}
+                {message.additional_info && (
+                  <div>
+                    <span className="text-neutral-500 dark:text-neutral-400 block mb-1">Additional Info:</span>
+                    <p className="text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 p-2 rounded border border-neutral-200 dark:border-neutral-700">
+                      {message.additional_info}
+                    </p>
+                  </div>
+                )}
+                {message.has_attachments && message.attachment_urls && message.attachment_urls.length > 0 && (
+                  <div>
+                    <span className="text-neutral-500 dark:text-neutral-400 block mb-2">
+                      Attachments ({message.attachment_urls.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {message.attachment_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Paperclip className="h-4 w-4 text-neutral-400" />
+                          <span className="text-sm text-blue-600 dark:text-blue-400">
+                            Attachment {idx + 1}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Admin Notes Section */}
           {(message.admin_notes || showNotes) && (
@@ -390,6 +518,14 @@ export function SupportInbox({ messages, currentStatusFilter, currentTypeFilter,
             >
               <MessageSquare className="h-4 w-4 mr-1" />
               Feedback {counts.feedback > 0 && <span className="ml-1 px-1.5 py-0.5 bg-purple-500 text-white rounded-full text-xs">{counts.feedback}</span>}
+            </Button>
+            <Button
+              size="sm"
+              variant={currentTypeFilter === 'appeals' ? 'default' : 'outline'}
+              onClick={() => updateFilters(undefined, 'appeals')}
+            >
+              <ShieldAlert className="h-4 w-4 mr-1" />
+              Appeals {counts.appeals > 0 && <span className="ml-1 px-1.5 py-0.5 bg-orange-500 text-white rounded-full text-xs">{counts.appeals}</span>}
             </Button>
           </div>
         </div>

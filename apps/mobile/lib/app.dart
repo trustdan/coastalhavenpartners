@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/providers/deep_link_provider.dart';
+import 'core/providers/theme_provider.dart';
 import 'widgets/common/offline_widgets.dart';
 
 /// Main app widget
@@ -45,6 +46,9 @@ class _CoastalHavenAppState extends ConsumerState<CoastalHavenApp> {
       });
     }
 
+    // Watch theme mode from provider
+    final themeMode = ref.watch(themeModeProvider);
+
     return ConnectivitySnackbarListener(
       child: MaterialApp.router(
         title: 'Coastal Haven Partners',
@@ -53,7 +57,7 @@ class _CoastalHavenAppState extends ConsumerState<CoastalHavenApp> {
         // Theme configuration
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.dark, // Default to dark for premium feel
+        themeMode: themeMode,
 
         // Router configuration
         routerConfig: router,

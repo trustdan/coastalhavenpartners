@@ -4,3 +4,5 @@ export 'profile.dart';
 export 'job.dart';
 export 'messaging.dart';
 export 'recruiter.dart';
+export 'notification.dart';
+export 'user_settings.dart';

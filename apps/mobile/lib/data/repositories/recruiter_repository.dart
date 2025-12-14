@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import 'base_repository.dart';
 import '../models/models.dart';
 
@@ -26,22 +28,77 @@ class RecruiterRepository extends BaseRepository {
     }, errorMessage: 'Error fetching recruiter profile');
   }
 
-  /// Update recruiter profile fields (for verification)
-  Future<void> updateRecruiterProfile({
-    String? companyWebsite,
+  /// Update recruiter profile fields
+  Future<RecruiterProfile?> updateRecruiterProfile({
     String? firmName,
+    String? jobTitle,
+    String? firmType,
     String? bio,
+    String? linkedinUrl,
+    String? profilePhotoUrl,
+    String? companyWebsite,
+    int? yearsExperience,
+    List<String>? specialties,
+    List<String>? locations,
   }) async {
-    if (!isAvailable || currentUserId == null) return;
+    if (!isAvailable || currentUserId == null) return null;
 
-    await safeExecute<void>(() async {
-      await table('recruiter_profiles').update({
-        if (companyWebsite != null) 'company_website': companyWebsite,
+    return safeExecute<RecruiterProfile?>(() async {
+      final response = await table('recruiter_profiles').update({
         if (firmName != null) 'firm_name': firmName,
+        if (jobTitle != null) 'job_title': jobTitle,
+        if (firmType != null) 'firm_type': firmType,
         if (bio != null) 'bio': bio,
+        if (linkedinUrl != null) 'linkedin_url': linkedinUrl,
+        if (profilePhotoUrl != null) 'profile_photo_url': profilePhotoUrl,
+        if (companyWebsite != null) 'company_website': companyWebsite,
+        if (yearsExperience != null) 'years_experience': yearsExperience,
+        if (specialties != null) 'specialties': specialties,
+        if (locations != null) 'locations': locations,
+        'updated_at': DateTime.now().toIso8601String(),
+      })
+          .eq('user_id', currentUserId!)
+          .select('*, profiles!recruiter_profiles_user_id_fkey(*)')
+          .single();
+
+      return RecruiterProfile.fromJson(response);
+    }, errorMessage: 'Error updating recruiter profile');
+  }
+
+  /// Upload recruiter profile photo
+  Future<String?> uploadProfilePhoto(
+    Uint8List photoBytes,
+    String fileName,
+  ) async {
+    if (!isAvailable || currentUserId == null) return null;
+
+    return safeExecute<String?>(() async {
+      const bucketName = 'profile-photos';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = fileName.split('.').last.toLowerCase();
+      final storagePath = 'recruiters/$currentUserId/${timestamp}_profile.$extension';
+
+      // Upload to Supabase Storage
+      await client!.storage.from(bucketName).uploadBinary(
+        storagePath,
+        photoBytes,
+        fileOptions: FileOptions(
+          contentType: 'image/$extension',
+          upsert: true,
+        ),
+      );
+
+      // Get public URL
+      final publicUrl = client!.storage.from(bucketName).getPublicUrl(storagePath);
+
+      // Update profile with new photo URL
+      await table('recruiter_profiles').update({
+        'profile_photo_url': publicUrl,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('user_id', currentUserId!);
-    }, errorMessage: 'Error updating recruiter profile');
+
+      return publicUrl;
+    }, errorMessage: 'Error uploading profile photo');
   }
 
   // =====================

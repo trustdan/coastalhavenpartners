@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -19,6 +20,7 @@ class LocalStorageService {
   // Reserved for future use: device_id
   static const String _keyMfaTrustedDevice = 'mfa_trusted_device';
   static const String _keyLastLoginTime = 'last_login_time';
+  static const String _keyUserSettings = 'user_settings';
 
   late FlutterSecureStorage _storage;
   bool _isInitialized = false;
@@ -209,6 +211,38 @@ class LocalStorageService {
       key: _keyLastLoginTime,
       value: DateTime.now().toIso8601String(),
     );
+  }
+
+  // ============================================
+  // User Settings
+  // ============================================
+
+  /// Get cached user settings as JSON map
+  Future<Map<String, dynamic>?> getUserSettings() async {
+    _checkInitialized();
+    final value = await _storage.read(key: _keyUserSettings);
+    if (value == null) return null;
+    try {
+      return jsonDecode(value) as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error decoding user settings: $e');
+      return null;
+    }
+  }
+
+  /// Save user settings as JSON
+  Future<void> setUserSettings(Map<String, dynamic> settings) async {
+    _checkInitialized();
+    await _storage.write(
+      key: _keyUserSettings,
+      value: jsonEncode(settings),
+    );
+  }
+
+  /// Clear cached user settings
+  Future<void> clearUserSettings() async {
+    _checkInitialized();
+    await _storage.delete(key: _keyUserSettings);
   }
 
   // ============================================

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/services/notification_service.dart';
+import '../../data/repositories/notification_repository.dart';
+import '../../data/models/notification.dart' as db;
 
 /// State for notification management
 class NotificationState {
@@ -210,3 +212,117 @@ final lastNotificationProvider = Provider<NotificationPayload?>((ref) {
   final notificationAsync = ref.watch(notificationProvider);
   return notificationAsync.hasValue ? notificationAsync.value!.lastNotification : null;
 });
+
+// =====================
+// Database Notification Providers (for notification list screen)
+// =====================
+
+/// Provider for notification repository instance
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  return NotificationRepository.instance;
+});
+
+/// Provider for fetching notification list from database
+final notificationListProvider = FutureProvider<List<db.AppNotification>>((ref) async {
+  final repo = ref.watch(notificationRepositoryProvider);
+  return repo.getNotifications();
+});
+
+/// Provider for unread notification count
+final unreadNotificationCountProvider = FutureProvider<int>((ref) async {
+  final repo = ref.watch(notificationRepositoryProvider);
+  return repo.getUnreadCount();
+});
+
+/// Notifier for managing notification list actions
+class NotificationListNotifier extends AsyncNotifier<List<db.AppNotification>> {
+  @override
+  Future<List<db.AppNotification>> build() async {
+    final repo = ref.watch(notificationRepositoryProvider);
+    return repo.getNotifications();
+  }
+
+  /// Mark a notification as read
+  Future<void> markAsRead(String notificationId) async {
+    final repo = ref.read(notificationRepositoryProvider);
+    final success = await repo.markAsRead(notificationId);
+    if (success) {
+      // Update the list optimistically
+      final current = state.hasValue ? state.value! : <db.AppNotification>[];
+      state = AsyncData(
+        current.map((n) {
+          if (n.id == notificationId) {
+            return db.AppNotification(
+              id: n.id,
+              userId: n.userId,
+              type: n.type,
+              title: n.title,
+              body: n.body,
+              actionUrl: n.actionUrl,
+              metadata: n.metadata,
+              isRead: true,
+              createdAt: n.createdAt,
+              readAt: DateTime.now(),
+            );
+          }
+          return n;
+        }).toList(),
+      );
+      // Invalidate unread count
+      ref.invalidate(unreadNotificationCountProvider);
+    }
+  }
+
+  /// Mark all notifications as read
+  Future<void> markAllAsRead() async {
+    final repo = ref.read(notificationRepositoryProvider);
+    final success = await repo.markAllAsRead();
+    if (success) {
+      // Update the list optimistically
+      final current = state.hasValue ? state.value! : <db.AppNotification>[];
+      state = AsyncData(
+        current.map((n) => db.AppNotification(
+          id: n.id,
+          userId: n.userId,
+          type: n.type,
+          title: n.title,
+          body: n.body,
+          actionUrl: n.actionUrl,
+          metadata: n.metadata,
+          isRead: true,
+          createdAt: n.createdAt,
+          readAt: DateTime.now(),
+        )).toList(),
+      );
+      // Invalidate unread count
+      ref.invalidate(unreadNotificationCountProvider);
+    }
+  }
+
+  /// Delete a notification
+  Future<void> deleteNotification(String notificationId) async {
+    final repo = ref.read(notificationRepositoryProvider);
+    final success = await repo.deleteNotification(notificationId);
+    if (success) {
+      // Update the list optimistically
+      final current = state.hasValue ? state.value! : <db.AppNotification>[];
+      state = AsyncData(current.where((n) => n.id != notificationId).toList());
+      // Invalidate unread count
+      ref.invalidate(unreadNotificationCountProvider);
+    }
+  }
+
+  /// Refresh the notification list
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    final repo = ref.read(notificationRepositoryProvider);
+    final notifications = await repo.getNotifications();
+    state = AsyncData(notifications);
+  }
+}
+
+/// Provider for notification list management
+final notificationListNotifierProvider =
+    AsyncNotifierProvider<NotificationListNotifier, List<db.AppNotification>>(
+  NotificationListNotifier.new,
+);

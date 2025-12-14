@@ -88,6 +88,9 @@ dependencies:
   # Deep Links
   app_links: any
 
+  # Share
+  share_plus: any
+
   # Serialization (needed at runtime)
   freezed_annotation: any
   json_annotation: ^4.9.0
@@ -105,6 +108,26 @@ dev_dependencies:
   freezed: any
   json_serializable: any
   drift_dev: ^2.24.0
+
+  # App Icon Generation
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/iOS-icons/Icon-1024.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icons/Android-icons/Icon-512.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icons/Android-icons/Icon-512.png"
+  windows:
+    generate: true
+    image_path: "assets/icons/Android-icons/Icon-512.png"
+  macos:
+    generate: true
+    image_path: "assets/icons/iOS-icons/Icon-1024.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/profile_provider.dart';
 import '../../../data/services/profile_service.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
 
@@ -75,7 +76,6 @@ class _CompleteProfileRecruiterScreenState
 
   // State
   bool _isLoading = false;
-  bool _domainVerified = false;
 
   @override
   void initState() {
@@ -86,7 +86,7 @@ class _CompleteProfileRecruiterScreenState
     });
   }
 
-  void _checkAuthStatus() {
+  Future<void> _checkAuthStatus() async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
       // Show dialog explaining they need to sign up first
@@ -128,6 +128,18 @@ class _CompleteProfileRecruiterScreenState
           ],
         ),
       );
+      return;
+    }
+
+    // Check if profile is already complete - redirect to dashboard if so
+    try {
+      final hasProfile = await ref.read(hasRoleProfileProvider.future);
+      if (hasProfile && mounted) {
+        context.go(AppRoutes.recruiter);
+      }
+    } catch (e) {
+      // Error checking profile, allow user to continue with profile completion
+      debugPrint('Error checking profile completion: $e');
     }
   }
 
@@ -189,41 +201,6 @@ class _CompleteProfileRecruiterScreenState
     }
   }
 
-  Future<void> _verifyDomain() async {
-    final website = _firmWebsiteController.text.trim();
-    if (website.isEmpty) {
-      _showError('Please enter your firm website first');
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      // TODO: Implement domain verification with Supabase
-      await Future.delayed(const Duration(seconds: 1));
-
-      setState(() {
-        _domainVerified = true;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Domain verified successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError('Domain verification failed');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   Future<void> _completeProfile() async {
     setState(() => _isLoading = true);
@@ -281,11 +258,10 @@ class _CompleteProfileRecruiterScreenState
                 ],
               ),
               content: Text(
-                'Your recruiter profile has been saved to Supabase.\n\n'
+                'Your recruiter profile has been saved.\n\n'
                 'Firm: ${_firmNameController.text}\n'
                 'Type: ${_selectedFirmType ?? "N/A"}\n'
-                'Role: ${_selectedRole ?? "N/A"}\n'
-                'Verified: ${_domainVerified ? "Yes" : "No"}',
+                'Role: ${_selectedRole ?? "N/A"}',
                 style: TextStyle(color: AppColors.textSecondaryDark),
               ),
               actions: [
@@ -457,45 +433,16 @@ class _CompleteProfileRecruiterScreenState
         ),
         const SizedBox(height: 16),
 
-        // Firm website with verification
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _firmWebsiteController,
-                keyboardType: TextInputType.url,
-                style: TextStyle(color: AppColors.textPrimaryDark),
-                decoration: InputDecoration(
-                  labelText: 'Firm Website',
-                  hintText: 'https://yourfirm.com',
-                  prefixIcon: const Icon(Icons.language_outlined),
-                  suffixIcon: _domainVerified
-                      ? const Icon(Icons.verified, color: AppColors.success)
-                      : null,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              height: 56,
-              child: OutlinedButton(
-                onPressed: _isLoading ? null : _verifyDomain,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _domainVerified ? AppColors.success : AppColors.teal,
-                  side: BorderSide(
-                    color: _domainVerified ? AppColors.success : AppColors.teal,
-                  ),
-                ),
-                child: Text(_domainVerified ? 'Verified' : 'Verify'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Domain verification helps build trust with candidates',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
+        // Firm website
+        TextFormField(
+          controller: _firmWebsiteController,
+          keyboardType: TextInputType.url,
+          style: TextStyle(color: AppColors.textPrimaryDark),
+          decoration: const InputDecoration(
+            labelText: 'Firm Website',
+            hintText: 'https://yourfirm.com',
+            prefixIcon: Icon(Icons.language_outlined),
+          ),
         ),
         const SizedBox(height: 16),
 
@@ -643,27 +590,6 @@ class _CompleteProfileRecruiterScreenState
                       ),
                     ),
                   ),
-                  if (_domainVerified)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.verified, color: AppColors.success, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Verified',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                 ],
               ),
               if (_selectedFirmType != null) ...[

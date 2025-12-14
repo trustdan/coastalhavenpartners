@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/profile_provider.dart';
 import '../../../data/services/profile_service.dart';
 import '../../../data/repositories/profile_repository.dart';
 import '../../../widgets/magic_ui/magic_ui.dart';
@@ -141,7 +142,7 @@ class _CompleteProfileCandidateScreenState
     });
   }
 
-  void _checkAuthStatus() {
+  Future<void> _checkAuthStatus() async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
       // Show dialog explaining they need to sign up first
@@ -183,6 +184,18 @@ class _CompleteProfileCandidateScreenState
           ],
         ),
       );
+      return;
+    }
+
+    // Check if profile is already complete - redirect to dashboard if so
+    try {
+      final hasProfile = await ref.read(hasRoleProfileProvider.future);
+      if (hasProfile && mounted) {
+        context.go(AppRoutes.candidate);
+      }
+    } catch (e) {
+      // Error checking profile, allow user to continue with profile completion
+      debugPrint('Error checking profile completion: $e');
     }
   }
 
