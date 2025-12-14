@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useState, useTransition } from 'react'
+import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/select'
 import { Search, X, ArrowUpDown } from 'lucide-react'
 import {
-  FIRM_CATEGORIES,
   FIRM_REGIONS,
   FIRM_STATES,
   FIRM_SORT_OPTIONS,
@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils'
 
 // Quick filter tabs with abbreviations
 const CATEGORY_TABS = [
-  { value: '__all__', label: 'All', full: 'All' },
+  { value: '', label: 'All', full: 'All' },
   { value: 'Investment Banking', label: 'IB', full: 'Investment Banking' },
   { value: 'Private Equity', label: 'PE', full: 'Private Equity' },
   { value: 'Venture Capital', label: 'VC', full: 'Venture Capital' },
@@ -94,45 +94,44 @@ export function FirmsFilters() {
 
   const currentCategory = searchParams.get('category') || ''
 
-  // Determine which tab is active - empty string or no category means "All"
-  const getTabActive = (tabValue: string) => {
-    if (tabValue === '__all__') {
-      return !currentCategory || currentCategory === ''
-    }
-    return currentCategory === tabValue
-  }
-
-  const handleCategoryClick = (value: string) => {
-    // Navigate directly without transition for more reliable behavior
+  // Build href for category tabs - using Link for proper Next.js navigation
+  const getCategoryHref = (categoryValue: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (value === '__all__' || !value) {
+    if (categoryValue === '') {
       params.delete('category')
     } else {
-      params.set('category', value)
+      params.set('category', categoryValue)
     }
     params.delete('page') // Reset pagination
-    router.push(`?${params.toString()}`)
+    const queryString = params.toString()
+    return `/firms-directory${queryString ? `?${queryString}` : ''}`
   }
 
   return (
     <div className="space-y-4">
       {/* Quick Category Tabs */}
       <div className="flex flex-wrap gap-2">
-        {CATEGORY_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => handleCategoryClick(tab.value)}
-            title={tab.full}
-            className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-              getTabActive(tab.value)
-                ? 'bg-blue-600 text-white'
-                : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 border'
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {CATEGORY_TABS.map((tab) => {
+          const isActive = tab.value === ''
+            ? currentCategory === ''
+            : currentCategory === tab.value
+
+          return (
+            <Link
+              key={tab.value || 'all'}
+              href={getCategoryHref(tab.value)}
+              title={tab.full}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 border'
+              )}
+            >
+              {tab.label}
+            </Link>
+          )
+        })}
       </div>
 
       <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-neutral-900">
