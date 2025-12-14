@@ -166,6 +166,65 @@ export async function triggerTranscriptVerification(transcriptId: string) {
 }
 
 /**
+ * Trigger automatic resume verification for a resume
+ * Can be called by candidates after uploading a resume
+ */
+export async function triggerResumeVerification(resumeId: string) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  // Use admin client to verify ownership and trigger verification
+  const supabaseAdmin = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  // Verify the resume belongs to this user
+  const { data: resume, error: resumeError } = await supabaseAdmin
+    .from('candidate_resumes')
+    .select('id, candidate_profile_id, user_id')
+    .eq('id', resumeId)
+    .single()
+
+  if (resumeError || !resume) {
+    return { success: false, error: 'Resume not found' }
+  }
+
+  if (resume.user_id !== user.id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  // Trigger verification in the background (don't wait for it)
+  try {
+    const { verifyResume } = await import('@/lib/resume-verification')
+
+    // Run verification asynchronously - don't await
+    verifyResume(resume.candidate_profile_id, resumeId)
+      .then((result) => {
+        console.log('[Auto-Verify] Completed for resume', resumeId, result.status)
+      })
+      .catch((error) => {
+        console.error('[Auto-Verify] Failed for resume', resumeId, error)
+      })
+
+    return { success: true, message: 'Verification started' }
+  } catch (error) {
+    console.error('[Auto-Verify] Error starting resume verification:', error)
+    return { success: false, error: 'Failed to start verification' }
+  }
+}
+
+/**
  * Delete the current user's account and all associated data
  * This is a destructive operation that cannot be undone
  */

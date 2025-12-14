@@ -15,8 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Loader2, Upload, Plus, Trash2, FileText, CheckCircle2, Clock, ExternalLink, Star, StarOff, RefreshCw } from 'lucide-react'
+import { Loader2, Upload, Plus, Trash2, FileText, CheckCircle2, Clock, ExternalLink, Star, StarOff, RefreshCw, Bot } from 'lucide-react'
 import { toast } from 'sonner'
+import { triggerResumeVerification } from '@/app/(portal)/candidate/actions'
 
 interface Resume {
   id: string
@@ -176,6 +177,20 @@ export function ResumeManager() {
 
       toast.success('Resume uploaded successfully')
 
+      // Trigger auto-verification in the background
+      triggerResumeVerification(newResume.id)
+        .then((result) => {
+          if (result.success) {
+            toast.info('Resume verification started', {
+              description: "We'll verify your resume automatically",
+              icon: <Bot className="h-4 w-4" />,
+            })
+          }
+        })
+        .catch(() => {
+          // Silent fail - verification will happen on admin review
+        })
+
       // Reset form
       setDialogOpen(false)
       setSelectedFile(null)
@@ -321,6 +336,23 @@ export function ResumeManager() {
       }
 
       toast.success('Resume updated successfully')
+
+      // Trigger re-verification if a new file was uploaded
+      if (selectedFile) {
+        triggerResumeVerification(updatedResume.id)
+          .then((result) => {
+            if (result.success) {
+              toast.info('Resume verification started', {
+                description: "We'll verify your resume automatically",
+                icon: <Bot className="h-4 w-4" />,
+              })
+            }
+          })
+          .catch(() => {
+            // Silent fail - verification will happen on admin review
+          })
+      }
+
       setDialogOpen(false)
       resetForm()
     } catch (error: any) {

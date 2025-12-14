@@ -107,6 +107,12 @@ export default async function RecruiterLayout({
             >
               Insights
             </Link>
+            <Link
+              href="/firms-directory"
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Firms Index
+            </Link>
             <MessageBadge role="recruiter" userId={user.id} />
             <Link
               href="/recruiter/settings"

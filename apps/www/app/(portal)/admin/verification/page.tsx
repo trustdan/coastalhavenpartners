@@ -6,6 +6,7 @@ import { AutoVerificationCard } from './auto-verification-card'
 import { ResumeVerificationCard } from './resume-verification-card'
 import { BulkVerifyButton, ReprocessFlaggedButton } from './bulk-verify-button'
 import { ResumeBulkVerifyButton, ResumeReprocessFlaggedButton } from './resume-bulk-verify-button'
+import { VerificationAuditLog } from './verification-audit-log'
 import type { Database } from '@/lib/types/database.types'
 
 type EducationLevel = 'bachelors' | 'masters' | 'mba' | 'phd' | 'professional'
@@ -305,6 +306,119 @@ export default async function AdminVerificationPage() {
     error: allResumeVerifications?.filter((v: any) => v.status === 'error').length || 0,
   }
 
+  // =============================================
+  // VERIFICATION AUDIT LOG DATA
+  // Fetch ALL verifications (including auto_verified) with full details for audit trail
+  // =============================================
+
+  // Fetch all transcript verifications with candidate info
+  const { data: allTranscriptVerificationsForAudit } = await supabaseAdminUntyped
+    .from('transcript_verifications')
+    .select(`
+      id,
+      transcript_id,
+      candidate_profile_id,
+      status,
+      extracted_gpa,
+      entered_gpa,
+      gpa_match,
+      gpa_difference,
+      extraction_confidence,
+      extraction_reasoning,
+      reviewer_notes,
+      updated_at,
+      candidate_profiles(
+        id,
+        school_name,
+        user_id
+      )
+    `)
+    .order('updated_at', { ascending: false })
+    .limit(100)
+
+  // Get user profiles for transcript audit log
+  const transcriptAuditUserIds = allTranscriptVerificationsForAudit
+    ?.map((v: any) => v.candidate_profiles?.user_id)
+    .filter((id: any): id is string => id !== null) || []
+
+  const { data: transcriptAuditProfiles } = transcriptAuditUserIds.length > 0
+    ? await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', transcriptAuditUserIds)
+    : { data: [] }
+
+  const transcriptAuditProfileMap = new Map(transcriptAuditProfiles?.map(p => [p.id, p]) || [])
+
+  const transcriptVerificationsForAudit = allTranscriptVerificationsForAudit?.map((v: any) => ({
+    ...v,
+    profile: v.candidate_profiles?.user_id
+      ? transcriptAuditProfileMap.get(v.candidate_profiles.user_id)
+      : null,
+    school_name: v.candidate_profiles?.school_name || null,
+  })) || []
+
+  // Fetch all resume verifications with candidate info
+  const { data: allResumeVerificationsForAudit } = await supabaseAdminUntyped
+    .from('resume_verifications')
+    .select(`
+      id,
+      resume_id,
+      candidate_profile_id,
+      status,
+      is_valid_resume,
+      appears_authentic,
+      fake_indicators,
+      confidence,
+      reasoning,
+      reviewer_notes,
+      updated_at,
+      candidate_profiles(
+        id,
+        school_name,
+        user_id
+      )
+    `)
+    .order('updated_at', { ascending: false })
+    .limit(100)
+
+  // Get user profiles for resume audit log
+  const resumeAuditUserIds = allResumeVerificationsForAudit
+    ?.map((v: any) => v.candidate_profiles?.user_id)
+    .filter((id: any): id is string => id !== null) || []
+
+  const { data: resumeAuditProfiles } = resumeAuditUserIds.length > 0
+    ? await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', resumeAuditUserIds)
+    : { data: [] }
+
+  const resumeAuditProfileMap = new Map(resumeAuditProfiles?.map(p => [p.id, p]) || [])
+
+  // Get resume labels
+  const resumeAuditResumeIds = allResumeVerificationsForAudit
+    ?.map((v: any) => v.resume_id)
+    .filter((id: any): id is string => id !== null) || []
+
+  const { data: resumeAuditResumes } = resumeAuditResumeIds.length > 0
+    ? await supabaseAdmin
+        .from('candidate_resumes')
+        .select('id, label')
+        .in('id', resumeAuditResumeIds)
+    : { data: [] }
+
+  const resumeLabelMap = new Map(resumeAuditResumes?.map(r => [r.id, r.label]) || [])
+
+  const resumeVerificationsForAudit = allResumeVerificationsForAudit?.map((v: any) => ({
+    ...v,
+    profile: v.candidate_profiles?.user_id
+      ? resumeAuditProfileMap.get(v.candidate_profiles.user_id)
+      : null,
+    school_name: v.candidate_profiles?.school_name || null,
+    resume_label: v.resume_id ? resumeLabelMap.get(v.resume_id) : null,
+  })) || []
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -515,6 +629,12 @@ export default async function AdminVerificationPage() {
           </div>
         </div>
       )}
+
+      {/* Verification Audit Log - Shows AI reasoning for ALL verifications */}
+      <VerificationAuditLog
+        transcriptVerifications={transcriptVerificationsForAudit}
+        resumeVerifications={resumeVerificationsForAudit}
+      />
     </div>
   )
 }
