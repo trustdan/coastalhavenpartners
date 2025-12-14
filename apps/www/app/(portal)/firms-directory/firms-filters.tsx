@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useState, useTransition } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useCallback, useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,6 +21,15 @@ import {
 } from '@/lib/constants/firms'
 import { cn } from '@/lib/utils'
 
+// DEBUG flag - set to false to disable console logging
+const DEBUG_ENABLED = true
+
+function debugLog(label: string, data?: unknown) {
+  if (DEBUG_ENABLED) {
+    console.log(`[FirmsFilters] ${label}`, data !== undefined ? data : '')
+  }
+}
+
 // Quick filter tabs with abbreviations
 const CATEGORY_TABS = [
   { value: '', label: 'All', full: 'All' },
@@ -35,7 +44,18 @@ const CATEGORY_TABS = [
 export function FirmsFilters() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+
+  // DEBUG: Log component mount and searchParams changes
+  useEffect(() => {
+    debugLog('Component mounted/updated', {
+      pathname,
+      fullUrl: typeof window !== 'undefined' ? window.location.href : 'N/A',
+      searchParamsString: searchParams.toString(),
+      currentCategory: searchParams.get('category'),
+    })
+  }, [searchParams, pathname])
 
   const hasActiveFilters =
     searchParams.get('category') ||
@@ -62,8 +82,11 @@ export function FirmsFilters() {
   )
 
   const updateFilter = (name: string, value: string) => {
+    debugLog(`updateFilter called:`, { name, value })
     startTransition(() => {
-      router.push('?' + createQueryString(name, value))
+      const newQueryString = createQueryString(name, value)
+      debugLog(`updateFilter navigating to:`, `?${newQueryString}`)
+      router.push('?' + newQueryString)
       router.refresh() // Force server component to re-render with new search params
     })
   }
@@ -112,20 +135,36 @@ export function FirmsFilters() {
   // Handle category tab click with refresh
   const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, categoryValue: string) => {
     e.preventDefault()
+
+    debugLog('=== CATEGORY TAB CLICKED ===', {
+      clickedCategory: categoryValue || '(All)',
+      previousCategory: searchParams.get('category') || '(All)',
+      isPending,
+    })
+
     const params = new URLSearchParams(searchParams.toString())
     if (categoryValue === '') {
       params.delete('category')
+      debugLog('Deleting category param (setting to All)')
     } else {
       params.set('category', categoryValue)
+      debugLog(`Setting category to: ${categoryValue}`)
     }
     params.delete('page') // Reset pagination
     const queryString = params.toString()
     const href = `/firms-directory${queryString ? `?${queryString}` : ''}`
-    
+
+    debugLog('Navigation target:', { href, queryString })
+
     startTransition(() => {
+      debugLog('Starting transition...')
       router.push(href)
+      debugLog('router.push() called')
       router.refresh() // Force server component to re-render with new search params
+      debugLog('router.refresh() called')
     })
+
+    debugLog('Transition initiated (callbacks scheduled)')
   }
 
   return (

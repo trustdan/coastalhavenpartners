@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { unstable_noStore as noStore } from 'next/cache'
 import { FirmsFilters } from './firms-filters'
 import { FirmsTable } from './firms-table'
 import { ColumnSelector } from './column-selector'
@@ -17,13 +18,30 @@ export const metadata = {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+// DEBUG: Generate unique render ID for tracking
+const DEBUG_ENABLED = true
+let renderCount = 0
+
 export default async function FirmsDirectory({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  // Force no caching
+  noStore()
+
+  const renderTimestamp = Date.now()
+  const currentRenderCount = ++renderCount
+
   const supabase = await createClient()
   const params = await searchParams
+
+  // DEBUG: Log every server component render
+  if (DEBUG_ENABLED) {
+    console.log('\n=== [FirmsPage] SERVER COMPONENT RENDER ===')
+    console.log(`[FirmsPage] Render #${currentRenderCount} at ${new Date(renderTimestamp).toISOString()}`)
+    console.log('[FirmsPage] Raw searchParams:', JSON.stringify(params, null, 2))
+  }
 
   // Check if user is authenticated
   const { data: { user } } = await supabase.auth.getUser()
@@ -49,6 +67,21 @@ export default async function FirmsDirectory({
   const sortOrder = typeof params.order === 'string' ? params.order : 'asc'
   const page = typeof params.page === 'string' ? parseInt(params.page) : 1
   const limit = 25
+
+  // DEBUG: Log parsed filters
+  if (DEBUG_ENABLED) {
+    console.log('[FirmsPage] Parsed filters:', {
+      category: category || '(none - showing ALL)',
+      region: region || '(none)',
+      state: state || '(none)',
+      priority: priority || '(none)',
+      search: search || '(none)',
+      sortBy,
+      sortOrder,
+      page,
+      limit,
+    })
+  }
 
   // Parse optional columns
   const columnsParam = typeof params.columns === 'string' ? params.columns : ''
@@ -97,6 +130,20 @@ export default async function FirmsDirectory({
 
   const { data: firms, count, error } = await query
 
+  // DEBUG: Log query results
+  if (DEBUG_ENABLED) {
+    console.log('[FirmsPage] Query results:', {
+      firmsReturned: firms?.length ?? 0,
+      totalCount: count,
+      hasError: !!error,
+      error: error?.message,
+      pagination: { from: (page - 1) * limit, to: (page - 1) * limit + limit - 1 },
+    })
+    if (firms?.length) {
+      console.log('[FirmsPage] First firm:', firms[0]?.name, '| Last firm:', firms[firms.length - 1]?.name)
+    }
+  }
+
   if (error) {
     console.error('Error fetching firms:', error)
   }
@@ -114,6 +161,18 @@ export default async function FirmsDirectory({
   // Create a stable key for the table that changes when filters change
   // This forces React to re-mount the component with fresh state
   const tableKey = `${category || ''}-${region || ''}-${state || ''}-${priority || ''}-${search || ''}-${sortBy}-${sortOrder}`
+
+  // DEBUG: Final summary before render
+  if (DEBUG_ENABLED) {
+    console.log('[FirmsPage] Rendering with:', {
+      tableKey,
+      totalCount: count || 0,
+      totalPages,
+      firmsPassedToTable: (firms as Firm[])?.length || 0,
+      hasMoreExpected: (count || 0) > ((firms as Firm[])?.length || 0),
+    })
+    console.log('=== [FirmsPage] END SERVER RENDER ===\n')
+  }
 
   return (
     <div className="space-y-8">

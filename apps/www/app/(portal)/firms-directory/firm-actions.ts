@@ -2,6 +2,16 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { unstable_noStore as noStore } from 'next/cache'
+
+// DEBUG flag - set to false to disable console logging
+const DEBUG_ENABLED = true
+
+function debugLog(label: string, data?: unknown) {
+  if (DEBUG_ENABLED) {
+    console.log(`[FirmActions] ${label}`, data !== undefined ? JSON.stringify(data, null, 2) : '')
+  }
+}
 
 export async function saveFirm(firmId: string) {
   const supabase = await createClient()
@@ -85,10 +95,17 @@ export interface LoadMoreFirmsParams {
 }
 
 export async function loadMoreFirms(params: LoadMoreFirmsParams) {
+  // Prevent caching
+  noStore()
+
+  debugLog('=== loadMoreFirms SERVER ACTION CALLED ===')
+  debugLog('Received params:', params)
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
+    debugLog('ERROR: Not authenticated')
     throw new Error('Not authenticated')
   }
 
@@ -104,6 +121,18 @@ export async function loadMoreFirms(params: LoadMoreFirmsParams) {
     sortOrder = 'asc',
   } = params
 
+  debugLog('Parsed params:', {
+    offset,
+    limit,
+    category: category || '(none)',
+    region: region || '(none)',
+    state: state || '(none)',
+    priority: priority || '(none)',
+    search: search || '(none)',
+    sortBy,
+    sortOrder,
+  })
+
   // Build query
   let query = supabase
     .from('firms')
@@ -112,23 +141,29 @@ export async function loadMoreFirms(params: LoadMoreFirmsParams) {
 
   // Apply filters
   if (category) {
+    debugLog(`Applying filter: firm_type = ${category}`)
     query = query.eq('firm_type', category)
   }
   if (region) {
+    debugLog(`Applying filter: region = ${region}`)
     query = query.eq('region', region)
   }
   if (state) {
+    debugLog(`Applying filter: state = ${state}`)
     query = query.eq('state', state)
   }
   if (priority) {
+    debugLog(`Applying filter: priority = ${priority}`)
     query = query.eq('priority', priority)
   }
   if (search) {
+    debugLog(`Applying search: ${search}`)
     query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,focus_sector.ilike.%${search}%`)
   }
 
   // Apply sorting
   const ascending = sortOrder !== 'desc'
+  debugLog(`Applying sort: ${sortBy} ${ascending ? 'ASC' : 'DESC'}`)
   query = query.order(sortBy, { ascending, nullsFirst: false })
 
   if (sortBy !== 'name') {
@@ -138,18 +173,36 @@ export async function loadMoreFirms(params: LoadMoreFirmsParams) {
   // Apply pagination
   const from = offset
   const to = offset + limit - 1
+  debugLog(`Applying range: ${from} to ${to}`)
   query = query.range(from, to)
 
   const { data: firms, count, error } = await query
 
   if (error) {
+    debugLog('ERROR from Supabase:', error)
     console.error('Error loading more firms:', error)
     throw new Error('Failed to load more firms')
   }
 
+  const hasMore = (offset + limit) < (count || 0)
+
+  debugLog('Query results:', {
+    firmsReturned: firms?.length || 0,
+    totalCount: count,
+    hasMore,
+    calculatedHasMore: `(${offset} + ${limit}) < ${count} = ${hasMore}`,
+  })
+
+  if (firms?.length) {
+    debugLog('First firm in result:', firms[0]?.name)
+    debugLog('Last firm in result:', firms[firms.length - 1]?.name)
+  }
+
+  debugLog('=== loadMoreFirms COMPLETED ===')
+
   return {
     firms: firms || [],
     totalCount: count || 0,
-    hasMore: (offset + limit) < (count || 0),
+    hasMore,
   }
 }

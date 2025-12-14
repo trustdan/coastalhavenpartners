@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ExternalLink,
@@ -26,6 +26,15 @@ import { saveFirm, unsaveFirm, loadMoreFirms } from './firm-actions'
 import type { Database } from '@/lib/types/database.types'
 
 type Firm = Database['public']['Tables']['firms']['Row']
+
+// DEBUG flag - set to false to disable console logging
+const DEBUG_ENABLED = true
+
+function debugLog(label: string, data?: unknown) {
+  if (DEBUG_ENABLED) {
+    console.log(`[FirmsTable] ${label}`, data !== undefined ? data : '')
+  }
+}
 
 interface FirmsTableProps {
   firms: Firm[]
@@ -265,6 +274,7 @@ export function FirmsTable({
   const [displayedFirms, setDisplayedFirms] = useState<Firm[]>(initialFirms)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(totalCount > initialFirms.length)
+  const mountCountRef = useRef(0)
 
   const currentSort = searchParams.get('sort') || 'priority'
   const currentOrder = searchParams.get('order') || 'asc'
@@ -274,12 +284,62 @@ export function FirmsTable({
   const currentPriority = searchParams.get('priority') || undefined
   const currentSearch = searchParams.get('search') || undefined
 
+  // DEBUG: Log component mount
+  useEffect(() => {
+    mountCountRef.current += 1
+    debugLog(`=== COMPONENT MOUNTED (mount #${mountCountRef.current}) ===`)
+    debugLog('Initial props received:', {
+      initialFirmsCount: initialFirms.length,
+      totalCount,
+      currentPage,
+      totalPages,
+      hasMoreOnMount: totalCount > initialFirms.length,
+      firstFirmName: initialFirms[0]?.name,
+      lastFirmName: initialFirms[initialFirms.length - 1]?.name,
+    })
+    return () => {
+      debugLog(`=== COMPONENT UNMOUNTING (was mount #${mountCountRef.current}) ===`)
+    }
+  }, []) // Empty deps = only on mount/unmount
+
+  // DEBUG: Track props changes
+  useEffect(() => {
+    debugLog('Props changed - initialFirms/totalCount update:', {
+      newInitialFirmsCount: initialFirms.length,
+      newTotalCount: totalCount,
+      newHasMore: totalCount > initialFirms.length,
+    })
+  }, [initialFirms, totalCount])
+
   // Reset displayed firms when filters/sort change (initial firms from server)
   useEffect(() => {
+    debugLog('=== RESETTING DISPLAYED FIRMS ===', {
+      previousDisplayedCount: displayedFirms.length,
+      newInitialFirmsCount: initialFirms.length,
+      totalCount,
+      filters: {
+        category: currentCategory || '(All)',
+        region: currentRegion || '(All)',
+        state: currentState || '(All)',
+        priority: currentPriority || '(All)',
+        search: currentSearch || '(none)',
+        sort: currentSort,
+        order: currentOrder,
+      },
+    })
+
     setDisplayedFirms(initialFirms)
     // Calculate hasMore: true if totalCount is greater than currently displayed firms
     // This ensures Load More button appears when there are more results
     const shouldHaveMore = totalCount > initialFirms.length
+
+    debugLog('hasMore calculation:', {
+      totalCount,
+      initialFirmsLength: initialFirms.length,
+      shouldHaveMore,
+      willShowLoadMoreButton: shouldHaveMore,
+    })
+
     setHasMore(shouldHaveMore)
   }, [initialFirms, totalCount, currentCategory, currentRegion, currentState, currentPriority, currentSearch, currentSort, currentOrder])
 
@@ -303,28 +363,49 @@ export function FirmsTable({
   }
 
   const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore) return
+    debugLog('=== LOAD MORE CLICKED ===', {
+      isLoadingMore,
+      hasMore,
+      currentDisplayedCount: displayedFirms.length,
+    })
+
+    if (isLoadingMore || !hasMore) {
+      debugLog('Load more BLOCKED:', { isLoadingMore, hasMore })
+      return
+    }
 
     setIsLoadingMore(true)
+    const loadParams = {
+      offset: displayedFirms.length,
+      limit: 25,
+      category: currentCategory,
+      region: currentRegion,
+      state: currentState,
+      priority: currentPriority ? parseInt(currentPriority) : undefined,
+      search: currentSearch,
+      sortBy: currentSort,
+      sortOrder: currentOrder,
+    }
+    debugLog('Calling loadMoreFirms with:', loadParams)
+
     try {
-      const result = await loadMoreFirms({
-        offset: displayedFirms.length,
-        limit: 25,
-        category: currentCategory,
-        region: currentRegion,
-        state: currentState,
-        priority: currentPriority ? parseInt(currentPriority) : undefined,
-        search: currentSearch,
-        sortBy: currentSort,
-        sortOrder: currentOrder,
+      const result = await loadMoreFirms(loadParams)
+
+      debugLog('loadMoreFirms result:', {
+        firmsReturned: result.firms.length,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
+        newTotalDisplayed: displayedFirms.length + result.firms.length,
       })
 
       setDisplayedFirms((prev) => [...prev, ...result.firms])
       setHasMore(result.hasMore)
     } catch (error) {
       console.error('Error loading more firms:', error)
+      debugLog('loadMoreFirms ERROR:', error)
     } finally {
       setIsLoadingMore(false)
+      debugLog('Load more completed')
     }
   }
 
@@ -496,6 +577,31 @@ export function FirmsTable({
           </p>
         )}
       </div>
+
+      {/* DEBUG PANEL - Visible when DEBUG_ENABLED is true */}
+      {DEBUG_ENABLED && (
+        <div className="mt-6 p-4 border-2 border-dashed border-yellow-500 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+          <h3 className="font-bold text-yellow-800 dark:text-yellow-200 mb-2">🐛 DEBUG INFO</h3>
+          <div className="text-xs font-mono space-y-1 text-yellow-700 dark:text-yellow-300">
+            <p><strong>displayedFirms.length:</strong> {displayedFirms.length}</p>
+            <p><strong>totalCount (from server):</strong> {totalCount}</p>
+            <p><strong>hasMore:</strong> {hasMore ? 'true' : 'false'}</p>
+            <p><strong>isLoadingMore:</strong> {isLoadingMore ? 'true' : 'false'}</p>
+            <p><strong>currentCategory:</strong> {currentCategory || '(All/undefined)'}</p>
+            <p><strong>currentRegion:</strong> {currentRegion || '(All/undefined)'}</p>
+            <p><strong>currentState:</strong> {currentState || '(All/undefined)'}</p>
+            <p><strong>currentPriority:</strong> {currentPriority || '(All/undefined)'}</p>
+            <p><strong>currentSearch:</strong> {currentSearch || '(none)'}</p>
+            <p><strong>currentSort:</strong> {currentSort} {currentOrder}</p>
+            <p><strong>searchParams.toString():</strong> {searchParams.toString() || '(empty)'}</p>
+            <p><strong>Should show Load More:</strong> {hasMore && displayedFirms.length > 0 ? 'YES' : 'NO'}</p>
+            <p className="mt-2 pt-2 border-t border-yellow-400">
+              <strong>First firm:</strong> {displayedFirms[0]?.name || 'N/A'} |
+              <strong> Last firm:</strong> {displayedFirms[displayedFirms.length - 1]?.name || 'N/A'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
