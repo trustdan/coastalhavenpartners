@@ -1,0 +1,122 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/types/database.types'
+
+/**
+ * API endpoint for triggering resume verification from mobile app
+ * POST /api/verify/resume
+ * Body: { resumeId: string }
+ *
+ * Requires authenticated user via Bearer token or Supabase session
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // Get auth token from header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { success: false, error: 'Missing authorization header' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+
+    // Create Supabase client with the user's token
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    )
+
+    // Verify the token and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid or expired token' },
+        { status: 401 }
+      )
+    }
+
+    // Parse request body
+    const body = await request.json()
+    const { resumeId } = body
+
+    if (!resumeId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing resumeId in request body' },
+        { status: 400 }
+      )
+    }
+
+    // Use admin client to verify ownership
+    const supabaseAdmin = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
+    // Verify the resume belongs to this user
+    const { data: resume, error: resumeError } = await supabaseAdmin
+      .from('candidate_resumes')
+      .select('id, candidate_profile_id, user_id')
+      .eq('id', resumeId)
+      .single()
+
+    if (resumeError || !resume) {
+      return NextResponse.json(
+        { success: false, error: 'Resume not found' },
+        { status: 404 }
+      )
+    }
+
+    if (resume.user_id !== user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 403 }
+      )
+    }
+
+    // Trigger verification in the background
+    try {
+      const { verifyResume } = await import('@/lib/resume-verification')
+
+      // Run verification asynchronously - don't await
+      verifyResume(resume.candidate_profile_id, resumeId)
+        .then((result) => {
+          console.log('[API/verify/resume] Completed for resume', resumeId, result.status)
+        })
+        .catch((error) => {
+          console.error('[API/verify/resume] Failed for resume', resumeId, error)
+        })
+
+      return NextResponse.json({
+        success: true,
+        message: 'Verification started',
+      })
+    } catch (error) {
+      console.error('[API/verify/resume] Error starting verification:', error)
+      return NextResponse.json(
+        { success: false, error: 'Failed to start verification' },
+        { status: 500 }
+      )
+    }
+  } catch (error) {
+    console.error('[API/verify/resume] Error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

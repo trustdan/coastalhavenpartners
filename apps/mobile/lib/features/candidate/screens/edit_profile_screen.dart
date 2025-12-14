@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../widgets/magic_ui/magic_ui.dart';
 import '../../../data/repositories/profile_repository.dart';
+import '../widgets/documents_tab.dart';
 
 /// Edit Profile Screen - Tab-based profile editor for candidates
 /// Tabs: Basic | Education | Documents | Preferences
@@ -105,7 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           children: [
             _BasicInfoTab(onChanged: _markChanged),
             _EducationTab(onChanged: _markChanged),
-            _DocumentsTab(onChanged: _markChanged),
+            DocumentsTab(onChanged: _markChanged),
             _PreferencesTab(onChanged: _markChanged),
           ],
         ),
@@ -741,529 +739,6 @@ class _EducationTabState extends State<_EducationTab> {
   }
 }
 
-/// Documents Tab - Resume and transcripts
-class _DocumentsTab extends StatefulWidget {
-  final VoidCallback onChanged;
-
-  const _DocumentsTab({required this.onChanged});
-
-  @override
-  State<_DocumentsTab> createState() => _DocumentsTabState();
-}
-
-class _DocumentsTabState extends State<_DocumentsTab> {
-  // Mock document state
-  String? _resumeName = 'John_Smith_Resume.pdf';
-  String? _resumeDate = 'Dec 5, 2024';
-  final String _resumeSize = '156 KB';
-  final List<_Document> _transcripts = [];
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Resume Section
-          _buildSectionTitle('Resume'),
-          AppSpacing.itemGap,
-          _buildDocumentCard(
-            context,
-            isDark,
-            title: 'Resume',
-            fileName: _resumeName,
-            date: _resumeDate,
-            size: _resumeSize,
-            onUpload: _isUploading ? null : _uploadResume,
-            onView: _resumeName != null ? _viewResume : null,
-            onReplace: _resumeName != null && !_isUploading
-                ? _replaceResume
-                : null,
-          ),
-          AppSpacing.sectionGap,
-
-          // Transcripts Section
-          _buildSectionTitle('Transcripts'),
-          AppSpacing.itemGap,
-          if (_transcripts.isEmpty)
-            _buildEmptyState(
-              context,
-              isDark,
-              'No transcripts uploaded',
-              'Upload your official or unofficial transcripts',
-              onUpload: _isUploading ? null : () => _uploadTranscript(),
-            )
-          else
-            ..._transcripts.asMap().entries.map((entry) {
-              final index = entry.key;
-              final doc = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildDocumentCard(
-                  context,
-                  isDark,
-                  title: 'Transcript ${index + 1}',
-                  fileName: doc.name,
-                  date: doc.date,
-                  size: doc.size,
-                  onView: () => _viewTranscript(index),
-                  onDelete: () => _deleteTranscript(index),
-                ),
-              );
-            }),
-          if (_transcripts.isNotEmpty) ...[
-            AppSpacing.itemGap,
-            OutlinedButton.icon(
-              onPressed: _isUploading ? null : () => _uploadTranscript(),
-              icon: const Icon(Icons.add),
-              label: Text(_isUploading ? 'Uploading...' : 'Add Transcript'),
-            ),
-          ],
-          AppSpacing.sectionGap,
-
-          // Guidelines
-          Container(
-            padding: AppSpacing.cardPadding,
-            decoration: BoxDecoration(
-              color: AppColors.info.withValues(alpha: 0.1),
-              borderRadius: AppRadius.card,
-              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.info_outline, size: 20, color: AppColors.info),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Document Guidelines',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color: AppColors.info,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '• PDF format only\n• Maximum file size: 5MB\n• Ensure documents are clearly readable',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.info,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.sectionGap,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(title, style: AppTextStyles.h4);
-  }
-
-  Widget _buildDocumentCard(
-    BuildContext context,
-    bool isDark, {
-    required String title,
-    String? fileName,
-    String? date,
-    String? size,
-    VoidCallback? onUpload,
-    VoidCallback? onView,
-    VoidCallback? onReplace,
-    VoidCallback? onDelete,
-  }) {
-    final hasFile = fileName != null;
-
-    return Container(
-      padding: AppSpacing.cardPadding,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: AppRadius.card,
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (hasFile) ...[
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.picture_as_pdf,
-                    color: AppColors.error,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        fileName,
-                        style: AppTextStyles.labelMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '$date • $size',
-                        style: AppTextStyles.caption.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            AppSpacing.subsectionGap,
-            Row(
-              children: [
-                if (onView != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onView,
-                      icon: const Icon(Icons.visibility_outlined, size: 18),
-                      label: const Text('View'),
-                    ),
-                  ),
-                if (onView != null && (onReplace != null || onDelete != null))
-                  AppSpacing.hGapSm,
-                if (onReplace != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onReplace,
-                      icon: const Icon(Icons.swap_horiz, size: 18),
-                      label: const Text('Replace'),
-                    ),
-                  ),
-                if (onDelete != null) ...[
-                  AppSpacing.hGapSm,
-                  IconButton(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline),
-                    color: AppColors.error,
-                  ),
-                ],
-              ],
-            ),
-          ] else ...[
-            InkWell(
-              onTap: onUpload,
-              borderRadius: AppRadius.card,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 40,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap to upload $title',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'PDF only, max 5MB',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(
-    BuildContext context,
-    bool isDark,
-    String title,
-    String subtitle, {
-    VoidCallback? onUpload,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: AppRadius.card,
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          style: BorderStyle.solid,
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.folder_open_outlined,
-            size: 48,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 12),
-          Text(title, style: AppTextStyles.labelMedium),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: AppTextStyles.caption.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ShimmerButton(
-            text: onUpload == null ? 'Uploading...' : 'Upload',
-            onPressed: onUpload,
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _isUploading = false;
-  String? _resumeUrl;
-  final List<String> _transcriptUrls = [];
-
-  Future<void> _uploadResume() async {
-    await _pickAndUploadFile(
-      documentType: 'resume',
-      onSuccess: (fileName, url) {
-        setState(() {
-          _resumeName = fileName;
-          _resumeDate = _formatDate(DateTime.now());
-          _resumeUrl = url;
-        });
-        widget.onChanged();
-      },
-    );
-  }
-
-  Future<void> _viewResume() async {
-    if (_resumeUrl != null) {
-      await _openDocument(_resumeUrl!);
-    }
-  }
-
-  Future<void> _replaceResume() async {
-    await _uploadResume();
-  }
-
-  Future<void> _uploadTranscript() async {
-    await _pickAndUploadFile(
-      documentType: 'transcript',
-      onSuccess: (fileName, url) {
-        setState(() {
-          _transcripts.add(
-            _Document(
-              name: fileName,
-              date: _formatDate(DateTime.now()),
-              size: 'Uploaded',
-            ),
-          );
-          _transcriptUrls.add(url);
-        });
-        widget.onChanged();
-      },
-    );
-  }
-
-  Future<void> _viewTranscript(int index) async {
-    if (index < _transcriptUrls.length) {
-      await _openDocument(_transcriptUrls[index]);
-    }
-  }
-
-  void _deleteTranscript(int index) {
-    setState(() {
-      _transcripts.removeAt(index);
-      if (index < _transcriptUrls.length) {
-        _transcriptUrls.removeAt(index);
-      }
-    });
-    widget.onChanged();
-  }
-
-  Future<void> _pickAndUploadFile({
-    required String documentType,
-    required void Function(String fileName, String url) onSuccess,
-  }) async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-        withData: true,
-      );
-
-      if (result == null || result.files.isEmpty) return;
-
-      final file = result.files.first;
-
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('File size exceeds 5MB limit'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-        return;
-      }
-
-      if (file.bytes == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to read file'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-        return;
-      }
-
-      setState(() => _isUploading = true);
-
-      // Show upload progress
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                const SizedBox(width: 16),
-                Text('Uploading ${file.name}...'),
-              ],
-            ),
-            duration: const Duration(seconds: 30),
-          ),
-        );
-      }
-
-      // Upload to Supabase storage
-      final url = await ProfileRepository.instance.uploadDocument(
-        file.bytes!,
-        file.name,
-        documentType,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }
-
-      if (url != null) {
-        onSuccess(file.name, url);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${documentType.substring(0, 1).toUpperCase()}${documentType.substring(1)} uploaded successfully',
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to upload file'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isUploading = false);
-      }
-    }
-  }
-
-  Future<void> _openDocument(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open document'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
-}
-
-class _Document {
-  final String name;
-  final String date;
-  final String size;
-
-  _Document({required this.name, required this.date, required this.size});
-}
-
 /// Preferences Tab - Target roles, locations, visibility settings
 class _PreferencesTab extends StatefulWidget {
   final VoidCallback onChanged;
@@ -1275,17 +750,20 @@ class _PreferencesTab extends StatefulWidget {
 }
 
 class _PreferencesTabState extends State<_PreferencesTab> {
-  // Target roles
+  // Target roles (matches website options)
   final List<String> _allRoles = [
     'Investment Banking',
     'Private Equity',
     'Venture Capital',
     'Hedge Fund',
-    'Equity Research',
-    'Sales & Trading',
-    'Corporate Development',
     'Asset Management',
     'Consulting',
+    'Corporate Finance',
+    'Equity Research',
+    'Sales & Trading',
+    'Wealth Management',
+    'Real Estate',
+    'Fintech',
   ];
   final Set<String> _selectedRoles = {
     'Investment Banking',
@@ -1293,18 +771,24 @@ class _PreferencesTabState extends State<_PreferencesTab> {
     'Venture Capital',
   };
 
-  // Preferred locations
+  // Preferred locations (matches website options + international)
   final List<String> _allLocations = [
     'New York, NY',
     'San Francisco, CA',
-    'Boston, MA',
     'Chicago, IL',
+    'Boston, MA',
     'Los Angeles, CA',
     'Miami, FL',
     'Dallas, TX',
+    'Houston, TX',
     'Seattle, WA',
+    'Austin, TX',
+    'Denver, CO',
+    'Atlanta, GA',
     'Washington, DC',
     'London, UK',
+    'Hong Kong',
+    'Remote',
   ];
   final Set<String> _selectedLocations = {
     'New York, NY',

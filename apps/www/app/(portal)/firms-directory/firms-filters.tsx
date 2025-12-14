@@ -19,6 +19,18 @@ import {
   FIRM_STATES,
   FIRM_SORT_OPTIONS,
 } from '@/lib/constants/firms'
+import { cn } from '@/lib/utils'
+
+// Quick filter tabs with abbreviations
+const CATEGORY_TABS = [
+  { value: '__all__', label: 'All', full: 'All' },
+  { value: 'Investment Banking', label: 'IB', full: 'Investment Banking' },
+  { value: 'Private Equity', label: 'PE', full: 'Private Equity' },
+  { value: 'Venture Capital', label: 'VC', full: 'Venture Capital' },
+  { value: 'Hedge Fund', label: 'HF', full: 'Hedge Fund' },
+  { value: 'Asset Management', label: 'AM', full: 'Asset Management' },
+  { value: 'Family Office', label: 'FO', full: 'Family Office' },
+] as const
 
 export function FirmsFilters() {
   const router = useRouter()
@@ -80,9 +92,32 @@ export function FirmsFilters() {
     setSearchTimeout(timeout)
   }
 
+  const currentCategory = searchParams.get('category') || '__all__'
+
   return (
-    <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+    <div className="space-y-4">
+      {/* Quick Category Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {CATEGORY_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => updateFilter('category', tab.value)}
+            disabled={isPending}
+            title={tab.full}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+              currentCategory === tab.value
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 border'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-xl border bg-white p-4 shadow-sm dark:bg-neutral-900">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Search */}
         <div className="space-y-2 lg:col-span-2">
           <Label htmlFor="search">Search</Label>
@@ -96,27 +131,6 @@ export function FirmsFilters() {
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-        </div>
-
-        {/* Category */}
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select
-            value={searchParams.get('category') || '__all__'}
-            onValueChange={(value) => updateFilter('category', value)}
-          >
-            <SelectTrigger id="category">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All categories</SelectItem>
-              {FIRM_CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Region */}
@@ -227,6 +241,7 @@ export function FirmsFilters() {
             Clear Filters
           </Button>
         )}
+      </div>
       </div>
     </div>
   )

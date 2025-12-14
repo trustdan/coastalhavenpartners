@@ -69,37 +69,40 @@ const List<String> _degreeTypes = [
   'PhD',
 ];
 
-/// Target roles in finance
+/// Target roles in finance (matches website options)
 const List<String> _targetRoles = [
   'Investment Banking',
   'Private Equity',
   'Venture Capital',
   'Hedge Fund',
+  'Asset Management',
+  'Consulting',
+  'Corporate Finance',
   'Equity Research',
   'Sales & Trading',
-  'Corporate Development',
-  'Asset Management',
-  'Restructuring',
-  'Real Estate',
   'Wealth Management',
+  'Real Estate',
+  'Fintech',
 ];
 
-/// Preferred locations
+/// Preferred locations (matches website options + international)
 const List<String> _preferredLocations = [
   'New York, NY',
   'San Francisco, CA',
-  'Boston, MA',
   'Chicago, IL',
+  'Boston, MA',
   'Los Angeles, CA',
   'Miami, FL',
   'Dallas, TX',
   'Houston, TX',
+  'Seattle, WA',
+  'Austin, TX',
+  'Denver, CO',
   'Atlanta, GA',
   'Washington, DC',
-  'Seattle, WA',
-  'Denver, CO',
   'London, UK',
   'Hong Kong',
+  'Remote',
 ];
 
 /// Candidate profile completion screen - collects education, preferences, and resume

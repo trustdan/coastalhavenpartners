@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+
+// Ensure page always fetches fresh data
+export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { VerificationCard } from './verification-card'
 import { AutoVerificationCard } from './auto-verification-card'

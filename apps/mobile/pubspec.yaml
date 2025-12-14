@@ -56,6 +56,9 @@ dependencies:
   # Animations
   flutter_animate: any
 
+  # HTTP Client
+  http: any
+
   # Utilities
   intl: any
   url_launcher: any

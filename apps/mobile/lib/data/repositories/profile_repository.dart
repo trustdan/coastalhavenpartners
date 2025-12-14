@@ -639,20 +639,40 @@ class ProfileRepository extends BaseRepository {
       // Get the public URL
       final url = client!.storage.from(bucketName).getPublicUrl(storagePath);
 
-      // Update the candidate profile with the new document URL
+      // Get candidate profile
+      final profile = await getCurrentCandidateProfile();
+      if (profile == null) {
+        debugPrint('No candidate profile found for document upload');
+        return url;
+      }
+
+      // Insert into the new document tables (used by admin verification)
       if (documentType == 'resume') {
-        final profile = await getCurrentCandidateProfile();
-        if (profile != null) {
-          await updateCandidateProfile(profileId: profile.id, resumeUrl: url);
-        }
+        // Insert into candidate_resumes table
+        await table('candidate_resumes').insert({
+          'candidate_profile_id': profile.id,
+          'user_id': currentUserId,
+          'resume_url': url,
+          'label': 'General', // Default label for mobile uploads
+          'is_default': true,
+          'is_verified': false,
+        });
+        // Also update legacy field for backwards compatibility
+        await updateCandidateProfile(profileId: profile.id, resumeUrl: url);
       } else if (documentType == 'transcript') {
-        final profile = await getCurrentCandidateProfile();
-        if (profile != null) {
-          await updateCandidateProfile(
-            profileId: profile.id,
-            transcriptUrl: url,
-          );
-        }
+        // Insert into candidate_transcripts table
+        await table('candidate_transcripts').insert({
+          'candidate_profile_id': profile.id,
+          'user_id': currentUserId,
+          'transcript_url': url,
+          'education_level': profile.educationLevel?.name ?? 'bachelors',
+          'school_name': profile.schoolName,
+          'gpa': profile.gpa,
+          'is_verified': false,
+          'gpa_verified': false,
+        });
+        // Also update legacy field for backwards compatibility
+        await updateCandidateProfile(profileId: profile.id, transcriptUrl: url);
       }
 
       return url;

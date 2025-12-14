@@ -71,3 +71,85 @@ export async function getSavedFirms() {
 
   return savedFirms || []
 }
+
+export interface LoadMoreFirmsParams {
+  offset: number
+  limit?: number
+  category?: string
+  region?: string
+  state?: string
+  priority?: number
+  search?: string
+  sortBy?: string
+  sortOrder?: string
+}
+
+export async function loadMoreFirms(params: LoadMoreFirmsParams) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Not authenticated')
+  }
+
+  const {
+    offset,
+    limit = 25,
+    category,
+    region,
+    state,
+    priority,
+    search,
+    sortBy = 'priority',
+    sortOrder = 'asc',
+  } = params
+
+  // Build query
+  let query = supabase
+    .from('firms')
+    .select('*', { count: 'exact' })
+    .eq('is_visible', true)
+
+  // Apply filters
+  if (category) {
+    query = query.eq('firm_type', category)
+  }
+  if (region) {
+    query = query.eq('region', region)
+  }
+  if (state) {
+    query = query.eq('state', state)
+  }
+  if (priority) {
+    query = query.eq('priority', priority)
+  }
+  if (search) {
+    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,focus_sector.ilike.%${search}%`)
+  }
+
+  // Apply sorting
+  const ascending = sortOrder !== 'desc'
+  query = query.order(sortBy, { ascending, nullsFirst: false })
+
+  if (sortBy !== 'name') {
+    query = query.order('name', { ascending: true })
+  }
+
+  // Apply pagination
+  const from = offset
+  const to = offset + limit - 1
+  query = query.range(from, to)
+
+  const { data: firms, count, error } = await query
+
+  if (error) {
+    console.error('Error loading more firms:', error)
+    throw new Error('Failed to load more firms')
+  }
+
+  return {
+    firms: firms || [],
+    totalCount: count || 0,
+    hasMore: (offset + limit) < (count || 0),
+  }
+}

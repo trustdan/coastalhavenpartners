@@ -43,6 +43,11 @@ import '../../features/shared/screens/firms_directory_screen.dart';
 import '../../features/school/screens/school_dashboard.dart';
 import '../../features/school/screens/students_screen.dart';
 import '../../features/school/widgets/school_shell.dart';
+import '../../features/admin/screens/admin_dashboard.dart';
+import '../../features/admin/screens/admin_verification_screen.dart';
+import '../../features/admin/screens/admin_candidates_screen.dart';
+import '../../features/admin/screens/admin_support_screen.dart';
+import '../../features/admin/widgets/admin_shell.dart';
 import '../providers/auth_provider.dart';
 
 /// Route names as constants
@@ -93,6 +98,13 @@ class AppRoutes {
   static const schoolStudents = '/school/students';
   static const schoolMessages = '/school/messages';
   static const schoolSettings = '/school/settings';
+
+  // Admin Portal
+  static const admin = '/admin';
+  static const adminVerification = '/admin/verification';
+  static const adminCandidates = '/admin/candidates';
+  static const adminSupport = '/admin/support';
+  static const adminSettings = '/admin/settings';
 
   // Shared
   static const settings = '/settings';
@@ -172,6 +184,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.completeProfileCandidate: 'candidate',
         AppRoutes.completeProfileRecruiter: 'recruiter',
         AppRoutes.completeProfileSchool: 'school_admin',
+        // Note: admin users skip profile completion and go directly to admin dashboard
       };
 
       final isPublicRoute = publicRoutes.contains(currentPath);
@@ -204,6 +217,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return AppRoutes.completeProfileRecruiter;
             case 'school_admin':
               return AppRoutes.completeProfileSchool;
+            case 'admin':
+              // Admin users don't need profile completion
+              return AppRoutes.admin;
             default:
               return AppRoutes.roleSelection;
           }
@@ -225,6 +241,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return AppRoutes.completeProfileRecruiter;
             case 'school_admin':
               return AppRoutes.completeProfileSchool;
+            case 'admin':
+              // Admin users go directly to admin dashboard
+              return AppRoutes.admin;
           }
         }
         // No role set - redirect to role selection
@@ -489,6 +508,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.schoolSettings,
             builder: (context, state) => const SettingsScreen(userRole: 'school_admin'),
+          ),
+        ],
+      ),
+
+      // Admin Portal (Shell Route for bottom nav)
+      ShellRoute(
+        builder: (context, state, child) {
+          return AdminShell(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: AppRoutes.admin,
+            builder: (context, state) => const AdminDashboard(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminVerification,
+            builder: (context, state) => const AdminVerificationScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminCandidates,
+            builder: (context, state) => const AdminCandidatesScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminSupport,
+            builder: (context, state) => const AdminSupportScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminSettings,
+            builder: (context, state) => const SettingsScreen(userRole: 'admin'),
           ),
         ],
       ),

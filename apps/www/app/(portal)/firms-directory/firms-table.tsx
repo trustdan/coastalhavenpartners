@@ -1,22 +1,18 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import Link from 'next/link'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ExternalLink,
   Bookmark,
   BookmarkCheck,
-  ChevronLeft,
-  ChevronRight,
   Building2,
   MapPin,
-  Users,
-  Calendar,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   Mail,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,7 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { PRIORITY_LABELS, OPTIONAL_COLUMNS, type OptionalColumnKey } from '@/lib/constants/firms'
-import { saveFirm, unsaveFirm } from './firm-actions'
+import { saveFirm, unsaveFirm, loadMoreFirms } from './firm-actions'
 import type { Database } from '@/lib/types/database.types'
 
 type Firm = Database['public']['Tables']['firms']['Row']
@@ -256,7 +252,7 @@ function FirmRow({
 }
 
 export function FirmsTable({
-  firms,
+  firms: initialFirms,
   savedFirmIds,
   currentPage,
   totalPages,
@@ -266,9 +262,23 @@ export function FirmsTable({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [localSavedIds, setLocalSavedIds] = useState(savedFirmIds)
+  const [displayedFirms, setDisplayedFirms] = useState<Firm[]>(initialFirms)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(totalCount > initialFirms.length)
 
   const currentSort = searchParams.get('sort') || 'priority'
   const currentOrder = searchParams.get('order') || 'asc'
+  const currentCategory = searchParams.get('category') || undefined
+  const currentRegion = searchParams.get('region') || undefined
+  const currentState = searchParams.get('state') || undefined
+  const currentPriority = searchParams.get('priority') || undefined
+  const currentSearch = searchParams.get('search') || undefined
+
+  // Reset displayed firms when filters/sort change (initial firms from server)
+  useEffect(() => {
+    setDisplayedFirms(initialFirms)
+    setHasMore(totalCount > initialFirms.length)
+  }, [initialFirms, totalCount])
 
   // Calculate total columns for empty state colspan
   const baseColumnCount = 7 // Firm, Category, Location, Region, Focus, Contact, Actions
@@ -287,6 +297,32 @@ export function FirmsTable({
     // Reset to page 1 when sorting changes
     params.delete('page')
     router.push('?' + params.toString())
+  }
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return
+
+    setIsLoadingMore(true)
+    try {
+      const result = await loadMoreFirms({
+        offset: displayedFirms.length,
+        limit: 25,
+        category: currentCategory,
+        region: currentRegion,
+        state: currentState,
+        priority: currentPriority ? parseInt(currentPriority) : undefined,
+        search: currentSearch,
+        sortBy: currentSort,
+        sortOrder: currentOrder,
+      })
+
+      setDisplayedFirms((prev) => [...prev, ...result.firms])
+      setHasMore(result.hasMore)
+    } catch (error) {
+      console.error('Error loading more firms:', error)
+    } finally {
+      setIsLoadingMore(false)
+    }
   }
 
   const handleToggleSave = async (firmId: string, currentlySaved: boolean) => {
@@ -311,12 +347,6 @@ export function FirmsTable({
       setLocalSavedIds(savedFirmIds)
       console.error('Error toggling save:', error)
     }
-  }
-
-  const goToPage = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('page', page.toString())
-    router.push('?' + params.toString())
   }
 
   return (
@@ -404,8 +434,8 @@ export function FirmsTable({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {firms.length > 0 ? (
-                firms.map((firm) => (
+              {displayedFirms.length > 0 ? (
+                displayedFirms.map((firm) => (
                   <FirmRow
                     key={firm.id}
                     firm={firm}
@@ -432,37 +462,37 @@ export function FirmsTable({
         </div>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Showing {(currentPage - 1) * 25 + 1} - {Math.min(currentPage * 25, totalCount)} of {totalCount} firms
+      {/* Results count and Load More */}
+      <div className="flex flex-col items-center gap-4">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          Showing {displayedFirms.length} of {totalCount} firms
+        </p>
+
+        {hasMore && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleLoadMore}
+            disabled={isLoadingMore}
+            className="min-w-[200px]"
+          >
+            {isLoadingMore ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>Load More Firms</>
+            )}
+          </Button>
+        )}
+
+        {!hasMore && displayedFirms.length > 0 && (
+          <p className="text-sm text-neutral-500">
+            You've reached the end of the list
           </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <span className="px-2 text-sm text-neutral-600 dark:text-neutral-400">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

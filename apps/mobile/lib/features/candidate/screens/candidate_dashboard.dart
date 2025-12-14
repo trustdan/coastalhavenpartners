@@ -76,6 +76,10 @@ class CandidateDashboard extends ConsumerWidget {
                 _buildActivityStats(context, isDark, ref),
                 AppSpacing.subsectionGap,
 
+                // Quick Actions
+                _buildQuickActions(context, isDark),
+                AppSpacing.subsectionGap,
+
                 // Matching Jobs
                 matchingJobsAsync.when(
                   loading: () => const SizedBox.shrink(),
@@ -400,6 +404,109 @@ class CandidateDashboard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Explore',
+          style: AppTextStyles.h4,
+        ),
+        AppSpacing.itemGap,
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionCard(
+                context,
+                isDark,
+                icon: Icons.business,
+                label: 'Firms Directory',
+                subtitle: 'Browse firms',
+                onTap: () => context.push(AppRoutes.firmsDirectory),
+              ),
+            ),
+            AppSpacing.hGapMd,
+            Expanded(
+              child: _buildQuickActionCard(
+                context,
+                isDark,
+                icon: Icons.message_outlined,
+                label: 'Messages',
+                subtitle: 'View inbox',
+                onTap: () => context.push(AppRoutes.candidateMessages),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionCard(
+    BuildContext context,
+    bool isDark, {
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: AppSpacing.cardPadding,
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.cardLight,
+          borderRadius: AppRadius.card,
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.teal.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: AppColors.teal,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: AppTextStyles.labelMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.caption.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -117,8 +117,14 @@ export function ResumeManager() {
   }
 
   async function handleUpload() {
-    if (!selectedFile || !userId || !candidateProfileId) {
+    if (!selectedFile) {
       toast.error('Please select a file first')
+      return
+    }
+
+    if (!userId || !candidateProfileId) {
+      toast.error('Session error - please refresh the page and try again')
+      console.error('Upload failed: userId or candidateProfileId is null', { userId, candidateProfileId })
       return
     }
 

@@ -373,3 +373,137 @@ enum CampaignStatus {
     }
   }
 }
+
+/// Support message type enum
+enum SupportMessageType {
+  technicalSupport,
+  feedback,
+  verificationAppeal,
+  documentIssue,
+  accountAccess,
+  other;
+
+  String get value {
+    switch (this) {
+      case SupportMessageType.technicalSupport:
+        return 'technical_support';
+      case SupportMessageType.feedback:
+        return 'feedback';
+      case SupportMessageType.verificationAppeal:
+        return 'verification_appeal';
+      case SupportMessageType.documentIssue:
+        return 'document_issue';
+      case SupportMessageType.accountAccess:
+        return 'account_access';
+      case SupportMessageType.other:
+        return 'other';
+    }
+  }
+
+  String get displayName {
+    switch (this) {
+      case SupportMessageType.technicalSupport:
+        return 'Technical Support';
+      case SupportMessageType.feedback:
+        return 'Feedback';
+      case SupportMessageType.verificationAppeal:
+        return 'Verification Appeal';
+      case SupportMessageType.documentIssue:
+        return 'Document Issue';
+      case SupportMessageType.accountAccess:
+        return 'Account Access';
+      case SupportMessageType.other:
+        return 'Other';
+    }
+  }
+
+  static SupportMessageType fromString(String? value) {
+    switch (value) {
+      case 'technical_support':
+        return SupportMessageType.technicalSupport;
+      case 'feedback':
+        return SupportMessageType.feedback;
+      case 'verification_appeal':
+        return SupportMessageType.verificationAppeal;
+      case 'document_issue':
+        return SupportMessageType.documentIssue;
+      case 'account_access':
+        return SupportMessageType.accountAccess;
+      case 'other':
+        return SupportMessageType.other;
+      default:
+        return SupportMessageType.other;
+    }
+  }
+}
+
+/// Support message status enum
+enum SupportMessageStatus {
+  newMessage,
+  inProgress,
+  resolved,
+  spam;
+
+  String get value {
+    switch (this) {
+      case SupportMessageStatus.newMessage:
+        return 'new';
+      case SupportMessageStatus.inProgress:
+        return 'in_progress';
+      case SupportMessageStatus.resolved:
+        return 'resolved';
+      case SupportMessageStatus.spam:
+        return 'spam';
+    }
+  }
+
+  String get displayName {
+    switch (this) {
+      case SupportMessageStatus.newMessage:
+        return 'New';
+      case SupportMessageStatus.inProgress:
+        return 'In Progress';
+      case SupportMessageStatus.resolved:
+        return 'Resolved';
+      case SupportMessageStatus.spam:
+        return 'Spam';
+    }
+  }
+
+  static SupportMessageStatus fromString(String? value) {
+    switch (value) {
+      case 'new':
+        return SupportMessageStatus.newMessage;
+      case 'in_progress':
+        return SupportMessageStatus.inProgress;
+      case 'resolved':
+        return SupportMessageStatus.resolved;
+      case 'spam':
+        return SupportMessageStatus.spam;
+      default:
+        return SupportMessageStatus.newMessage;
+    }
+  }
+}
+
+/// Support message source enum
+enum SupportMessageSource {
+  web,
+  mobile,
+  api;
+
+  String get value => name;
+
+  static SupportMessageSource fromString(String? value) {
+    switch (value) {
+      case 'web':
+        return SupportMessageSource.web;
+      case 'mobile':
+        return SupportMessageSource.mobile;
+      case 'api':
+        return SupportMessageSource.api;
+      default:
+        return SupportMessageSource.web;
+    }
+  }
+}

@@ -69,7 +69,8 @@
       "Bash(powershell -Command \"Start-Sleep -Seconds 20; flutter devices\")",
       "Bash(powershell:*)",
       "Bash(dart run:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(head:*)"
     ],
     "deny": [],
     "ask": []
