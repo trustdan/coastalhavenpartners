@@ -59,7 +59,7 @@ export default async function FirmsLayout({
               Dashboard
             </Link>
             <Link
-              href="/firms"
+              href="/firms-directory"
               className="text-sm font-medium text-blue-600 dark:text-blue-400"
             >
               Firms Directory

@@ -100,7 +100,7 @@ class AppRoutes {
   static const messagesNew = '/messages/new';
   static const notifications = '/notifications';
   static const verificationAppeal = '/verification-appeal';
-  static const firmsDirectory = '/firms';
+  static const firmsDirectory = '/firms-directory';
   // Note: Individual conversation routes use /messages/:conversationId
 }
 
