@@ -13,6 +13,10 @@ export const metadata = {
   description: 'Browse our curated directory of investment banks, private equity firms, venture capital, and more.',
 }
 
+// Force dynamic rendering to ensure server component re-renders on search param changes
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function FirmsDirectory({
   searchParams,
 }: {

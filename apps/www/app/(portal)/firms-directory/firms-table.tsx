@@ -277,8 +277,11 @@ export function FirmsTable({
   // Reset displayed firms when filters/sort change (initial firms from server)
   useEffect(() => {
     setDisplayedFirms(initialFirms)
-    setHasMore(totalCount > initialFirms.length)
-  }, [initialFirms, totalCount])
+    // Calculate hasMore: true if totalCount is greater than currently displayed firms
+    // This ensures Load More button appears when there are more results
+    const shouldHaveMore = totalCount > initialFirms.length
+    setHasMore(shouldHaveMore)
+  }, [initialFirms, totalCount, currentCategory, currentRegion, currentState, currentPriority, currentSearch, currentSort, currentOrder])
 
   // Calculate total columns for empty state colspan
   const baseColumnCount = 7 // Firm, Category, Location, Region, Focus, Contact, Actions
@@ -489,7 +492,7 @@ export function FirmsTable({
 
         {!hasMore && displayedFirms.length > 0 && (
           <p className="text-sm text-neutral-500">
-            You've reached the end of the list
+            You&apos;ve reached the end of the list
           </p>
         )}
       </div>

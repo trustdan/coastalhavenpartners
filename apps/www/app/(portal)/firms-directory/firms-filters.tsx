@@ -64,6 +64,7 @@ export function FirmsFilters() {
   const updateFilter = (name: string, value: string) => {
     startTransition(() => {
       router.push('?' + createQueryString(name, value))
+      router.refresh() // Force server component to re-render with new search params
     })
   }
 
@@ -76,6 +77,7 @@ export function FirmsFilters() {
     if (order) params.set('order', order)
     startTransition(() => {
       router.push('?' + params.toString())
+      router.refresh() // Force server component to re-render with new search params
     })
   }
 
@@ -107,6 +109,25 @@ export function FirmsFilters() {
     return `/firms-directory${queryString ? `?${queryString}` : ''}`
   }
 
+  // Handle category tab click with refresh
+  const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, categoryValue: string) => {
+    e.preventDefault()
+    const params = new URLSearchParams(searchParams.toString())
+    if (categoryValue === '') {
+      params.delete('category')
+    } else {
+      params.set('category', categoryValue)
+    }
+    params.delete('page') // Reset pagination
+    const queryString = params.toString()
+    const href = `/firms-directory${queryString ? `?${queryString}` : ''}`
+    
+    startTransition(() => {
+      router.push(href)
+      router.refresh() // Force server component to re-render with new search params
+    })
+  }
+
   return (
     <div className="space-y-4">
       {/* Quick Category Tabs */}
@@ -121,6 +142,7 @@ export function FirmsFilters() {
               key={tab.value || 'all'}
               href={getCategoryHref(tab.value)}
               title={tab.full}
+              onClick={(e) => handleCategoryClick(e, tab.value)}
               className={cn(
                 'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                 isActive
