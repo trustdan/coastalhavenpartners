@@ -246,7 +246,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     children: _roles.map((role) {
                       final isSelected = _selectedRoles.contains(role);
                       return FilterChip(
-                        label: Text(role),
+                        label: Text(
+                          role,
+                          style: TextStyle(
+                            color: isSelected
+                                ? AppColors.teal
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                         selected: isSelected,
                         onSelected: (selected) {
                           setState(() {
@@ -259,6 +266,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         },
                         selectedColor: AppColors.teal.withValues(alpha: 0.2),
                         checkmarkColor: AppColors.teal,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
                         side: BorderSide(
                           color: isSelected
                               ? AppColors.teal
@@ -348,7 +356,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     children: _experienceLevels.map((level) {
                       final isSelected = _experienceLevel == level;
                       return ChoiceChip(
-                        label: Text(level),
+                        label: Text(
+                          level,
+                          style: TextStyle(
+                            color: isSelected
+                                ? AppColors.teal
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                         selected: isSelected,
                         onSelected: (selected) {
                           if (selected) {
@@ -359,6 +374,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         },
                         selectedColor: AppColors.teal.withValues(alpha: 0.2),
                         checkmarkColor: AppColors.teal,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppColors.teal
+                              : Theme.of(context).colorScheme.outline,
+                        ),
                       );
                     }).toList(),
                   ),
@@ -435,11 +456,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       children: items.map((item) {
         final isSelected = selected.contains(item);
         return FilterChip(
-          label: Text(item),
+          label: Text(
+            item,
+            style: TextStyle(
+              color: isSelected
+                  ? AppColors.teal
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
           selected: isSelected,
           onSelected: (_) => onToggle(item),
           selectedColor: AppColors.teal.withValues(alpha: 0.2),
           checkmarkColor: AppColors.teal,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           side: BorderSide(
             color: isSelected
                 ? AppColors.teal

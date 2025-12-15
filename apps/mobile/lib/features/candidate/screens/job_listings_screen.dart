@@ -207,13 +207,21 @@ class _JobListingsScreenState extends ConsumerState<JobListingsScreen> {
   Widget _buildFilterChip(BuildContext context, String label, JobType? jobType) {
     final isSelected = _selectedJobType == jobType;
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected
+              ? AppColors.teal
+              : Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
       selected: isSelected,
       onSelected: (_) {
         setState(() => _selectedJobType = jobType);
       },
       selectedColor: AppColors.teal.withValues(alpha: 0.2),
       checkmarkColor: AppColors.teal,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       side: BorderSide(
         color: isSelected
             ? AppColors.teal
