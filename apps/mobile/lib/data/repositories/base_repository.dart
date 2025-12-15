@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
+import '../../core/utils/app_debug.dart';
 
 /// Base repository with common Supabase operations
 abstract class BaseRepository {
@@ -22,8 +22,13 @@ abstract class BaseRepository {
   }) async {
     try {
       return await operation();
-    } catch (e) {
-      debugPrint('${errorMessage ?? 'Repository error'}: $e');
+    } catch (e, st) {
+      AppDebug.log(
+        'repo',
+        errorMessage ?? 'Repository error',
+        error: e,
+        stackTrace: st,
+      );
       if (rethrowError) rethrow;
       return null;
     }

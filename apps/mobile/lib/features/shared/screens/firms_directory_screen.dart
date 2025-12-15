@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/utils/app_debug.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -13,7 +14,8 @@ class FirmsDirectoryScreen extends ConsumerStatefulWidget {
   const FirmsDirectoryScreen({super.key});
 
   @override
-  ConsumerState<FirmsDirectoryScreen> createState() => _FirmsDirectoryScreenState();
+  ConsumerState<FirmsDirectoryScreen> createState() =>
+      _FirmsDirectoryScreenState();
 }
 
 class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
@@ -31,13 +33,57 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final params = ref.watch(firmsDirectoryParamsProvider);
-    final firmsAsync = ref.watch(firmsDirectoryProvider(params));
+    final firmsPagedAsync = ref.watch(firmsDirectoryPagedProvider);
     final savedFirmIdsAsync = ref.watch(savedFirmsNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Firms Directory'),
+        title: GestureDetector(
+          onLongPress: () {
+            // Long-press title to dump current filter state to logs.
+            AppDebug.log(
+              'firms',
+              'title long-press: current params',
+              data: {
+                'category': params.category,
+                'region': params.region,
+                'state': params.state,
+                'priority': params.priority,
+                'searchQuery': params.searchQuery,
+                'sortBy': params.sortBy,
+                'ascending': params.ascending,
+                'limit': params.limit,
+                'offset': params.offset,
+              },
+            );
+          },
+          child: const Text('Firms Directory'),
+        ),
         actions: [
+          if (AppDebug.enabled)
+            IconButton(
+              icon: const Icon(Icons.bug_report_outlined),
+              tooltip: 'Debug: log current state',
+              onPressed: () {
+                final paged = firmsPagedAsync.asData?.value;
+                AppDebug.log(
+                  'firms',
+                  'debug button pressed',
+                  data: {
+                    'params.category': params.category,
+                    'params.region': params.region,
+                    'params.state': params.state,
+                    'params.priority': params.priority,
+                    'params.searchQuery': params.searchQuery,
+                    'params.sortBy': params.sortBy,
+                    'params.ascending': params.ascending,
+                    'paged.totalCount': paged?.totalCount,
+                    'paged.firms.length': paged?.firms.length,
+                    'paged.hasMore': paged?.hasMore,
+                  },
+                );
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.bookmark_outline),
             tooltip: 'Saved Firms',
@@ -65,7 +111,9 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
-                          ref.read(firmsDirectoryParamsProvider.notifier).setSearchQuery(null);
+                          ref
+                              .read(firmsDirectoryParamsProvider.notifier)
+                              .setSearchQuery(null);
                         },
                       )
                     : null,
@@ -77,9 +125,14 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
               ),
               onChanged: (value) {
                 _debouncer.run(() {
-                  ref.read(firmsDirectoryParamsProvider.notifier).setSearchQuery(
-                    value.isEmpty ? null : value,
+                  AppDebug.log(
+                    'firms',
+                    'search changed (debounced)',
+                    data: {'value': value},
                   );
+                  ref
+                      .read(firmsDirectoryParamsProvider.notifier)
+                      .setSearchQuery(value.isEmpty ? null : value);
                 });
               },
             ),
@@ -95,17 +148,47 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
               children: [
                 _buildCategoryChip(context, 'All', null, params.category),
                 const SizedBox(width: 8),
-                _buildCategoryChip(context, 'IB', 'Investment Banking', params.category),
+                _buildCategoryChip(
+                  context,
+                  'IB',
+                  'Investment Banking',
+                  params.category,
+                ),
                 const SizedBox(width: 8),
-                _buildCategoryChip(context, 'PE', 'Private Equity', params.category),
+                _buildCategoryChip(
+                  context,
+                  'PE',
+                  'Private Equity',
+                  params.category,
+                ),
                 const SizedBox(width: 8),
-                _buildCategoryChip(context, 'VC', 'Venture Capital', params.category),
+                _buildCategoryChip(
+                  context,
+                  'VC',
+                  'Venture Capital',
+                  params.category,
+                ),
                 const SizedBox(width: 8),
-                _buildCategoryChip(context, 'HF', 'Hedge Fund', params.category),
+                _buildCategoryChip(
+                  context,
+                  'HF',
+                  'Hedge Fund',
+                  params.category,
+                ),
                 const SizedBox(width: 8),
-                _buildCategoryChip(context, 'AM', 'Asset Management', params.category),
+                _buildCategoryChip(
+                  context,
+                  'AM',
+                  'Asset Management',
+                  params.category,
+                ),
                 const SizedBox(width: 8),
-                _buildCategoryChip(context, 'FO', 'Family Office', params.category),
+                _buildCategoryChip(
+                  context,
+                  'FO',
+                  'Family Office',
+                  params.category,
+                ),
               ],
             ),
           ),
@@ -117,7 +200,7 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                firmsAsync.when(
+                firmsPagedAsync.when(
                   loading: () => Text(
                     'Loading...',
                     style: AppTextStyles.bodySmall.copyWith(
@@ -130,8 +213,8 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  data: (firms) => Text(
-                    '${firms.length} firms found',
+                  data: (paged) => Text(
+                    '${paged.totalCount} results found',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -150,26 +233,33 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
-                ref.invalidate(firmsDirectoryProvider(params));
+                AppDebug.log('firms', 'pull-to-refresh');
+                ref.invalidate(firmsDirectoryPagedProvider);
               },
-              child: firmsAsync.when(
+              child: firmsPagedAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, stack) => Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text('Error loading firms'),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () => ref.invalidate(firmsDirectoryProvider(params)),
+                        onPressed: () =>
+                            ref.invalidate(firmsDirectoryPagedProvider),
                         child: const Text('Retry'),
                       ),
                     ],
                   ),
                 ),
-                data: (firms) {
+                data: (paged) {
+                  final firms = paged.firms;
                   if (firms.isEmpty) {
                     return Center(
                       child: Column(
@@ -178,20 +268,26 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                           Icon(
                             Icons.business_outlined,
                             size: 64,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'No firms found',
                             style: AppTextStyles.h4.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Try adjusting your search or filters',
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -203,9 +299,50 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
 
                   return ListView.separated(
                     padding: AppSpacing.screenPadding,
-                    itemCount: firms.length,
+                    itemCount: firms.length + 1,
                     separatorBuilder: (_, __) => AppSpacing.subsectionGap,
                     itemBuilder: (context, index) {
+                      // Load more row
+                      if (index == firms.length) {
+                        if (!paged.hasMore) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Center(
+                              child: Text(
+                                'End of results',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Center(
+                            child: ElevatedButton(
+                              onPressed: paged.isLoadingMore
+                                  ? null
+                                  : () async {
+                                      await ref
+                                          .read(
+                                            firmsDirectoryPagedProvider
+                                                .notifier,
+                                          )
+                                          .loadMore();
+                                    },
+                              child: Text(
+                                paged.isLoadingMore
+                                    ? 'Loading...'
+                                    : 'Load More',
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
                       final firm = firms[index];
                       return _buildFirmCard(
                         context,
@@ -232,20 +369,44 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
   ) {
     final isSelected = selectedCategory == category;
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected
+              ? AppColors.teal
+              : Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
       selected: isSelected,
       onSelected: (_) {
+        AppDebug.log(
+          'firms',
+          'category chip tapped',
+          data: {
+            'label': label,
+            'category': category,
+            'selectedCategoryBefore': selectedCategory,
+          },
+        );
         ref.read(firmsDirectoryParamsProvider.notifier).setCategory(category);
       },
       selectedColor: AppColors.teal.withValues(alpha: 0.2),
       checkmarkColor: AppColors.teal,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       side: BorderSide(
-        color: isSelected ? AppColors.teal : Theme.of(context).colorScheme.outline,
+        color: isSelected
+            ? AppColors.teal
+            : Theme.of(context).colorScheme.outline,
       ),
     );
   }
 
-  Widget _buildFirmCard(BuildContext context, bool isDark, Firm firm, bool isSaved) {
+  Widget _buildFirmCard(
+    BuildContext context,
+    bool isDark,
+    Firm firm,
+    bool isSaved,
+  ) {
     return GestureDetector(
       onTap: () => _showFirmDetails(context, firm),
       child: Container(
@@ -282,16 +443,24 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Center(
                               child: Text(
-                                firm.name.isNotEmpty ? firm.name.substring(0, 1) : 'F',
-                                style: AppTextStyles.h3.copyWith(color: AppColors.teal),
+                                firm.name.isNotEmpty
+                                    ? firm.name.substring(0, 1)
+                                    : 'F',
+                                style: AppTextStyles.h3.copyWith(
+                                  color: AppColors.teal,
+                                ),
                               ),
                             ),
                           ),
                         )
                       : Center(
                           child: Text(
-                            firm.name.isNotEmpty ? firm.name.substring(0, 1) : 'F',
-                            style: AppTextStyles.h3.copyWith(color: AppColors.teal),
+                            firm.name.isNotEmpty
+                                ? firm.name.substring(0, 1)
+                                : 'F',
+                            style: AppTextStyles.h3.copyWith(
+                              color: AppColors.teal,
+                            ),
                           ),
                         ),
                 ),
@@ -317,8 +486,8 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                                 color: firm.priority == 1
                                     ? AppColors.warning
                                     : firm.priority == 2
-                                        ? AppColors.info
-                                        : Colors.grey,
+                                    ? AppColors.info
+                                    : Colors.grey,
                               ),
                             ),
                         ],
@@ -328,7 +497,9 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                         Text(
                           firm.firmType!,
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                     ],
@@ -340,7 +511,9 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                     color: isSaved ? AppColors.teal : null,
                   ),
                   onPressed: () {
-                    ref.read(savedFirmsNotifierProvider.notifier).toggleSave(firm.id, isSaved);
+                    ref
+                        .read(savedFirmsNotifierProvider.notifier)
+                        .toggleSave(firm.id, isSaved);
                   },
                 ),
               ],
@@ -365,12 +538,21 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
               runSpacing: 8,
               children: [
                 if (firm.locationString != null)
-                  _buildTag(context, Icons.location_on_outlined, firm.locationString!),
-                if (firm.region != null) _buildTag(context, Icons.public, firm.region!),
+                  _buildTag(
+                    context,
+                    Icons.location_on_outlined,
+                    firm.locationString!,
+                  ),
+                if (firm.region != null)
+                  _buildTag(context, Icons.public, firm.region!),
                 if (firm.employeeCount != null)
                   _buildTag(context, Icons.people_outline, firm.employeeCount!),
                 if (firm.foundedYear != null)
-                  _buildTag(context, Icons.calendar_today, 'Est. ${firm.foundedYear}'),
+                  _buildTag(
+                    context,
+                    Icons.calendar_today,
+                    'Est. ${firm.foundedYear}',
+                  ),
               ],
             ),
 
@@ -448,9 +630,18 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                 color: params.sortBy == 'priority' ? AppColors.teal : null,
               ),
               title: const Text('Priority'),
-              trailing: params.sortBy == 'priority' ? const Icon(Icons.check, color: AppColors.teal) : null,
+              trailing: params.sortBy == 'priority'
+                  ? const Icon(Icons.check, color: AppColors.teal)
+                  : null,
               onTap: () {
-                ref.read(firmsDirectoryParamsProvider.notifier).setSortBy('priority', ascending: true);
+                AppDebug.log(
+                  'firms',
+                  'sort selected',
+                  data: {'sortBy': 'priority'},
+                );
+                ref
+                    .read(firmsDirectoryParamsProvider.notifier)
+                    .setSortBy('priority', ascending: true);
                 Navigator.pop(context);
               },
             ),
@@ -460,9 +651,18 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                 color: params.sortBy == 'name' ? AppColors.teal : null,
               ),
               title: const Text('Name (A-Z)'),
-              trailing: params.sortBy == 'name' ? const Icon(Icons.check, color: AppColors.teal) : null,
+              trailing: params.sortBy == 'name'
+                  ? const Icon(Icons.check, color: AppColors.teal)
+                  : null,
               onTap: () {
-                ref.read(firmsDirectoryParamsProvider.notifier).setSortBy('name', ascending: true);
+                AppDebug.log(
+                  'firms',
+                  'sort selected',
+                  data: {'sortBy': 'name'},
+                );
+                ref
+                    .read(firmsDirectoryParamsProvider.notifier)
+                    .setSortBy('name', ascending: true);
                 Navigator.pop(context);
               },
             ),
@@ -472,9 +672,18 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                 color: params.sortBy == 'founded_year' ? AppColors.teal : null,
               ),
               title: const Text('Founded (Newest)'),
-              trailing: params.sortBy == 'founded_year' ? const Icon(Icons.check, color: AppColors.teal) : null,
+              trailing: params.sortBy == 'founded_year'
+                  ? const Icon(Icons.check, color: AppColors.teal)
+                  : null,
               onTap: () {
-                ref.read(firmsDirectoryParamsProvider.notifier).setSortBy('founded_year', ascending: false);
+                AppDebug.log(
+                  'firms',
+                  'sort selected',
+                  data: {'sortBy': 'founded_year'},
+                );
+                ref
+                    .read(firmsDirectoryParamsProvider.notifier)
+                    .setSortBy('founded_year', ascending: false);
                 Navigator.pop(context);
               },
             ),
@@ -504,7 +713,9 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                     const Text('Filters', style: AppTextStyles.h4),
                     TextButton(
                       onPressed: () {
-                        ref.read(firmsDirectoryParamsProvider.notifier).clearFilters();
+                        ref
+                            .read(firmsDirectoryParamsProvider.notifier)
+                            .clearFilters();
                         _searchController.clear();
                         Navigator.pop(context);
                       },
@@ -525,20 +736,42 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _buildFilterChip('All Regions', null, params.region, (v) {
-                          ref.read(firmsDirectoryParamsProvider.notifier).setRegion(v);
+                        _buildFilterChip('All Regions', null, params.region, (
+                          v,
+                        ) {
+                          ref
+                              .read(firmsDirectoryParamsProvider.notifier)
+                              .setRegion(v);
                         }),
                         _buildFilterChip('PNW', 'PNW', params.region, (v) {
-                          ref.read(firmsDirectoryParamsProvider.notifier).setRegion(v);
+                          ref
+                              .read(firmsDirectoryParamsProvider.notifier)
+                              .setRegion(v);
                         }),
-                        _buildFilterChip('Bay Area', 'Bay Area', params.region, (v) {
-                          ref.read(firmsDirectoryParamsProvider.notifier).setRegion(v);
-                        }),
-                        _buildFilterChip('Los Angeles', 'Los Angeles', params.region, (v) {
-                          ref.read(firmsDirectoryParamsProvider.notifier).setRegion(v);
-                        }),
+                        _buildFilterChip(
+                          'Bay Area',
+                          'Bay Area',
+                          params.region,
+                          (v) {
+                            ref
+                                .read(firmsDirectoryParamsProvider.notifier)
+                                .setRegion(v);
+                          },
+                        ),
+                        _buildFilterChip(
+                          'Los Angeles',
+                          'Los Angeles',
+                          params.region,
+                          (v) {
+                            ref
+                                .read(firmsDirectoryParamsProvider.notifier)
+                                .setRegion(v);
+                          },
+                        ),
                         _buildFilterChip('Texas', 'Texas', params.region, (v) {
-                          ref.read(firmsDirectoryParamsProvider.notifier).setRegion(v);
+                          ref
+                              .read(firmsDirectoryParamsProvider.notifier)
+                              .setRegion(v);
                         }),
                       ],
                     ),
@@ -552,9 +785,21 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                       runSpacing: 8,
                       children: [
                         _buildPriorityChip('All', null, params.priority),
-                        _buildPriorityChip('High (\u2605\u2605\u2605)', 1, params.priority),
-                        _buildPriorityChip('Medium (\u2605\u2605)', 2, params.priority),
-                        _buildPriorityChip('Lower (\u2605)', 3, params.priority),
+                        _buildPriorityChip(
+                          'High (\u2605\u2605\u2605)',
+                          1,
+                          params.priority,
+                        ),
+                        _buildPriorityChip(
+                          'Medium (\u2605\u2605)',
+                          2,
+                          params.priority,
+                        ),
+                        _buildPriorityChip(
+                          'Lower (\u2605)',
+                          3,
+                          params.priority,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -567,11 +812,22 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                       runSpacing: 8,
                       children: [
                         _buildFilterChip('All States', null, params.state, (v) {
-                          ref.read(firmsDirectoryParamsProvider.notifier).setState(v);
+                          ref
+                              .read(firmsDirectoryParamsProvider.notifier)
+                              .setState(v);
                         }),
-                        for (final state in ['WA', 'OR', 'CA', 'CO', 'TX', 'NY'])
+                        for (final state in [
+                          'WA',
+                          'OR',
+                          'CA',
+                          'CO',
+                          'TX',
+                          'NY',
+                        ])
                           _buildFilterChip(state, state, params.state, (v) {
-                            ref.read(firmsDirectoryParamsProvider.notifier).setState(v);
+                            ref
+                                .read(firmsDirectoryParamsProvider.notifier)
+                                .setState(v);
                           }),
                       ],
                     ),
@@ -603,24 +859,50 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
   ) {
     final isSelected = selectedValue == value;
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected
+              ? AppColors.teal
+              : Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
       selected: isSelected,
       onSelected: (_) => onSelected(value),
       selectedColor: AppColors.teal.withValues(alpha: 0.2),
       checkmarkColor: AppColors.teal,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      side: BorderSide(
+        color: isSelected
+            ? AppColors.teal
+            : Theme.of(context).colorScheme.outline,
+      ),
     );
   }
 
   Widget _buildPriorityChip(String label, int? value, int? selectedValue) {
     final isSelected = selectedValue == value;
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected
+              ? AppColors.teal
+              : Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
       selected: isSelected,
       onSelected: (_) {
         ref.read(firmsDirectoryParamsProvider.notifier).setPriority(value);
       },
       selectedColor: AppColors.teal.withValues(alpha: 0.2),
       checkmarkColor: AppColors.teal,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      side: BorderSide(
+        color: isSelected
+            ? AppColors.teal
+            : Theme.of(context).colorScheme.outline,
+      ),
     );
   }
 
@@ -633,10 +915,8 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (context, scrollController) => _FirmDetailsSheet(
-          firm: firm,
-          scrollController: scrollController,
-        ),
+        builder: (context, scrollController) =>
+            _FirmDetailsSheet(firm: firm, scrollController: scrollController),
       ),
     );
   }
@@ -662,8 +942,11 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                   ),
                   Expanded(
                     child: savedFirmsAsync.when(
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (_, __) => const Center(child: Text('Error loading saved firms')),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (_, __) => const Center(
+                        child: Text('Error loading saved firms'),
+                      ),
                       data: (firms) {
                         if (firms.isEmpty) {
                           return Center(
@@ -673,13 +956,17 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                                 Icon(
                                   Icons.bookmark_outline,
                                   size: 64,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No saved firms',
                                   style: AppTextStyles.bodyMedium.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -690,23 +977,33 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                           controller: scrollController,
                           padding: const EdgeInsets.all(16),
                           itemCount: firms.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final firm = firms[index];
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: AppColors.teal.withValues(alpha: 0.1),
+                                backgroundColor: AppColors.teal.withValues(
+                                  alpha: 0.1,
+                                ),
                                 child: Text(
-                                  firm.name.isNotEmpty ? firm.name.substring(0, 1) : 'F',
+                                  firm.name.isNotEmpty
+                                      ? firm.name.substring(0, 1)
+                                      : 'F',
                                   style: const TextStyle(color: AppColors.teal),
                                 ),
                               ),
                               title: Text(firm.name),
                               subtitle: Text(firm.firmType ?? ''),
                               trailing: IconButton(
-                                icon: const Icon(Icons.bookmark, color: AppColors.teal),
+                                icon: const Icon(
+                                  Icons.bookmark,
+                                  color: AppColors.teal,
+                                ),
                                 onPressed: () {
-                                  ref.read(savedFirmsNotifierProvider.notifier).unsaveFirm(firm.id);
+                                  ref
+                                      .read(savedFirmsNotifierProvider.notifier)
+                                      .unsaveFirm(firm.id);
                                   ref.invalidate(savedFirmsProvider);
                                 },
                               ),
@@ -735,10 +1032,7 @@ class _FirmDetailsSheet extends ConsumerWidget {
   final Firm firm;
   final ScrollController scrollController;
 
-  const _FirmDetailsSheet({
-    required this.firm,
-    required this.scrollController,
-  });
+  const _FirmDetailsSheet({required this.firm, required this.scrollController});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -776,8 +1070,12 @@ class _FirmDetailsSheet extends ConsumerWidget {
                       ),
                       child: Center(
                         child: Text(
-                          firm.name.isNotEmpty ? firm.name.substring(0, 1) : 'F',
-                          style: AppTextStyles.h2.copyWith(color: AppColors.teal),
+                          firm.name.isNotEmpty
+                              ? firm.name.substring(0, 1)
+                              : 'F',
+                          style: AppTextStyles.h2.copyWith(
+                            color: AppColors.teal,
+                          ),
                         ),
                       ),
                     ),
@@ -792,7 +1090,9 @@ class _FirmDetailsSheet extends ConsumerWidget {
                             Text(
                               firm.firmType!,
                               style: AppTextStyles.bodyMedium.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -806,8 +1106,8 @@ class _FirmDetailsSheet extends ConsumerWidget {
                                     color: firm.priority == 1
                                         ? AppColors.warning
                                         : firm.priority == 2
-                                            ? AppColors.info
-                                            : Colors.grey,
+                                        ? AppColors.info
+                                        : Colors.grey,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -827,7 +1127,9 @@ class _FirmDetailsSheet extends ConsumerWidget {
                         color: isSaved ? AppColors.teal : null,
                       ),
                       onPressed: () {
-                        ref.read(savedFirmsNotifierProvider.notifier).toggleSave(firm.id, isSaved);
+                        ref
+                            .read(savedFirmsNotifierProvider.notifier)
+                            .toggleSave(firm.id, isSaved);
                       },
                     ),
                   ],
@@ -843,14 +1145,49 @@ class _FirmDetailsSheet extends ConsumerWidget {
                 ],
 
                 // Details
-                _buildDetailRow(context, Icons.location_on, 'Location', firm.locationString),
+                _buildDetailRow(
+                  context,
+                  Icons.location_on,
+                  'Location',
+                  firm.locationString,
+                ),
                 _buildDetailRow(context, Icons.public, 'Region', firm.region),
-                _buildDetailRow(context, Icons.business, 'Focus', firm.focusSector),
-                _buildDetailRow(context, Icons.account_balance, 'AUM/Fund Size', firm.aumFundSize),
-                _buildDetailRow(context, Icons.attach_money, 'Deal Size', firm.dealSizeCriteria),
-                _buildDetailRow(context, Icons.people, 'Team Size', firm.employeeCount),
-                _buildDetailRow(context, Icons.calendar_today, 'Founded', firm.foundedYear?.toString()),
-                _buildDetailRow(context, Icons.school, 'UW Foster Relevance', firm.uwFosterRelevance),
+                _buildDetailRow(
+                  context,
+                  Icons.business,
+                  'Focus',
+                  firm.focusSector,
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.account_balance,
+                  'AUM/Fund Size',
+                  firm.aumFundSize,
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.attach_money,
+                  'Deal Size',
+                  firm.dealSizeCriteria,
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.people,
+                  'Team Size',
+                  firm.employeeCount,
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.calendar_today,
+                  'Founded',
+                  firm.foundedYear?.toString(),
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.school,
+                  'UW Foster Relevance',
+                  firm.uwFosterRelevance,
+                ),
 
                 if (firm.notes != null && firm.notes!.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -884,14 +1221,23 @@ class _FirmDetailsSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String? value) {
+  Widget _buildDetailRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String? value,
+  ) {
     if (value == null || value.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(
+            icon,
+            size: 20,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -908,7 +1254,9 @@ class _FirmDetailsSheet extends ConsumerWidget {
   }
 
   Future<void> _launchUrl(String url) async {
-    final uri = url.startsWith('http') ? Uri.parse(url) : Uri.parse('https://$url');
+    final uri = url.startsWith('http')
+        ? Uri.parse(url)
+        : Uri.parse('https://$url');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

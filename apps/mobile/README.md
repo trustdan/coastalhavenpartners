@@ -214,6 +214,33 @@ Implemented full analytics parity with the website:
 
 3. **Week labels in chart**: Uses `intl` package's `DateFormat` for locale-aware formatting.
 
+4. **Firms Directory “All” category not working**: Caused by a `copyWith` implementation that could not set nullable fields back to `null`. Fixed by updating `FirmsDirectoryParams.copyWith()` to allow explicitly clearing fields (so tapping “All” actually clears `category`).
+
+5. **Firms Directory “Load More” missing**: Implemented paged state (total count + appended pages) and a “Load More” action, so the UI can fetch beyond the first page.
+
+### Debugging (Android on Windows)
+
+When you’re running the Flutter Android app on Windows, UI click/tap logs come from the **Flutter process**:
+
+- **See logs in**:
+  - the terminal running `flutter run`
+  - `flutter logs`
+  - `adb logcat`
+- **Note**: `pnpm dev` is the Next.js dev server for the web apps and will not show Flutter button clicks.
+
+#### Optional: force Coastal debug logs on
+
+Debug logging is enabled automatically in debug builds. You can also force it with:
+
+```bash
+flutter run --dart-define=COASTAL_DEBUG=true
+```
+
+Useful files:
+- `lib/core/utils/app_debug.dart` (logger + Riverpod observer)
+- `lib/core/providers/job_provider.dart` (firms directory params + paging + logs)
+- `lib/features/shared/screens/firms_directory_screen.dart` (tap logs + load more UI)
+
 ## Commands
 
 ```bash

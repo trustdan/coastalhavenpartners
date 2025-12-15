@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/models.dart';
 import '../../data/repositories/repositories.dart';
+import '../utils/app_debug.dart';
 import 'profile_provider.dart';
 
 /// Provider for job repository instance
@@ -9,16 +10,20 @@ final jobRepositoryProvider = Provider<JobRepository>((ref) {
 });
 
 /// Provider for job listings with optional filters
-final jobListingsProvider = FutureProvider.family<List<JobListing>, JobListingsParams>((ref, params) async {
-  final repo = ref.watch(jobRepositoryProvider);
-  return repo.getJobListings(
-    limit: params.limit,
-    offset: params.offset,
-    firmId: params.firmId,
-    jobType: params.jobType,
-    searchQuery: params.searchQuery,
-  );
-});
+final jobListingsProvider =
+    FutureProvider.family<List<JobListing>, JobListingsParams>((
+      ref,
+      params,
+    ) async {
+      final repo = ref.watch(jobRepositoryProvider);
+      return repo.getJobListings(
+        limit: params.limit,
+        offset: params.offset,
+        firmId: params.firmId,
+        jobType: params.jobType,
+        searchQuery: params.searchQuery,
+      );
+    });
 
 /// Parameters for job listings query
 class JobListingsParams {
@@ -51,7 +56,9 @@ class JobListingsParams {
 }
 
 /// Default job listings (first page)
-final defaultJobListingsProvider = FutureProvider<List<JobListing>>((ref) async {
+final defaultJobListingsProvider = FutureProvider<List<JobListing>>((
+  ref,
+) async {
   final repo = ref.watch(jobRepositoryProvider);
   return repo.getJobListings();
 });
@@ -63,7 +70,10 @@ final featuredJobsProvider = FutureProvider<List<JobListing>>((ref) async {
 });
 
 /// Job listing by ID
-final jobListingProvider = FutureProvider.family<JobListing?, String>((ref, jobId) async {
+final jobListingProvider = FutureProvider.family<JobListing?, String>((
+  ref,
+  jobId,
+) async {
   final repo = ref.watch(jobRepositoryProvider);
   return repo.getJobListing(jobId);
 });
@@ -94,7 +104,10 @@ final firmProvider = FutureProvider.family<Firm?, String>((ref, firmId) async {
 });
 
 /// Search firms
-final searchFirmsProvider = FutureProvider.family<List<Firm>, String>((ref, query) async {
+final searchFirmsProvider = FutureProvider.family<List<Firm>, String>((
+  ref,
+  query,
+) async {
   if (query.isEmpty) return [];
   final repo = ref.watch(jobRepositoryProvider);
   return repo.searchFirms(query);
@@ -107,13 +120,19 @@ final myApplicationsProvider = FutureProvider<List<Application>>((ref) async {
 });
 
 /// Application by ID
-final applicationProvider = FutureProvider.family<Application?, String>((ref, applicationId) async {
+final applicationProvider = FutureProvider.family<Application?, String>((
+  ref,
+  applicationId,
+) async {
   final repo = ref.watch(jobRepositoryProvider);
   return repo.getApplication(applicationId);
 });
 
 /// Check if user has applied to a job
-final hasAppliedProvider = FutureProvider.family<bool, String>((ref, jobListingId) async {
+final hasAppliedProvider = FutureProvider.family<bool, String>((
+  ref,
+  jobListingId,
+) async {
   final repo = ref.watch(jobRepositoryProvider);
   return repo.hasApplied(jobListingId);
 });
@@ -129,7 +148,10 @@ final savedJobsProvider = FutureProvider<List<JobListing>>((ref) async {
 });
 
 /// Check if a job is saved
-final isJobSavedProvider = FutureProvider.family<bool, String>((ref, jobListingId) async {
+final isJobSavedProvider = FutureProvider.family<bool, String>((
+  ref,
+  jobListingId,
+) async {
   final repo = ref.watch(jobRepositoryProvider);
   return repo.isJobSaved(jobListingId);
 });
@@ -180,9 +202,10 @@ class SavedJobsNotifier extends AsyncNotifier<List<JobListing>> {
 }
 
 /// Provider for saved jobs notifier
-final savedJobsNotifierProvider = AsyncNotifierProvider<SavedJobsNotifier, List<JobListing>>(
-  SavedJobsNotifier.new,
-);
+final savedJobsNotifierProvider =
+    AsyncNotifierProvider<SavedJobsNotifier, List<JobListing>>(
+      SavedJobsNotifier.new,
+    );
 
 // =====================
 // Firms Directory Providers
@@ -190,6 +213,8 @@ final savedJobsNotifierProvider = AsyncNotifierProvider<SavedJobsNotifier, List<
 
 /// Parameters for firms directory query
 class FirmsDirectoryParams {
+  static const Object _unset = Object();
+
   final String? category;
   final String? region;
   final String? state;
@@ -213,22 +238,26 @@ class FirmsDirectoryParams {
   });
 
   FirmsDirectoryParams copyWith({
-    String? category,
-    String? region,
-    String? state,
-    int? priority,
-    String? searchQuery,
+    Object? category = _unset,
+    Object? region = _unset,
+    Object? state = _unset,
+    Object? priority = _unset,
+    Object? searchQuery = _unset,
     String? sortBy,
     bool? ascending,
     int? limit,
     int? offset,
   }) {
     return FirmsDirectoryParams(
-      category: category ?? this.category,
-      region: region ?? this.region,
-      state: state ?? this.state,
-      priority: priority ?? this.priority,
-      searchQuery: searchQuery ?? this.searchQuery,
+      category: identical(category, _unset)
+          ? this.category
+          : category as String?,
+      region: identical(region, _unset) ? this.region : region as String?,
+      state: identical(state, _unset) ? this.state : state as String?,
+      priority: identical(priority, _unset) ? this.priority : priority as int?,
+      searchQuery: identical(searchQuery, _unset)
+          ? this.searchQuery
+          : searchQuery as String?,
       sortBy: sortBy ?? this.sortBy,
       ascending: ascending ?? this.ascending,
       limit: limit ?? this.limit,
@@ -252,16 +281,16 @@ class FirmsDirectoryParams {
 
   @override
   int get hashCode => Object.hash(
-        category,
-        region,
-        state,
-        priority,
-        searchQuery,
-        sortBy,
-        ascending,
-        limit,
-        offset,
-      );
+    category,
+    region,
+    state,
+    priority,
+    searchQuery,
+    sortBy,
+    ascending,
+    limit,
+    offset,
+  );
 }
 
 /// Notifier for firms directory filter state
@@ -274,27 +303,63 @@ class FirmsDirectoryParamsNotifier extends Notifier<FirmsDirectoryParams> {
   }
 
   void setCategory(String? category) {
-    state = state.copyWith(category: category);
+    final prev = state;
+    state = state.copyWith(category: category, offset: 0);
+    AppDebug.log(
+      'firms',
+      'setCategory',
+      data: {'prev': prev.toString(), 'next': state.toString()},
+    );
   }
 
   void setRegion(String? region) {
-    state = state.copyWith(region: region);
+    final prev = state;
+    state = state.copyWith(region: region, offset: 0);
+    AppDebug.log(
+      'firms',
+      'setRegion',
+      data: {'prev': prev.toString(), 'next': state.toString()},
+    );
   }
 
   void setState(String? stateValue) {
-    state = state.copyWith(state: stateValue);
+    final prev = state;
+    state = state.copyWith(state: stateValue, offset: 0);
+    AppDebug.log(
+      'firms',
+      'setState',
+      data: {'prev': prev.toString(), 'next': state.toString()},
+    );
   }
 
   void setPriority(int? priority) {
-    state = state.copyWith(priority: priority);
+    final prev = state;
+    state = state.copyWith(priority: priority, offset: 0);
+    AppDebug.log(
+      'firms',
+      'setPriority',
+      data: {'prev': prev.toString(), 'next': state.toString()},
+    );
   }
 
   void setSearchQuery(String? query) {
-    state = state.copyWith(searchQuery: query);
+    final prev = state;
+    state = state.copyWith(searchQuery: query, offset: 0);
+    AppDebug.log(
+      'firms',
+      'setSearchQuery',
+      data: {'prev': prev.toString(), 'next': state.toString()},
+    );
   }
 
   void setSortBy(String sortBy, {bool? ascending}) {
-    state = state.copyWith(sortBy: sortBy, ascending: ascending);
+    final prev = state;
+    state = state.copyWith(sortBy: sortBy, ascending: ascending, offset: 0);
+    AppDebug.log(
+      'firms',
+      'setSortBy',
+      data: {'prev': prev.toString(), 'next': state.toString()},
+    );
   }
 
   void setOffset(int offset) {
@@ -303,19 +368,115 @@ class FirmsDirectoryParamsNotifier extends Notifier<FirmsDirectoryParams> {
 
   void clearFilters() {
     state = const FirmsDirectoryParams();
+    AppDebug.log('firms', 'clearFilters');
   }
 }
 
 /// Provider for current firms directory filter state
-final firmsDirectoryParamsProvider = NotifierProvider<FirmsDirectoryParamsNotifier, FirmsDirectoryParams>(
-  FirmsDirectoryParamsNotifier.new,
-);
+final firmsDirectoryParamsProvider =
+    NotifierProvider<FirmsDirectoryParamsNotifier, FirmsDirectoryParams>(
+      FirmsDirectoryParamsNotifier.new,
+    );
 
 /// Provider for firms directory with filters
-final firmsDirectoryProvider = FutureProvider.family<List<Firm>, FirmsDirectoryParams>(
-  (ref, params) async {
+final firmsDirectoryProvider =
+    FutureProvider.family<List<Firm>, FirmsDirectoryParams>((
+      ref,
+      params,
+    ) async {
+      final repo = ref.watch(jobRepositoryProvider);
+      AppDebug.log(
+        'firms',
+        'fetch firmsDirectoryProvider',
+        data: {
+          'category': params.category,
+          'region': params.region,
+          'state': params.state,
+          'priority': params.priority,
+          'searchQuery': params.searchQuery,
+          'sortBy': params.sortBy,
+          'ascending': params.ascending,
+          'limit': params.limit,
+          'offset': params.offset,
+        },
+      );
+      return repo.getFirmsDirectory(
+        category: params.category,
+        region: params.region,
+        state: params.state,
+        priority: params.priority,
+        searchQuery: params.searchQuery,
+        sortBy: params.sortBy,
+        ascending: params.ascending,
+        limit: params.limit,
+        offset: params.offset,
+      );
+    });
+
+/// Paged state for the Firms Directory (supports "Load more" + total count).
+class FirmsDirectoryPagedState {
+  final FirmsDirectoryParams params;
+  final List<Firm> firms;
+  final int totalCount;
+  final bool isLoadingMore;
+
+  const FirmsDirectoryPagedState({
+    required this.params,
+    required this.firms,
+    required this.totalCount,
+    this.isLoadingMore = false,
+  });
+
+  bool get hasMore => firms.length < totalCount;
+
+  FirmsDirectoryPagedState copyWith({
+    FirmsDirectoryParams? params,
+    List<Firm>? firms,
+    int? totalCount,
+    bool? isLoadingMore,
+  }) {
+    return FirmsDirectoryPagedState(
+      params: params ?? this.params,
+      firms: firms ?? this.firms,
+      totalCount: totalCount ?? this.totalCount,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
+}
+
+class FirmsDirectoryPagedNotifier
+    extends AsyncNotifier<FirmsDirectoryPagedState> {
+  @override
+  Future<FirmsDirectoryPagedState> build() async {
+    final params = ref.watch(firmsDirectoryParamsProvider);
     final repo = ref.watch(jobRepositoryProvider);
-    return repo.getFirmsDirectory(
+
+    AppDebug.log(
+      'firms',
+      'paged build',
+      data: {
+        'category': params.category,
+        'region': params.region,
+        'state': params.state,
+        'priority': params.priority,
+        'searchQuery': params.searchQuery,
+        'sortBy': params.sortBy,
+        'ascending': params.ascending,
+        'limit': params.limit,
+        'offset': params.offset,
+      },
+    );
+
+    // Always fetch first page for current filters.
+    final total = await repo.getFirmsCount(
+      category: params.category,
+      region: params.region,
+      state: params.state,
+      priority: params.priority,
+      searchQuery: params.searchQuery,
+    );
+
+    final firms = await repo.getFirmsDirectory(
       category: params.category,
       region: params.region,
       state: params.state,
@@ -324,10 +485,82 @@ final firmsDirectoryProvider = FutureProvider.family<List<Firm>, FirmsDirectoryP
       sortBy: params.sortBy,
       ascending: params.ascending,
       limit: params.limit,
-      offset: params.offset,
+      offset: 0,
     );
-  },
-);
+
+    AppDebug.log(
+      'firms',
+      'paged initial result',
+      data: {'total': total, 'returned': firms.length},
+    );
+
+    return FirmsDirectoryPagedState(
+      params: params,
+      firms: firms,
+      totalCount: total,
+    );
+  }
+
+  Future<void> loadMore() async {
+    final current = state.asData?.value;
+    if (current == null) return;
+    if (current.isLoadingMore) return;
+    if (!current.hasMore) return;
+
+    state = AsyncData(current.copyWith(isLoadingMore: true));
+
+    final repo = ref.read(jobRepositoryProvider);
+    final nextOffset = current.firms.length;
+    final params = current.params;
+
+    AppDebug.log(
+      'firms',
+      'loadMore',
+      data: {
+        'nextOffset': nextOffset,
+        'limit': params.limit,
+        'category': params.category,
+        'region': params.region,
+        'state': params.state,
+        'priority': params.priority,
+        'searchQuery': params.searchQuery,
+        'sortBy': params.sortBy,
+        'ascending': params.ascending,
+      },
+    );
+
+    final nextPage = await repo.getFirmsDirectory(
+      category: params.category,
+      region: params.region,
+      state: params.state,
+      priority: params.priority,
+      searchQuery: params.searchQuery,
+      sortBy: params.sortBy,
+      ascending: params.ascending,
+      limit: params.limit,
+      offset: nextOffset,
+    );
+
+    final merged = [...current.firms, ...nextPage];
+    AppDebug.log(
+      'firms',
+      'loadMore result',
+      data: {
+        'received': nextPage.length,
+        'merged': merged.length,
+        'total': current.totalCount,
+      },
+    );
+
+    state = AsyncData(current.copyWith(firms: merged, isLoadingMore: false));
+  }
+}
+
+final firmsDirectoryPagedProvider =
+    AsyncNotifierProvider<
+      FirmsDirectoryPagedNotifier,
+      FirmsDirectoryPagedState
+    >(FirmsDirectoryPagedNotifier.new);
 
 /// Provider for firms directory using current filter state
 final currentFirmsDirectoryProvider = FutureProvider<List<Firm>>((ref) async {
@@ -348,7 +581,10 @@ final savedFirmsProvider = FutureProvider<List<Firm>>((ref) async {
 });
 
 /// Check if a firm is saved
-final isFirmSavedProvider = FutureProvider.family<bool, String>((ref, firmId) async {
+final isFirmSavedProvider = FutureProvider.family<bool, String>((
+  ref,
+  firmId,
+) async {
   final repo = ref.watch(jobRepositoryProvider);
   return repo.isFirmSaved(firmId);
 });
@@ -402,6 +638,7 @@ class SavedFirmsNotifier extends AsyncNotifier<Set<String>> {
 }
 
 /// Provider for saved firms notifier
-final savedFirmsNotifierProvider = AsyncNotifierProvider<SavedFirmsNotifier, Set<String>>(
-  SavedFirmsNotifier.new,
-);
+final savedFirmsNotifierProvider =
+    AsyncNotifierProvider<SavedFirmsNotifier, Set<String>>(
+      SavedFirmsNotifier.new,
+    );

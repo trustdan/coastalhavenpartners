@@ -366,6 +366,24 @@ If queries return empty results unexpectedly:
 2. Verify user has correct role in `profiles` table
 3. Temporarily disable RLS to confirm it's a policy issue
 
+### Mobile (Flutter) debugging on Windows / Android
+
+Flutter logs (e.g. button-tap debug output) come from the **Flutter process**, not the web dev server.
+
+- **Where to see Flutter tap logs**:
+  - The terminal running `flutter run`
+  - `flutter logs`
+  - `adb logcat`
+- **Why `pnpm dev` didn’t show button clicks**:
+  - `pnpm dev` runs the **Next.js** dev server (web apps under `apps/www` / `apps/capital`) and will only show **web** logs.
+
+### Firms Directory (mobile) – category tabs + load more
+
+Recent fixes (Flutter app):
+- **“All” tab couldn’t clear category**: `FirmsDirectoryParams.copyWith()` now supports explicitly setting nullable fields back to `null` (so “All” works).
+- **No “Load More”**: added paged state with total count + `loadMore()` so the UI can append results.
+- **Debug instrumentation**: added a lightweight logger + optional Riverpod observer to trace filter changes and fetches during `flutter run`.
+
 ## Contributing
 
 1. Create a feature branch from `main`
