@@ -4,6 +4,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/env_config.dart';
+import '../../core/utils/app_debug.dart';
 
 /// Supabase service wrapper
 /// Provides centralized access to Supabase client and common operations
@@ -38,6 +39,19 @@ class SupabaseService {
         logLevel: RealtimeLogLevel.info,
       ),
     );
+
+    // Non-secret diagnostics: log the project host + environment to help
+    // debug “wrong Supabase project” issues (e.g., mobile vs Vercel mismatch).
+    try {
+      final host = Uri.parse(EnvConfig.supabaseUrl).host;
+      AppDebug.log(
+        'supabase',
+        'init completed',
+        data: {'host': host, 'environment': EnvConfig.environment},
+      );
+    } catch (_) {
+      // ignore
+    }
   }
 
   /// Get the Supabase client
@@ -72,10 +86,7 @@ class SupabaseService {
       throw Exception('Supabase not initialized');
     }
 
-    return client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    return client.auth.signInWithPassword(email: email, password: password);
   }
 
   /// Sign up with email and password
@@ -125,9 +136,7 @@ class SupabaseService {
       throw Exception('Supabase not initialized');
     }
 
-    return client.auth.updateUser(
-      UserAttributes(password: newPassword),
-    );
+    return client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   /// Update user email
@@ -138,9 +147,7 @@ class SupabaseService {
       throw Exception('Supabase not initialized');
     }
 
-    return client.auth.updateUser(
-      UserAttributes(email: newEmail),
-    );
+    return client.auth.updateUser(UserAttributes(email: newEmail));
   }
 
   /// Re-authenticate user with password
@@ -157,10 +164,7 @@ class SupabaseService {
     }
 
     try {
-      await client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      await client.auth.signInWithPassword(email: email, password: password);
       return true;
     } on AuthException {
       return false;
@@ -178,11 +182,7 @@ class SupabaseService {
       throw Exception('Supabase not initialized');
     }
 
-    return client.auth.verifyOTP(
-      email: email,
-      token: token,
-      type: type,
-    );
+    return client.auth.verifyOTP(email: email, token: token, type: type);
   }
 
   /// Get a reference to a storage bucket
@@ -207,7 +207,8 @@ class SupabaseService {
 
   /// The redirect URL for OAuth callbacks
   /// This must match what's configured in Supabase dashboard
-  static const String _oauthRedirectUrl = 'com.coastalhavenpartners.android://login-callback';
+  static const String _oauthRedirectUrl =
+      'com.coastalhavenpartners.android://login-callback';
 
   /// Sign in with Google OAuth
   Future<bool> signInWithGoogle() async {
@@ -315,7 +316,8 @@ class SupabaseService {
   }
 
   /// Get the current MFA authentication level
-  AuthMFAGetAuthenticatorAssuranceLevelResponse? mfaGetAuthenticatorAssuranceLevel() {
+  AuthMFAGetAuthenticatorAssuranceLevelResponse?
+  mfaGetAuthenticatorAssuranceLevel() {
     final client = this.client;
     if (client == null) return null;
 
@@ -330,13 +332,17 @@ class SupabaseService {
   /// Returns a list of 10 codes in format XXXX-XXXX-XXXX
   static List<String> generateRecoveryCodes({int count = 10}) {
     final random = Random.secure();
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 0, 1 for clarity
+    const chars =
+        'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 0, 1 for clarity
 
     List<String> codes = [];
     for (int i = 0; i < count; i++) {
       final parts = <String>[];
       for (int p = 0; p < 3; p++) {
-        final part = List.generate(4, (_) => chars[random.nextInt(chars.length)]).join();
+        final part = List.generate(
+          4,
+          (_) => chars[random.nextInt(chars.length)],
+        ).join();
         parts.add(part);
       }
       codes.add(parts.join('-'));
@@ -375,10 +381,9 @@ class SupabaseService {
       final hashes = codes.map((c) => hashRecoveryCode(c)).toList();
 
       // Store hashes via RPC
-      final response = await client.rpc(
-        'store_recovery_codes',
-        params: {'code_hashes': hashes},
-      ).single();
+      final response = await client
+          .rpc('store_recovery_codes', params: {'code_hashes': hashes})
+          .single();
 
       if (response['success'] == true) {
         return {
@@ -408,17 +413,13 @@ class SupabaseService {
   Future<Map<String, dynamic>> verifyRecoveryCode(String code) async {
     final client = this.client;
     if (client == null) {
-      return {
-        'success': false,
-        'message': 'Supabase not initialized',
-      };
+      return {'success': false, 'message': 'Supabase not initialized'};
     }
 
     try {
-      final response = await client.rpc(
-        'verify_recovery_code',
-        params: {'input_code': code},
-      ).single();
+      final response = await client
+          .rpc('verify_recovery_code', params: {'input_code': code})
+          .single();
 
       return {
         'success': response['success'] == true,
@@ -437,10 +438,7 @@ class SupabaseService {
   Future<Map<String, dynamic>> getRecoveryCodesCount() async {
     final client = this.client;
     if (client == null) {
-      return {
-        'success': false,
-        'message': 'Supabase not initialized',
-      };
+      return {'success': false, 'message': 'Supabase not initialized'};
     }
 
     try {
@@ -473,17 +471,11 @@ class SupabaseService {
   Future<Map<String, dynamic>> deleteAccount() async {
     final client = this.client;
     if (client == null) {
-      return {
-        'success': false,
-        'message': 'Supabase not initialized',
-      };
+      return {'success': false, 'message': 'Supabase not initialized'};
     }
 
     if (currentUser == null) {
-      return {
-        'success': false,
-        'message': 'Not authenticated',
-      };
+      return {'success': false, 'message': 'Not authenticated'};
     }
 
     try {
