@@ -70,7 +70,8 @@
       "Bash(powershell:*)",
       "Bash(dart run:*)",
       "Bash(npx tsx:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

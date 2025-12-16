@@ -3,9 +3,22 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { unstable_noStore as noStore } from 'next/cache'
+import { buildFirmsQuery } from './firm-queries'
+import {
+  type ServerResult,
+  type FailureKind,
+  success,
+  failure,
+  getFailureKindFromError,
+} from '@/lib/utils/server-result'
+import type { Database } from '@/lib/types/database.types'
 
-// DEBUG flag - set to false to disable console logging
-const DEBUG_ENABLED = true
+type Firm = Database['public']['Tables']['firms']['Row']
+
+// DEBUG flag - controlled by environment
+// Set NEXT_PUBLIC_DEBUG=true in .env.local to enable debug logging
+const DEBUG_ENABLED = process.env.NODE_ENV === 'development'
+  || process.env.NEXT_PUBLIC_DEBUG === 'true'
 
 function debugLog(label: string, data?: unknown) {
   if (DEBUG_ENABLED) {
@@ -94,7 +107,29 @@ export interface LoadMoreFirmsParams {
   sortOrder?: string
 }
 
-export async function loadMoreFirms(params: LoadMoreFirmsParams) {
+/** Successful response data from loadMoreFirms */
+export interface LoadMoreFirmsData {
+  firms: Firm[]
+  totalCount: number
+  hasMore: boolean
+}
+
+// Firm type imported from Database types above
+
+/**
+ * Load more firms with pagination and filters.
+ *
+ * Returns a structured result that distinguishes between:
+ * - Success with firms data
+ * - Auth errors (user not logged in)
+ * - Permission errors (RLS violations)
+ * - Network/server errors
+ *
+ * This prevents silent failures where server errors look like empty results.
+ */
+export async function loadMoreFirms(
+  params: LoadMoreFirmsParams
+): Promise<ServerResult<LoadMoreFirmsData>> {
   // Prevent caching
   noStore()
 
@@ -106,7 +141,7 @@ export async function loadMoreFirms(params: LoadMoreFirmsParams) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     debugLog('ERROR: Not authenticated')
-    throw new Error('Not authenticated')
+    return failure('auth', 'Please sign in to view firms')
   }
 
   const {
@@ -133,55 +168,29 @@ export async function loadMoreFirms(params: LoadMoreFirmsParams) {
     sortOrder,
   })
 
-  // Build query
-  let query = supabase
-    .from('firms')
-    .select('*', { count: 'exact' })
-    .eq('is_visible', true)
-
-  // Apply filters
-  if (category) {
-    debugLog(`Applying filter: firm_type = ${category}`)
-    query = query.eq('firm_type', category)
-  }
-  if (region) {
-    debugLog(`Applying filter: region = ${region}`)
-    query = query.eq('region', region)
-  }
-  if (state) {
-    debugLog(`Applying filter: state = ${state}`)
-    query = query.eq('state', state)
-  }
-  if (priority) {
-    debugLog(`Applying filter: priority = ${priority}`)
-    query = query.eq('priority', priority)
-  }
-  if (search) {
-    debugLog(`Applying search: ${search}`)
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,focus_sector.ilike.%${search}%`)
-  }
-
-  // Apply sorting
-  const ascending = sortOrder !== 'desc'
-  debugLog(`Applying sort: ${sortBy} ${ascending ? 'ASC' : 'DESC'}`)
-  query = query.order(sortBy, { ascending, nullsFirst: false })
-
-  if (sortBy !== 'name') {
-    query = query.order('name', { ascending: true })
-  }
+  // Build query using shared helper (single source of truth for filter logic)
+  const query = buildFirmsQuery(supabase, {
+    category,
+    region,
+    state,
+    priority,
+    search,
+    sortBy,
+    sortOrder: sortOrder as 'asc' | 'desc',
+  })
 
   // Apply pagination
   const from = offset
   const to = offset + limit - 1
   debugLog(`Applying range: ${from} to ${to}`)
-  query = query.range(from, to)
 
-  const { data: firms, count, error } = await query
+  const { data: firms, count, error } = await query.range(from, to)
 
   if (error) {
     debugLog('ERROR from Supabase:', error)
     console.error('Error loading more firms:', error)
-    throw new Error('Failed to load more firms')
+    const errorKind = getFailureKindFromError(error)
+    return failure(errorKind, 'Failed to load firms', error)
   }
 
   const hasMore = (offset + limit) < (count || 0)
@@ -200,9 +209,9 @@ export async function loadMoreFirms(params: LoadMoreFirmsParams) {
 
   debugLog('=== loadMoreFirms COMPLETED ===')
 
-  return {
-    firms: firms || [],
+  return success({
+    firms: (firms || []) as Firm[],
     totalCount: count || 0,
     hasMore,
-  }
+  })
 }

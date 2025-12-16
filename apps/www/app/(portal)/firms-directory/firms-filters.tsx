@@ -21,8 +21,10 @@ import {
 } from '@/lib/constants/firms'
 import { cn } from '@/lib/utils'
 
-// DEBUG flag - set to false to disable console logging
-const DEBUG_ENABLED = true
+// DEBUG flag - controlled by environment
+// Set NEXT_PUBLIC_DEBUG=true in .env.local to enable debug logging
+const DEBUG_ENABLED = process.env.NODE_ENV === 'development'
+  || process.env.NEXT_PUBLIC_DEBUG === 'true'
 
 function debugLog(label: string, data?: unknown) {
   if (DEBUG_ENABLED) {

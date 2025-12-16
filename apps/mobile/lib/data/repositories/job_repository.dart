@@ -1,7 +1,9 @@
 import 'base_repository.dart';
+import 'firm_query_builder.dart';
 import '../models/models.dart';
 import '../local/database.dart';
 import '../local/converters.dart';
+import '../../core/utils/result.dart';
 import '../../services/connectivity_service.dart';
 import '../../services/sync_service.dart';
 
@@ -680,31 +682,26 @@ class JobRepository extends BaseRepository {
     int limit = 25,
     int offset = 0,
   }) async {
+    // If offline, return cached data
+    if (!_connectivity.isOnline) {
+      return _getCachedFirms();
+    }
+
+    // If Supabase unavailable, return cached data
     if (!isAvailable) {
       return _getCachedFirms();
     }
 
     final result = await safeExecute<List<Firm>>(() async {
-      var query = table('firms').select().eq('is_visible', true);
-
-      // Apply filters
-      if (category != null && category.isNotEmpty) {
-        query = query.eq('firm_type', category);
-      }
-      if (region != null && region.isNotEmpty) {
-        query = query.eq('region', region);
-      }
-      if (state != null && state.isNotEmpty) {
-        query = query.eq('state', state);
-      }
-      if (priority != null) {
-        query = query.eq('priority', priority);
-      }
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.or(
-          'name.ilike.%$searchQuery%,description.ilike.%$searchQuery%,focus_sector.ilike.%$searchQuery%',
-        );
-      }
+      // Apply filters using shared helper (single source of truth)
+      final query = applyFirmFilters(
+        table('firms').select().eq('is_visible', true),
+        category: category,
+        region: region,
+        state: state,
+        priority: priority,
+        searchQuery: searchQuery,
+      );
 
       // Apply sorting and pagination
       final response = await query
@@ -726,6 +723,7 @@ class JobRepository extends BaseRepository {
   }
 
   /// Get count of firms matching filters
+  /// Uses efficient count query - doesn't fetch row data
   Future<int> getFirmsCount({
     String? category,
     String? region,
@@ -733,35 +731,145 @@ class JobRepository extends BaseRepository {
     int? priority,
     String? searchQuery,
   }) async {
-    if (!isAvailable) return 0;
+    // If offline, return cached count
+    if (!_connectivity.isOnline) {
+      return _getCachedFirmsCount();
+    }
+
+    if (!isAvailable) {
+      return _getCachedFirmsCount();
+    }
 
     final result = await safeExecute<int>(() async {
-      var query = table('firms').select().eq('is_visible', true);
+      // Apply filters using shared helper (single source of truth)
+      final query = applyFirmFilters(
+        table('firms').select().eq('is_visible', true),
+        category: category,
+        region: region,
+        state: state,
+        priority: priority,
+        searchQuery: searchQuery,
+      );
 
-      if (category != null && category.isNotEmpty) {
-        query = query.eq('firm_type', category);
-      }
-      if (region != null && region.isNotEmpty) {
-        query = query.eq('region', region);
-      }
-      if (state != null && state.isNotEmpty) {
-        query = query.eq('state', state);
-      }
-      if (priority != null) {
-        query = query.eq('priority', priority);
-      }
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        query = query.or(
-          'name.ilike.%$searchQuery%,description.ilike.%$searchQuery%,focus_sector.ilike.%$searchQuery%',
-        );
-      }
-
-      // Execute and count results
-      final response = await query;
-      return (response as List).length;
+      // Use .count() for efficient count-only query (no row data fetched)
+      final response = await query.count();
+      return response.count;
     }, errorMessage: 'Error counting firms', rethrowError: false);
 
-    return result ?? 0;
+    return result ?? _getCachedFirmsCount();
+  }
+
+  /// Get cached firms count from local database
+  Future<int> _getCachedFirmsCount() async {
+    final cached = await _db.getAllFirms();
+    return cached.length;
+  }
+
+  // =====================
+  // Firms Directory (Result Pattern)
+  // =====================
+
+  /// Get firms directory with filters and pagination, returning typed Result.
+  ///
+  /// Unlike [getFirmsDirectory], this method properly distinguishes between:
+  /// - Success with fresh data
+  /// - Success with cached data (offline)
+  /// - Auth/permission/network failures
+  ///
+  /// This prevents silent "success-shaped failures" where server errors
+  /// look like empty results.
+  Future<Result<List<Firm>>> getFirmsDirectoryResult({
+    String? category,
+    String? region,
+    String? state,
+    int? priority,
+    String? searchQuery,
+    String sortBy = 'priority',
+    bool ascending = true,
+    int limit = 25,
+    int offset = 0,
+  }) async {
+    // If offline, return cached data with isFromCache flag
+    if (!_connectivity.isOnline) {
+      final cached = await _getCachedFirms();
+      return Success(cached, isFromCache: true);
+    }
+
+    // If Supabase unavailable, return cached data
+    if (!isAvailable) {
+      final cached = await _getCachedFirms();
+      return Success(cached, isFromCache: true);
+    }
+
+    // Try to fetch from server
+    final result = await safeExecuteResult<List<Firm>>(() async {
+      final query = applyFirmFilters(
+        table('firms').select().eq('is_visible', true),
+        category: category,
+        region: region,
+        state: state,
+        priority: priority,
+        searchQuery: searchQuery,
+      );
+
+      final response = await query
+          .order(sortBy, ascending: ascending)
+          .order('name', ascending: true)
+          .range(offset, offset + limit - 1);
+
+      final firms = (response as List).map((e) => Firm.fromJson(e)).toList();
+
+      // Cache the results on first page
+      if (offset == 0) {
+        await _cacheFirms(firms);
+      }
+
+      return firms;
+    }, errorMessage: 'Error fetching firms directory');
+
+    return result;
+  }
+
+  /// Get count of firms matching filters, returning typed Result.
+  ///
+  /// Unlike [getFirmsCount], this method properly distinguishes between:
+  /// - Success with server count
+  /// - Success with cached count (offline)
+  /// - Auth/permission/network failures
+  Future<Result<int>> getFirmsCountResult({
+    String? category,
+    String? region,
+    String? state,
+    int? priority,
+    String? searchQuery,
+  }) async {
+    // If offline, return cached count with isFromCache flag
+    if (!_connectivity.isOnline) {
+      final count = await _getCachedFirmsCount();
+      return Success(count, isFromCache: true);
+    }
+
+    if (!isAvailable) {
+      final count = await _getCachedFirmsCount();
+      return Success(count, isFromCache: true);
+    }
+
+    // Try to fetch from server
+    final result = await safeExecuteResult<int>(() async {
+      final query = applyFirmFilters(
+        table('firms').select().eq('is_visible', true),
+        category: category,
+        region: region,
+        state: state,
+        priority: priority,
+        searchQuery: searchQuery,
+      );
+
+      final response = await query.count();
+      return response.count;
+    }, errorMessage: 'Error counting firms');
+
+    return result;
   }
 
   // =====================

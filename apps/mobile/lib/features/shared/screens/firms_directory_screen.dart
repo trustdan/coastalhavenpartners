@@ -194,6 +194,50 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
           ),
           AppSpacing.subsectionGap,
 
+          // Offline Banner (when showing cached data)
+          firmsPagedAsync.whenOrNull(
+            data: (paged) => paged.isFromCache
+                ? Container(
+                    width: double.infinity,
+                    margin: AppSpacing.screenPaddingHorizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.cloud_off,
+                          size: 16,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You\'re offline. Showing cached data.',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : null,
+          ) ?? const SizedBox.shrink(),
+
+          // Spacing after banner (only if banner shown)
+          firmsPagedAsync.whenOrNull(
+            data: (paged) => paged.isFromCache ? AppSpacing.itemGap : null,
+          ) ?? const SizedBox.shrink(),
+
           // Results Count and Sort
           Padding(
             padding: AppSpacing.screenPaddingHorizontal,

@@ -5,6 +5,7 @@ import { FirmsFilters } from './firms-filters'
 import { FirmsTable } from './firms-table'
 import { ColumnSelector } from './column-selector'
 import { OPTIONAL_COLUMNS, type OptionalColumnKey } from '@/lib/constants/firms'
+import { buildFirmsQuery, parseFiltersFromParams } from './firm-queries'
 import type { Database } from '@/lib/types/database.types'
 
 type Firm = Database['public']['Tables']['firms']['Row']
@@ -19,7 +20,9 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 // DEBUG: Generate unique render ID for tracking
-const DEBUG_ENABLED = true
+// Set NEXT_PUBLIC_DEBUG=true in .env.local to enable debug logging
+const DEBUG_ENABLED = process.env.NODE_ENV === 'development'
+  || process.env.NEXT_PUBLIC_DEBUG === 'true'
 let renderCount = 0
 
 export default async function FirmsDirectory({
@@ -57,16 +60,9 @@ export default async function FirmsDirectory({
     .eq('id', user.id)
     .single()
 
-  // Parse filter params
-  const category = typeof params.category === 'string' ? params.category : undefined
-  const region = typeof params.region === 'string' ? params.region : undefined
-  const state = typeof params.state === 'string' ? params.state : undefined
-  const priority = typeof params.priority === 'string' ? parseInt(params.priority) : undefined
-  const search = typeof params.search === 'string' ? params.search : undefined
-  const sortBy = typeof params.sort === 'string' ? params.sort : 'priority'
-  const sortOrder = typeof params.order === 'string' ? params.order : 'asc'
-  const page = typeof params.page === 'string' ? parseInt(params.page) : 1
-  const limit = 25
+  // Parse filter params using shared helper
+  const { category, region, state, priority, search, sortBy, sortOrder, page, limit } =
+    parseFiltersFromParams(params)
 
   // DEBUG: Log parsed filters
   if (DEBUG_ENABLED) {
@@ -90,45 +86,14 @@ export default async function FirmsDirectory({
     .split(',')
     .filter((col): col is OptionalColumnKey => validColumnKeys.includes(col as OptionalColumnKey))
 
-  // Build query
-  let query = supabase
-    .from('firms')
-    .select('*', { count: 'exact' })
-    .eq('is_visible', true)
-
-  // Apply filters
-  if (category) {
-    query = query.eq('firm_type', category)
-  }
-  if (region) {
-    query = query.eq('region', region)
-  }
-  if (state) {
-    query = query.eq('state', state)
-  }
-  if (priority) {
-    query = query.eq('priority', priority)
-  }
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,focus_sector.ilike.%${search}%`)
-  }
-
-  // Apply sorting
-  const ascending = sortOrder !== 'desc'
-  // Handle nulls for sorting - put nulls last
-  query = query.order(sortBy, { ascending, nullsFirst: false })
-
-  // If not sorting by name, add secondary sort by name for consistency
-  if (sortBy !== 'name') {
-    query = query.order('name', { ascending: true })
-  }
+  // Build query using shared helper (single source of truth for filter logic)
+  const query = buildFirmsQuery(supabase, { category, region, state, priority, search, sortBy, sortOrder })
 
   // Apply pagination
   const from = (page - 1) * limit
   const to = from + limit - 1
-  query = query.range(from, to)
 
-  const { data: firms, count, error } = await query
+  const { data: firms, count, error } = await query.range(from, to)
 
   // DEBUG: Log query results
   if (DEBUG_ENABLED) {

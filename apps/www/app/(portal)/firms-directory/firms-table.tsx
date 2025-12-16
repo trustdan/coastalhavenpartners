@@ -27,8 +27,10 @@ import type { Database } from '@/lib/types/database.types'
 
 type Firm = Database['public']['Tables']['firms']['Row']
 
-// DEBUG flag - set to false to disable console logging
-const DEBUG_ENABLED = true
+// DEBUG flag - controlled by environment
+// Set NEXT_PUBLIC_DEBUG=true in .env.local to enable debug logging
+const DEBUG_ENABLED = process.env.NODE_ENV === 'development'
+  || process.env.NEXT_PUBLIC_DEBUG === 'true'
 
 function debugLog(label: string, data?: unknown) {
   if (DEBUG_ENABLED) {
@@ -391,18 +393,38 @@ export function FirmsTable({
     try {
       const result = await loadMoreFirms(loadParams)
 
-      debugLog('loadMoreFirms result:', {
-        firmsReturned: result.firms.length,
-        totalCount: result.totalCount,
-        hasMore: result.hasMore,
-        newTotalDisplayed: displayedFirms.length + result.firms.length,
-      })
+      // Handle Result pattern - check success/failure
+      if (result.success) {
+        const { firms, totalCount: newTotalCount, hasMore: moreAvailable } = result.data
 
-      setDisplayedFirms((prev) => [...prev, ...result.firms])
-      setHasMore(result.hasMore)
+        debugLog('loadMoreFirms success:', {
+          firmsReturned: firms.length,
+          totalCount: newTotalCount,
+          hasMore: moreAvailable,
+          newTotalDisplayed: displayedFirms.length + firms.length,
+        })
+
+        setDisplayedFirms((prev) => [...prev, ...firms])
+        setHasMore(moreAvailable)
+      } else {
+        // Handle error - show appropriate message based on errorKind
+        debugLog('loadMoreFirms failure:', {
+          errorKind: result.errorKind,
+          error: result.error,
+        })
+
+        // For auth errors, we might want to redirect to login
+        if (result.errorKind === 'auth') {
+          console.error('Authentication required:', result.error)
+          // TODO: Could trigger a re-auth flow here
+        } else {
+          console.error(`Error (${result.errorKind}):`, result.error)
+        }
+      }
     } catch (error) {
-      console.error('Error loading more firms:', error)
-      debugLog('loadMoreFirms ERROR:', error)
+      // This catch is for unexpected errors (should rarely happen with Result pattern)
+      console.error('Unexpected error loading more firms:', error)
+      debugLog('loadMoreFirms UNEXPECTED ERROR:', error)
     } finally {
       setIsLoadingMore(false)
       debugLog('Load more completed')
