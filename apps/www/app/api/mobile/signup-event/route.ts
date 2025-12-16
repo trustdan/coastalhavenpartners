@@ -70,6 +70,7 @@ export async function POST(req: Request) {
   let verifiedBySupabase = false
   let createdAt: string | null = null
   const supabaseHost = safeHost(url)
+  let magicLink: string | null = null
 
   // Best-effort Supabase verification (helps prevent abuse in prod).
   // If env vars are misconfigured or point at the wrong project, we still
@@ -93,6 +94,28 @@ export async function POST(req: Request) {
           verifiedBySupabase = true
         }
       }
+
+      // Generate a magic link that opens the mobile app and sets a session.
+      // This can serve as a "confirmation link" when Supabase's built-in
+      // confirmation email isn't being delivered or when re-sending.
+      //
+      // NOTE: This requires a working service role key for the SAME Supabase project.
+      const { data: linkData, error: linkErr } = await (supabase as any).auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: {
+          redirectTo: 'coastalhaven://auth/callback',
+        },
+      })
+
+      if (linkErr) {
+        console.warn('[mobile-signup-event] generateLink failed', linkErr)
+      } else {
+        magicLink = (linkData?.properties?.action_link as string | undefined) ?? null
+        if (!magicLink) {
+          console.warn('[mobile-signup-event] generateLink missing action_link', linkData)
+        }
+      }
     } catch (e) {
       console.warn('[mobile-signup-event] Supabase verification exception', e)
     }
@@ -110,6 +133,7 @@ export async function POST(req: Request) {
     verifiedBySupabase,
     supabaseHost,
     commit: shortSha(),
+    magicLinkGenerated: !!magicLink,
   })
 
   // Send a welcome/verify email via Resend (independent of Supabase Auth email).
@@ -117,7 +141,9 @@ export async function POST(req: Request) {
   // (or when the project is misconfigured during development).
   try {
     const name = fullName?.trim() || 'there'
-    const verifyHelpUrl = `${APP_URL}/help`
+    const fallbackHelpUrl = `${APP_URL}/help`
+    const primaryCtaUrl = magicLink || fallbackHelpUrl
+    const primaryCtaText = magicLink ? 'Verify Email (Open App)' : 'Help & Troubleshooting'
 
     // NOTE: Resend SDK returns { data, error } and may not throw.
     const result = (await resend.emails.send({
@@ -137,15 +163,25 @@ export async function POST(req: Request) {
             <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: #374151;">
               Thanks for signing up as a <strong>${role}</strong>. Please verify your email address to finish creating your account.
             </p>
-            <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #6b7280;">
-              If you don’t see the verification email, check spam/junk. You can also tap “Resend verification email” in the app.
+            <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #6b7280;">
+              If you don’t see Supabase’s verification email, check spam/junk. You can also tap “Resend verification email” in the app.
             </p>
+            ${magicLink ? `
+            <p style="margin: 0 0 18px; font-size: 14px; line-height: 1.6; color: #6b7280;">
+              Or use this secure link to verify/sign in (it will open the app):
+            </p>
+            ` : ''}
             <div style="margin-top: 18px;">
-              <a href="${verifyHelpUrl}"
+              <a href="${primaryCtaUrl}"
                  style="display: inline-block; background: #0ea5e9; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                Help & Troubleshooting
+                ${primaryCtaText}
               </a>
             </div>
+            ${magicLink ? `
+            <div style="margin-top: 12px; font-size: 12px; color: #6b7280; word-break: break-all;">
+              If the button doesn’t work, copy/paste this link: <a href="${magicLink}" style="color:#0ea5e9;">${magicLink}</a>
+            </div>
+            ` : ''}
           </div>
         </div>
       `,
@@ -169,6 +205,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'Email send failed' }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true, verifiedBySupabase, supabaseHost, commit: shortSha() })
+  return NextResponse.json({
+    ok: true,
+    verifiedBySupabase,
+    supabaseHost,
+    commit: shortSha(),
+    magicLinkGenerated: !!magicLink,
+  })
 }
 
