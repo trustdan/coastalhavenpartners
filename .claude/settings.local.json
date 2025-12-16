@@ -71,7 +71,8 @@
       "Bash(dart run:*)",
       "Bash(npx tsx:*)",
       "Bash(head:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []
