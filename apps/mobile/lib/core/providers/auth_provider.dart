@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
+import 'package:http/http.dart' as http;
 import '../../data/services/supabase_service.dart';
 import '../../data/services/profile_service.dart';
+import '../utils/app_debug.dart';
 
 // Re-export types we need from supabase
 typedef User = supabase.User;
@@ -50,12 +53,60 @@ class AuthState {
 class AuthNotifier extends AsyncNotifier<AuthState> {
   StreamSubscription<supabase.AuthState>? _authSubscription;
 
+  // Web API base used for observability + transactional emails.
+  // (This is intentionally separate from Supabase Auth emails.)
+  static const String _webApiBaseUrl = 'https://coastalhavenpartners.com';
+
+  Future<void> _notifyWebSignupEvent({
+    required String userId,
+    required String email,
+    required String role,
+    String? fullName,
+  }) async {
+    try {
+      final uri = Uri.parse('$_webApiBaseUrl/api/mobile/signup-event');
+      final res = await http.post(
+        uri,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': userId,
+          'email': email,
+          'role': role,
+          'fullName': fullName,
+          'platform': defaultTargetPlatform.name,
+        }),
+      );
+
+      if (res.statusCode >= 400) {
+        AppDebug.log(
+          'auth',
+          'signup-event webhook failed',
+          data: {'status': res.statusCode, 'body': res.body},
+        );
+      } else {
+        AppDebug.log(
+          'auth',
+          'signup-event webhook ok',
+          data: {'status': res.statusCode},
+        );
+      }
+    } catch (e, st) {
+      AppDebug.log(
+        'auth',
+        'signup-event webhook exception',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
   @override
   Future<AuthState> build() async {
     // Listen to auth state changes
     _authSubscription?.cancel();
-    _authSubscription =
-        SupabaseService.instance.authStateChanges?.listen((event) async {
+    _authSubscription = SupabaseService.instance.authStateChanges?.listen((
+      event,
+    ) async {
       final authEvent = event.event;
       final session = event.session;
 
@@ -63,11 +114,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
           authEvent == AuthChangeEvent.tokenRefreshed) {
         if (session?.user != null) {
           final role = await _fetchUserRole(session!.user.id);
-          state = AsyncData(AuthState(
-            user: session.user,
-            session: session,
-            userRole: role,
-          ));
+          state = AsyncData(
+            AuthState(user: session.user, session: session, userRole: role),
+          );
         }
       } else if (authEvent == AuthChangeEvent.signedOut) {
         state = const AsyncData(AuthState());
@@ -86,11 +135,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
     if (user != null) {
       final role = await _fetchUserRole(user.id);
-      return AuthState(
-        user: user,
-        session: session,
-        userRole: role,
-      );
+      return AuthState(user: user, session: session, userRole: role);
     }
 
     return const AuthState();
@@ -134,12 +179,16 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   /// Sync role from user metadata to profiles table
   Future<void> _syncRoleFromMetadata(String userId, String role) async {
     try {
-      debugPrint('AuthProvider: Syncing role "$role" from metadata to profiles table');
+      debugPrint(
+        'AuthProvider: Syncing role "$role" from metadata to profiles table',
+      );
       await ProfileService.instance.ensureProfileExists(
         userId,
         role: role,
         email: SupabaseService.instance.currentUser?.email,
-        fullName: SupabaseService.instance.currentUser?.userMetadata?['full_name'] as String?,
+        fullName:
+            SupabaseService.instance.currentUser?.userMetadata?['full_name']
+                as String?,
       );
     } catch (e) {
       debugPrint('AuthProvider: Failed to sync role from metadata: $e');
@@ -152,12 +201,11 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   }
 
   /// Sign in with email and password
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
-    state = AsyncData(_currentValue?.copyWith(isLoading: true) ??
-        const AuthState(isLoading: true));
+  Future<void> signIn({required String email, required String password}) async {
+    state = AsyncData(
+      _currentValue?.copyWith(isLoading: true) ??
+          const AuthState(isLoading: true),
+    );
 
     try {
       final response = await SupabaseService.instance.signInWithEmail(
@@ -167,11 +215,13 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
       if (response.user != null) {
         final role = await _fetchUserRole(response.user!.id);
-        state = AsyncData(AuthState(
-          user: response.user,
-          session: response.session,
-          userRole: role,
-        ));
+        state = AsyncData(
+          AuthState(
+            user: response.user,
+            session: response.session,
+            userRole: role,
+          ),
+        );
       }
     } on AuthException catch (e) {
       state = AsyncData(AuthState(error: e.message));
@@ -187,34 +237,48 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     required String role,
     Map<String, dynamic>? userData,
   }) async {
-    state = AsyncData(_currentValue?.copyWith(isLoading: true) ??
-        const AuthState(isLoading: true));
+    state = AsyncData(
+      _currentValue?.copyWith(isLoading: true) ??
+          const AuthState(isLoading: true),
+    );
 
     try {
       final response = await SupabaseService.instance.signUpWithEmail(
         email: email,
         password: password,
-        data: {
-          'role': role,
-          ...?userData,
-        },
+        data: {'role': role, ...?userData},
       );
 
       if (response.user != null) {
+        // Fire-and-forget: log signup to web (Vercel) + send transactional welcome email.
+        // This does NOT affect Supabase's own verification email flow.
+        unawaited(
+          _notifyWebSignupEvent(
+            userId: response.user!.id,
+            email: response.user!.email ?? email,
+            role: role,
+            fullName: (userData?['full_name'] as String?),
+          ),
+        );
+
         // Update the role in the profiles table
         // The handle_new_user trigger creates the profile, but we need to set the role
         try {
           await ProfileService.instance.updateUserRole(response.user!.id, role);
           debugPrint('AuthProvider: Updated user role to $role');
         } catch (e) {
-          debugPrint('AuthProvider: Failed to update role (may need email verification first): $e');
+          debugPrint(
+            'AuthProvider: Failed to update role (may need email verification first): $e',
+          );
         }
 
-        state = AsyncData(AuthState(
-          user: response.user,
-          session: response.session,
-          userRole: role,
-        ));
+        state = AsyncData(
+          AuthState(
+            user: response.user,
+            session: response.session,
+            userRole: role,
+          ),
+        );
       }
     } on AuthException catch (e) {
       state = AsyncData(AuthState(error: e.message));
@@ -225,8 +289,10 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
   /// Sign out
   Future<void> signOut() async {
-    state = AsyncData(_currentValue?.copyWith(isLoading: true) ??
-        const AuthState(isLoading: true));
+    state = AsyncData(
+      _currentValue?.copyWith(isLoading: true) ??
+          const AuthState(isLoading: true),
+    );
 
     try {
       await SupabaseService.instance.signOut();
@@ -238,13 +304,16 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
   /// Send password reset email
   Future<void> resetPassword(String email) async {
-    state = AsyncData(_currentValue?.copyWith(isLoading: true) ??
-        const AuthState(isLoading: true));
+    state = AsyncData(
+      _currentValue?.copyWith(isLoading: true) ??
+          const AuthState(isLoading: true),
+    );
 
     try {
       await SupabaseService.instance.resetPassword(email);
-      state = AsyncData(_currentValue?.copyWith(isLoading: false) ??
-          const AuthState());
+      state = AsyncData(
+        _currentValue?.copyWith(isLoading: false) ?? const AuthState(),
+      );
     } catch (e) {
       state = AsyncData(AuthState(error: e.toString()));
     }
@@ -257,7 +326,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   }) async {
     try {
       // Verify current password first
-      final isValid = await SupabaseService.instance.reauthenticate(currentPassword);
+      final isValid = await SupabaseService.instance.reauthenticate(
+        currentPassword,
+      );
       if (!isValid) {
         return (success: false, error: 'Current password is incorrect');
       }
@@ -296,7 +367,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
   /// Clear any errors
   void clearError() {
-    state = AsyncData(_currentValue?.copyWith(error: null) ?? const AuthState());
+    state = AsyncData(
+      _currentValue?.copyWith(error: null) ?? const AuthState(),
+    );
   }
 
   /// Update user role (for logged-in users selecting role from role-selection screen)
@@ -305,7 +378,10 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     if (currentState?.user == null) return false;
 
     try {
-      await ProfileService.instance.updateUserRole(currentState!.user!.id, role);
+      await ProfileService.instance.updateUserRole(
+        currentState!.user!.id,
+        role,
+      );
       state = AsyncData(currentState.copyWith(userRole: role));
       debugPrint('AuthProvider: Updated user role to $role');
       return true;
@@ -321,20 +397,25 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   /// Opens a browser for Google OAuth flow
   /// Returns true if the OAuth flow was initiated successfully
   Future<bool> signInWithGoogle() async {
-    state = AsyncData(_currentValue?.copyWith(isLoading: true, error: null) ??
-        const AuthState(isLoading: true));
+    state = AsyncData(
+      _currentValue?.copyWith(isLoading: true, error: null) ??
+          const AuthState(isLoading: true),
+    );
 
     try {
       final success = await SupabaseService.instance.signInWithGoogle();
       // The auth state listener will handle the signed-in event
       // We just need to reset loading state if OAuth didn't start
       if (!success) {
-        state = AsyncData(_currentValue?.copyWith(isLoading: false) ??
-            const AuthState());
+        state = AsyncData(
+          _currentValue?.copyWith(isLoading: false) ?? const AuthState(),
+        );
       }
       return success;
     } catch (e) {
-      state = AsyncData(AuthState(error: 'Google sign-in failed: ${e.toString()}'));
+      state = AsyncData(
+        AuthState(error: 'Google sign-in failed: ${e.toString()}'),
+      );
       return false;
     }
   }
@@ -342,18 +423,23 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   /// Sign in with Discord
   /// Opens a browser for Discord OAuth flow
   Future<bool> signInWithDiscord() async {
-    state = AsyncData(_currentValue?.copyWith(isLoading: true, error: null) ??
-        const AuthState(isLoading: true));
+    state = AsyncData(
+      _currentValue?.copyWith(isLoading: true, error: null) ??
+          const AuthState(isLoading: true),
+    );
 
     try {
       final success = await SupabaseService.instance.signInWithDiscord();
       if (!success) {
-        state = AsyncData(_currentValue?.copyWith(isLoading: false) ??
-            const AuthState());
+        state = AsyncData(
+          _currentValue?.copyWith(isLoading: false) ?? const AuthState(),
+        );
       }
       return success;
     } catch (e) {
-      state = AsyncData(AuthState(error: 'Discord sign-in failed: ${e.toString()}'));
+      state = AsyncData(
+        AuthState(error: 'Discord sign-in failed: ${e.toString()}'),
+      );
       return false;
     }
   }
@@ -361,18 +447,23 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   /// Sign in with LinkedIn
   /// Opens a browser for LinkedIn OAuth flow
   Future<bool> signInWithLinkedIn() async {
-    state = AsyncData(_currentValue?.copyWith(isLoading: true, error: null) ??
-        const AuthState(isLoading: true));
+    state = AsyncData(
+      _currentValue?.copyWith(isLoading: true, error: null) ??
+          const AuthState(isLoading: true),
+    );
 
     try {
       final success = await SupabaseService.instance.signInWithLinkedIn();
       if (!success) {
-        state = AsyncData(_currentValue?.copyWith(isLoading: false) ??
-            const AuthState());
+        state = AsyncData(
+          _currentValue?.copyWith(isLoading: false) ?? const AuthState(),
+        );
       }
       return success;
     } catch (e) {
-      state = AsyncData(AuthState(error: 'LinkedIn sign-in failed: ${e.toString()}'));
+      state = AsyncData(
+        AuthState(error: 'LinkedIn sign-in failed: ${e.toString()}'),
+      );
       return false;
     }
   }
