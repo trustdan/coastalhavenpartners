@@ -22,6 +22,12 @@ function safeHost(url: string | undefined) {
   }
 }
 
+function shortSha() {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA
+  if (!sha) return null
+  return sha.slice(0, 7)
+}
+
 function getRequiredSecret() {
   return process.env.MOBILE_SIGNUP_WEBHOOK_SECRET || ''
 }
@@ -103,6 +109,7 @@ export async function POST(req: Request) {
     createdAt,
     verifiedBySupabase,
     supabaseHost,
+    commit: shortSha(),
   })
 
   // Send a welcome/verify email via Resend (independent of Supabase Auth email).
@@ -112,7 +119,8 @@ export async function POST(req: Request) {
     const name = fullName?.trim() || 'there'
     const verifyHelpUrl = `${APP_URL}/help`
 
-    await resend.emails.send({
+    // NOTE: Resend SDK returns { data, error } and may not throw.
+    const result = (await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
       replyTo: REPLY_TO,
@@ -141,6 +149,19 @@ export async function POST(req: Request) {
           </div>
         </div>
       `,
+    })) as unknown as { data?: { id?: string } | null; error?: unknown | null }
+
+    if (result?.error) {
+      console.error('[mobile-signup-event] Resend returned error', result.error)
+      return NextResponse.json(
+        { ok: false, error: 'Email send failed', commit: shortSha() },
+        { status: 502 }
+      )
+    }
+
+    console.log('[mobile-signup-event] Resend sent', {
+      messageId: result?.data?.id ?? null,
+      commit: shortSha(),
     })
   } catch (err) {
     console.error('[mobile-signup-event] Failed to send Resend email', err)
@@ -148,6 +169,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'Email send failed' }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true, verifiedBySupabase, supabaseHost })
+  return NextResponse.json({ ok: true, verifiedBySupabase, supabaseHost, commit: shortSha() })
 }
 

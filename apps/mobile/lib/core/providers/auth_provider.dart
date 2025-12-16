@@ -55,7 +55,10 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
   // Web API base used for observability + transactional emails.
   // (This is intentionally separate from Supabase Auth emails.)
-  static const String _webApiBaseUrl = 'https://coastalhavenpartners.com';
+  static const String _webApiBaseUrl = String.fromEnvironment(
+    'MOBILE_WEB_API_BASE_URL',
+    defaultValue: 'https://coastalhavenpartners.com',
+  );
   static const String _signupWebhookSecret = String.fromEnvironment(
     'MOBILE_SIGNUP_WEBHOOK_SECRET',
     defaultValue: '',
@@ -69,6 +72,11 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   }) async {
     try {
       final uri = Uri.parse('$_webApiBaseUrl/api/mobile/signup-event');
+      AppDebug.log(
+        'auth',
+        'calling signup-event webhook',
+        data: {'url': uri.toString()},
+      );
       final res = await http.post(
         uri,
         headers: {
@@ -95,7 +103,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AppDebug.log(
           'auth',
           'signup-event webhook ok',
-          data: {'status': res.statusCode},
+          data: {'status': res.statusCode, 'body': res.body},
         );
       }
     } catch (e, st) {
