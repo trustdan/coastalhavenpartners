@@ -3,6 +3,42 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types/database.types'
 
+/**
+ * Check if an email is from an .edu domain
+ */
+function isEduEmail(email: string): boolean {
+  return email.toLowerCase().endsWith('.edu')
+}
+
+// Typed admin client for existing schema
+function getTypedAdminClient() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
+// Untyped admin client for new columns not yet in types
+// (email_domain_status - run `pnpm supabase gen types` after migration)
+function getUntypedAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
 export async function createCandidateProfile(data: {
   userId: string
   email: string
@@ -15,17 +51,19 @@ export async function createCandidateProfile(data: {
 }) {
   console.log('Creating candidate profile for:', data.userId)
 
-  // Server-side only - uses service role to bypass RLS
-  const supabaseAdmin = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  )
+  // Determine email domain status
+  const emailDomainStatus = isEduEmail(data.email)
+    ? 'edu_verified'
+    : 'flagged_for_review'
+
+  if (!isEduEmail(data.email)) {
+    console.log(`Non-.edu email detected (${data.email}), flagging for review`)
+  }
+
+  // Typed client for profiles table
+  const supabaseAdmin = getTypedAdminClient()
+  // Untyped client for candidate_profiles (has new email_domain_status column)
+  const supabaseUntyped = getUntypedAdminClient()
 
   // 1. Ensure Profile Exists (Retry Logic)
   let profileExists = false
@@ -69,8 +107,8 @@ export async function createCandidateProfile(data: {
       .eq('id', data.userId)
   }
 
-  // 2. Insert Candidate Profile
-  const { data: candidateProfile, error } = await supabaseAdmin
+  // 2. Insert Candidate Profile (using untyped client for new email_domain_status column)
+  const { data: candidateProfile, error } = await supabaseUntyped
     .from('candidate_profiles')
     .insert({
       user_id: data.userId,
@@ -79,6 +117,7 @@ export async function createCandidateProfile(data: {
       gpa: data.gpa,
       graduation_year: data.graduationYear,
       status: 'pending_verification',
+      email_domain_status: emailDomainStatus,
     })
     .select()
     .single()

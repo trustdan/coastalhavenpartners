@@ -876,3 +876,165 @@ export async function reflagResumeForReview(resumeId: string, reason?: string) {
 
   revalidatePath('/admin/verification')
 }
+
+// =============================================
+// EMAIL DOMAIN VERIFICATION ACTIONS
+// =============================================
+
+/**
+ * Get all candidates with flagged (non-.edu) email domains needing review
+ * Uses untyped client until migration is run and types are regenerated
+ */
+export async function getFlaggedEmailAccounts() {
+  await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  const { data, error } = await supabaseUntyped
+    .from('candidate_profiles')
+    .select(`
+      id,
+      user_id,
+      school_name,
+      major,
+      graduation_year,
+      gpa,
+      email_domain_status,
+      email_review_notes,
+      email_reviewed_at,
+      created_at,
+      profiles:user_id (
+        id,
+        email,
+        full_name,
+        linkedin_url,
+        created_at
+      )
+    `)
+    .eq('email_domain_status', 'flagged_for_review')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data
+}
+
+/**
+ * Get email domain statistics for admin dashboard
+ * Uses untyped client until migration is run and types are regenerated
+ */
+export async function getEmailDomainStats() {
+  await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  // Get counts for each status
+  const { count: eduVerified } = await supabaseUntyped
+    .from('candidate_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('email_domain_status', 'edu_verified')
+
+  const { count: flagged } = await supabaseUntyped
+    .from('candidate_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('email_domain_status', 'flagged_for_review')
+
+  const { count: approved } = await supabaseUntyped
+    .from('candidate_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('email_domain_status', 'manually_approved')
+
+  const { count: rejected } = await supabaseUntyped
+    .from('candidate_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('email_domain_status', 'rejected')
+
+  return {
+    eduVerified: eduVerified ?? 0,
+    flaggedForReview: flagged ?? 0,
+    manuallyApproved: approved ?? 0,
+    rejected: rejected ?? 0,
+  }
+}
+
+/**
+ * Approve a flagged email account (career services, testing, etc.)
+ * Uses untyped client until migration is run and types are regenerated
+ */
+export async function approveEmailAccount(
+  candidateProfileId: string,
+  notes?: string
+) {
+  const { user } = await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  const { error } = await supabaseUntyped
+    .from('candidate_profiles')
+    .update({
+      email_domain_status: 'manually_approved',
+      email_review_notes: notes || 'Approved by admin',
+      email_reviewed_at: new Date().toISOString(),
+      email_reviewed_by: user.id,
+    })
+    .eq('id', candidateProfileId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/verification')
+  return { success: true }
+}
+
+/**
+ * Reject a flagged email account
+ * Uses untyped client until migration is run and types are regenerated
+ */
+export async function rejectEmailAccount(
+  candidateProfileId: string,
+  notes?: string
+) {
+  const { user } = await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  const { error } = await supabaseUntyped
+    .from('candidate_profiles')
+    .update({
+      email_domain_status: 'rejected',
+      email_review_notes: notes || 'Rejected by admin',
+      email_reviewed_at: new Date().toISOString(),
+      email_reviewed_by: user.id,
+      status: 'rejected', // Also update candidate status
+    })
+    .eq('id', candidateProfileId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/verification')
+  return { success: true }
+}
+
+/**
+ * Re-flag an approved email account for review
+ * Uses untyped client until migration is run and types are regenerated
+ */
+export async function reflagEmailAccount(
+  candidateProfileId: string,
+  reason?: string
+) {
+  const { user } = await verifyAdmin()
+  const supabaseUntyped = getUntypedAdminClient()
+
+  const { error } = await supabaseUntyped
+    .from('candidate_profiles')
+    .update({
+      email_domain_status: 'flagged_for_review',
+      email_review_notes: reason || 'Re-flagged for review by admin',
+      email_reviewed_at: new Date().toISOString(),
+      email_reviewed_by: user.id,
+    })
+    .eq('id', candidateProfileId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/verification')
+  return { success: true }
+}
