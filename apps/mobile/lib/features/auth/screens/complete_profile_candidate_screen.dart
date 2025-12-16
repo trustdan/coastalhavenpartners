@@ -152,40 +152,43 @@ class _CompleteProfileCandidateScreenState
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppColors.surfaceDark,
-          title: Row(
-            children: [
-              Icon(Icons.account_circle_outlined, color: AppColors.warning),
-              const SizedBox(width: 8),
-              Text('Sign Up Required', style: TextStyle(color: AppColors.textPrimaryDark)),
-            ],
-          ),
-          content: Text(
-            'You need to create an account before completing your profile.\n\n'
-            'This ensures your information is saved securely.',
-            style: TextStyle(color: AppColors.textSecondaryDark),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.go(AppRoutes.splash);
-              },
-              child: const Text('Go Back'),
+        builder: (dialogContext) {
+          final colorScheme = Theme.of(dialogContext).colorScheme;
+          return AlertDialog(
+            backgroundColor: colorScheme.surface,
+            title: Row(
+              children: [
+                Icon(Icons.account_circle_outlined, color: AppColors.warning),
+                const SizedBox(width: 8),
+                Text('Sign Up Required', style: TextStyle(color: colorScheme.onSurface)),
+              ],
             ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.go(AppRoutes.signupCandidate);
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.teal,
+            content: Text(
+              'You need to create an account before completing your profile.\n\n'
+              'This ensures your information is saved securely.',
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  context.go(AppRoutes.splash);
+                },
+                child: const Text('Go Back'),
               ),
-              child: const Text('Sign Up'),
-            ),
-          ],
-        ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  context.go(AppRoutes.signupCandidate);
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                ),
+                child: const Text('Sign Up'),
+              ),
+            ],
+          );
+        },
       );
       return;
     }
@@ -426,34 +429,37 @@ class _CompleteProfileCandidateScreenState
           // Success - show dialog then navigate
           await showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: AppColors.surfaceDark,
-              title: Row(
-                children: [
-                  Icon(Icons.check_circle, color: AppColors.success),
-                  const SizedBox(width: 8),
-                  Text('Profile Complete!', style: TextStyle(color: AppColors.textPrimaryDark)),
-                ],
-              ),
-              content: Text(
-                'Your candidate profile has been saved to Supabase.\n\n'
-                'School: ${_schoolController.text}\n'
-                'Major: ${_majorController.text}\n'
-                'GPA: ${_gpaController.text}\n'
-                'Roles: ${_selectedRoles.join(", ")}\n'
-                'Locations: ${_selectedLocations.join(", ")}',
-                style: TextStyle(color: AppColors.textSecondaryDark),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.go(AppRoutes.candidate);
-                  },
-                  child: const Text('Go to Dashboard'),
+            builder: (dialogContext) {
+              final colorScheme = Theme.of(dialogContext).colorScheme;
+              return AlertDialog(
+                backgroundColor: colorScheme.surface,
+                title: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: AppColors.success),
+                    const SizedBox(width: 8),
+                    Text('Profile Complete!', style: TextStyle(color: colorScheme.onSurface)),
+                  ],
                 ),
-              ],
-            ),
+                content: Text(
+                  'Your candidate profile has been saved to Supabase.\n\n'
+                  'School: ${_schoolController.text}\n'
+                  'Major: ${_majorController.text}\n'
+                  'GPA: ${_gpaController.text}\n'
+                  'Roles: ${_selectedRoles.join(", ")}\n'
+                  'Locations: ${_selectedLocations.join(", ")}',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      context.go(AppRoutes.candidate);
+                    },
+                    child: const Text('Go to Dashboard'),
+                  ),
+                ],
+              );
+            },
           );
         } else {
           _showError('Failed to save profile. Please try again.');
@@ -472,17 +478,20 @@ class _CompleteProfileCandidateScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'Complete Your Profile',
-          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimaryDark),
+          style: AppTextStyles.h4.copyWith(color: colorScheme.onSurface),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimaryDark),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: _currentStep > 0 ? _previousStep : () => context.go(AppRoutes.splash),
         ),
       ),
@@ -531,6 +540,8 @@ class _CompleteProfileCandidateScreenState
   }
 
   Widget _buildStepIndicator(int step, String label) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isActive = _currentStep >= step;
     final isCurrent = _currentStep == step;
 
@@ -542,9 +553,9 @@ class _CompleteProfileCandidateScreenState
             height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isActive ? AppColors.teal : AppColors.surfaceDark,
+              color: isActive ? AppColors.teal : colorScheme.surfaceContainerHighest,
               border: Border.all(
-                color: isCurrent ? AppColors.teal : AppColors.borderDark,
+                color: isCurrent ? AppColors.teal : colorScheme.outline,
                 width: 2,
               ),
             ),
@@ -554,7 +565,7 @@ class _CompleteProfileCandidateScreenState
                   : Text(
                       '${step + 1}',
                       style: AppTextStyles.labelMedium.copyWith(
-                        color: isActive ? Colors.white : AppColors.textMutedDark,
+                        color: isActive ? Colors.white : colorScheme.onSurfaceVariant,
                       ),
                     ),
             ),
@@ -563,7 +574,7 @@ class _CompleteProfileCandidateScreenState
           Text(
             label,
             style: AppTextStyles.labelSmall.copyWith(
-              color: isActive ? AppColors.textPrimaryDark : AppColors.textMutedDark,
+              color: isActive ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -572,11 +583,12 @@ class _CompleteProfileCandidateScreenState
   }
 
   Widget _buildStepConnector(int afterStep) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isActive = _currentStep > afterStep;
     return Container(
       width: 24,
       height: 2,
-      color: isActive ? AppColors.teal : AppColors.borderDark,
+      color: isActive ? AppColors.teal : colorScheme.outline,
     );
   }
 
@@ -594,17 +606,21 @@ class _CompleteProfileCandidateScreenState
   }
 
   Widget _buildEducationStep() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textColor = colorScheme.onSurface;
+    final secondaryTextColor = colorScheme.onSurfaceVariant;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           'Education Details',
-          style: AppTextStyles.h3.copyWith(color: AppColors.textPrimaryDark),
+          style: AppTextStyles.h3.copyWith(color: textColor),
         ),
         const SizedBox(height: 8),
         Text(
           'Tell us about your academic background',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondaryDark),
+          style: AppTextStyles.bodyMedium.copyWith(color: secondaryTextColor),
         ),
         const SizedBox(height: 24),
 
@@ -630,7 +646,7 @@ class _CompleteProfileCandidateScreenState
             return TextFormField(
               controller: controller,
               focusNode: focusNode,
-              style: TextStyle(color: AppColors.textPrimaryDark),
+              style: TextStyle(color: textColor),
               decoration: const InputDecoration(
                 labelText: 'School *',
                 hintText: 'Start typing to search...',
@@ -662,7 +678,7 @@ class _CompleteProfileCandidateScreenState
             return TextFormField(
               controller: controller,
               focusNode: focusNode,
-              style: TextStyle(color: AppColors.textPrimaryDark),
+              style: TextStyle(color: textColor),
               decoration: const InputDecoration(
                 labelText: 'Major *',
                 hintText: 'e.g., Finance, Economics',
@@ -675,9 +691,9 @@ class _CompleteProfileCandidateScreenState
 
         // Degree type dropdown
         DropdownButtonFormField<String>(
-          initialValue: _selectedDegreeType,
-          dropdownColor: AppColors.surfaceDark,
-          style: TextStyle(color: AppColors.textPrimaryDark),
+          value: _selectedDegreeType,
+          dropdownColor: colorScheme.surfaceContainerHighest,
+          style: TextStyle(color: textColor),
           decoration: const InputDecoration(
             labelText: 'Degree Type *',
             prefixIcon: Icon(Icons.school),
@@ -701,7 +717,7 @@ class _CompleteProfileCandidateScreenState
               child: TextFormField(
                 controller: _gpaController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(color: AppColors.textPrimaryDark),
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(
                   labelText: 'GPA *',
                   hintText: '3.85',
@@ -712,9 +728,9 @@ class _CompleteProfileCandidateScreenState
             const SizedBox(width: 16),
             Expanded(
               child: DropdownButtonFormField<int>(
-                initialValue: _graduationYear,
-                dropdownColor: AppColors.surfaceDark,
-                style: TextStyle(color: AppColors.textPrimaryDark),
+                value: _graduationYear,
+                dropdownColor: colorScheme.surfaceContainerHighest,
+                style: TextStyle(color: textColor),
                 decoration: const InputDecoration(
                   labelText: 'Graduation Year *',
                   prefixIcon: Icon(Icons.calendar_today_outlined),
@@ -740,29 +756,33 @@ class _CompleteProfileCandidateScreenState
   }
 
   Widget _buildPreferencesStep() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textColor = colorScheme.onSurface;
+    final secondaryTextColor = colorScheme.onSurfaceVariant;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           'Career Preferences',
-          style: AppTextStyles.h3.copyWith(color: AppColors.textPrimaryDark),
+          style: AppTextStyles.h3.copyWith(color: textColor),
         ),
         const SizedBox(height: 8),
         Text(
           'What roles and locations are you targeting?',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondaryDark),
+          style: AppTextStyles.bodyMedium.copyWith(color: secondaryTextColor),
         ),
         const SizedBox(height: 24),
 
         // Target Roles
         Text(
           'Target Roles *',
-          style: AppTextStyles.labelLarge.copyWith(color: AppColors.textPrimaryDark),
+          style: AppTextStyles.labelLarge.copyWith(color: textColor),
         ),
         const SizedBox(height: 8),
         Text(
           'Select all that apply',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
+          style: AppTextStyles.bodySmall.copyWith(color: secondaryTextColor),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -785,11 +805,11 @@ class _CompleteProfileCandidateScreenState
               selectedColor: AppColors.teal.withValues(alpha: 0.2),
               checkmarkColor: AppColors.teal,
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.teal : AppColors.textSecondaryDark,
+                color: isSelected ? AppColors.teal : secondaryTextColor,
               ),
-              backgroundColor: AppColors.surfaceDark,
+              backgroundColor: colorScheme.surfaceContainerHighest,
               side: BorderSide(
-                color: isSelected ? AppColors.teal : AppColors.borderDark,
+                color: isSelected ? AppColors.teal : colorScheme.outline,
               ),
             );
           }).toList(),
@@ -799,12 +819,12 @@ class _CompleteProfileCandidateScreenState
         // Preferred Locations
         Text(
           'Preferred Locations *',
-          style: AppTextStyles.labelLarge.copyWith(color: AppColors.textPrimaryDark),
+          style: AppTextStyles.labelLarge.copyWith(color: textColor),
         ),
         const SizedBox(height: 8),
         Text(
           'Where would you like to work?',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
+          style: AppTextStyles.bodySmall.copyWith(color: secondaryTextColor),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -827,11 +847,11 @@ class _CompleteProfileCandidateScreenState
               selectedColor: AppColors.emerald.withValues(alpha: 0.2),
               checkmarkColor: AppColors.emerald,
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.emerald : AppColors.textSecondaryDark,
+                color: isSelected ? AppColors.emerald : secondaryTextColor,
               ),
-              backgroundColor: AppColors.surfaceDark,
+              backgroundColor: colorScheme.surfaceContainerHighest,
               side: BorderSide(
-                color: isSelected ? AppColors.emerald : AppColors.borderDark,
+                color: isSelected ? AppColors.emerald : colorScheme.outline,
               ),
             );
           }).toList(),
@@ -841,17 +861,21 @@ class _CompleteProfileCandidateScreenState
   }
 
   Widget _buildDocumentsStep() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textColor = colorScheme.onSurface;
+    final secondaryTextColor = colorScheme.onSurfaceVariant;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           'Upload Resume',
-          style: AppTextStyles.h3.copyWith(color: AppColors.textPrimaryDark),
+          style: AppTextStyles.h3.copyWith(color: textColor),
         ),
         const SizedBox(height: 8),
         Text(
           'Your resume helps recruiters learn more about you',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondaryDark),
+          style: AppTextStyles.bodyMedium.copyWith(color: secondaryTextColor),
         ),
         const SizedBox(height: 32),
 
@@ -862,10 +886,10 @@ class _CompleteProfileCandidateScreenState
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.surfaceDark,
+              color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: _resumeFileName != null ? AppColors.teal : AppColors.borderDark,
+                color: _resumeFileName != null ? AppColors.teal : colorScheme.outline,
                 width: 2,
                 style: BorderStyle.solid,
               ),
@@ -882,7 +906,7 @@ class _CompleteProfileCandidateScreenState
                   Icon(
                     _resumeFileName != null ? Icons.check_circle : Icons.upload_file,
                     size: 48,
-                    color: _resumeFileName != null ? AppColors.teal : AppColors.textMutedDark,
+                    color: _resumeFileName != null ? AppColors.teal : secondaryTextColor,
                   ),
                 const SizedBox(height: 16),
                 Text(
@@ -890,16 +914,14 @@ class _CompleteProfileCandidateScreenState
                       ? 'Uploading...'
                       : (_resumeFileName ?? 'Tap to upload your resume'),
                   style: AppTextStyles.bodyLarge.copyWith(
-                    color: _resumeFileName != null
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textSecondaryDark,
+                    color: _resumeFileName != null ? textColor : secondaryTextColor,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'PDF format, max 5MB',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textMutedDark,
+                    color: secondaryTextColor,
                   ),
                 ),
                 if (_resumeFileName != null && !_isUploading) ...[
@@ -937,7 +959,7 @@ class _CompleteProfileCandidateScreenState
                 child: Text(
                   'You can skip this step and upload your resume later from your profile.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondaryDark,
+                    color: secondaryTextColor,
                   ),
                 ),
               ),
@@ -950,7 +972,7 @@ class _CompleteProfileCandidateScreenState
         // Summary of selections
         Text(
           'Profile Summary',
-          style: AppTextStyles.labelLarge.copyWith(color: AppColors.textPrimaryDark),
+          style: AppTextStyles.labelLarge.copyWith(color: textColor),
         ),
         const SizedBox(height: 12),
         _buildSummaryItem(Icons.school, 'School', _schoolController.text),
@@ -964,21 +986,22 @@ class _CompleteProfileCandidateScreenState
 
   Widget _buildSummaryItem(IconData icon, String label, String value) {
     if (value.isEmpty) return const SizedBox.shrink();
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: AppColors.textMutedDark),
+          Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 8),
           Text(
             '$label: ',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
+            style: AppTextStyles.bodySmall.copyWith(color: colorScheme.onSurfaceVariant),
           ),
           Expanded(
             child: Text(
               value,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondaryDark),
+              style: AppTextStyles.bodySmall.copyWith(color: colorScheme.onSurface),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -989,12 +1012,13 @@ class _CompleteProfileCandidateScreenState
   }
 
   Widget _buildBottomButtons() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: AppSpacing.screenPadding.copyWith(top: 16, bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
+        color: colorScheme.surfaceContainerHighest,
         border: Border(
-          top: BorderSide(color: AppColors.borderDark),
+          top: BorderSide(color: colorScheme.outline),
         ),
       ),
       child: Row(
