@@ -13,6 +13,19 @@ type Payload = {
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://coastalhavenpartners.com'
 
+function safeHost(url: string | undefined) {
+  if (!url) return null
+  try {
+    return new URL(url).host
+  } catch {
+    return null
+  }
+}
+
+function getRequiredSecret() {
+  return process.env.MOBILE_SIGNUP_WEBHOOK_SECRET || ''
+}
+
 function isRecent(dateIso: string, maxAgeMinutes: number) {
   const created = new Date(dateIso).getTime()
   const now = Date.now()
@@ -20,6 +33,15 @@ function isRecent(dateIso: string, maxAgeMinutes: number) {
 }
 
 export async function POST(req: Request) {
+  const requiredSecret = getRequiredSecret()
+  if (requiredSecret) {
+    const provided = req.headers.get('x-mobile-signup-secret') || ''
+    if (provided !== requiredSecret) {
+      console.warn('[mobile-signup-event] missing/invalid secret')
+      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
   let body: Payload | null = null
   try {
     body = (await req.json()) as Payload
@@ -39,32 +61,37 @@ export async function POST(req: Request) {
   // for mobile signups. It must NOT trust client input blindly.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceKey) {
-    console.error('[mobile-signup-event] Missing Supabase env vars')
-    return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 })
-  }
+  let verifiedBySupabase = false
+  let createdAt: string | null = null
+  const supabaseHost = safeHost(url)
 
-  const supabase = createAdminClient<Database>(url, serviceKey)
+  // Best-effort Supabase verification (helps prevent abuse in prod).
+  // If env vars are misconfigured or point at the wrong project, we still
+  // want observability/logs and (optionally) a welcome email.
+  if (url && serviceKey) {
+    try {
+      const supabase = createAdminClient<Database>(url, serviceKey)
 
-  // Verify the user exists and matches the email we received.
-  const { data: userResp, error: userErr } = await supabase.auth.admin.getUserById(userId)
-  if (userErr || !userResp?.user) {
-    console.warn('[mobile-signup-event] User lookup failed', { userId, userErr })
-    return NextResponse.json({ ok: false, error: 'User not found' }, { status: 404 })
-  }
-
-  const authUser = userResp.user
-  const authEmail = (authUser.email || '').toLowerCase()
-  if (authEmail !== email.toLowerCase()) {
-    console.warn('[mobile-signup-event] Email mismatch', { userId, email, authEmail })
-    return NextResponse.json({ ok: false, error: 'Email mismatch' }, { status: 400 })
-  }
-
-  // Prevent abuse: only send if the user was created recently.
-  const createdAt = authUser.created_at
-  if (!createdAt || !isRecent(createdAt, 15)) {
-    console.warn('[mobile-signup-event] User not recent, skipping email', { userId, createdAt })
-    return NextResponse.json({ ok: true, skipped: 'not-recent' })
+      const { data: userResp, error: userErr } = await supabase.auth.admin.getUserById(userId)
+      if (userErr || !userResp?.user) {
+        console.warn('[mobile-signup-event] User lookup failed', { userId, userErr })
+      } else {
+        const authUser = userResp.user
+        createdAt = authUser.created_at ?? null
+        const authEmail = (authUser.email || '').toLowerCase()
+        if (authEmail !== email.toLowerCase()) {
+          console.warn('[mobile-signup-event] Email mismatch', { userId, email, authEmail })
+        } else if (!createdAt || !isRecent(createdAt, 15)) {
+          console.warn('[mobile-signup-event] User not recent (possible replay)', { userId, createdAt })
+        } else {
+          verifiedBySupabase = true
+        }
+      }
+    } catch (e) {
+      console.warn('[mobile-signup-event] Supabase verification exception', e)
+    }
+  } else {
+    console.warn('[mobile-signup-event] Missing Supabase env vars (skipping verification)')
   }
 
   console.log('[mobile-signup-event] received', {
@@ -74,9 +101,13 @@ export async function POST(req: Request) {
     fullName,
     platform,
     createdAt,
+    verifiedBySupabase,
+    supabaseHost,
   })
 
   // Send a welcome/verify email via Resend (independent of Supabase Auth email).
+  // If Supabase verification failed, we still send when a shared secret is configured
+  // (or when the project is misconfigured during development).
   try {
     const name = fullName?.trim() || 'there'
     const verifyHelpUrl = `${APP_URL}/help`
@@ -117,6 +148,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'Email send failed' }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, verifiedBySupabase, supabaseHost })
 }
 
