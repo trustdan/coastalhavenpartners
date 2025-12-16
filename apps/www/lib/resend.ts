@@ -7,8 +7,17 @@ import { createClient as createServerClient } from '@supabase/supabase-js'
 // In production, it must be present for emails to work.
 export const resend = new Resend(process.env.RESEND_API_KEY || 're_123')
 
-// Domain verified in Resend - using send subdomain for SPF/DKIM compliance
-export const FROM_EMAIL = 'Coastal Haven Partners <notifications@send.coastalhavenpartners.com>'
+// NOTE: The "from" address must be from a domain verified in Resend.
+//
+// Configure via env:
+// - RESEND_FROM_EMAIL="Coastal Haven Partners <notifications@yourdomain.com>"
+//
+// Default to the apex domain (verified in Resend). If you prefer using a
+// dedicated sending subdomain (e.g. `send.coastalhavenpartners.com`), you must
+// verify that subdomain in Resend and then set RESEND_FROM_EMAIL accordingly.
+export const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL ||
+  'Coastal Haven Partners <notifications@coastalhavenpartners.com>'
 export const REPLY_TO = 'support@coastalhavenpartners.com'
 
 // Helper to get all admin emails

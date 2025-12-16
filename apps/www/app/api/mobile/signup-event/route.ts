@@ -154,7 +154,7 @@ export async function POST(req: Request) {
     if (result?.error) {
       console.error('[mobile-signup-event] Resend returned error', result.error)
       return NextResponse.json(
-        { ok: false, error: 'Email send failed', commit: shortSha() },
+        { ok: false, error: 'Email send failed', resendError: result.error, commit: shortSha() },
         { status: 502 }
       )
     }
