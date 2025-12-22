@@ -146,6 +146,7 @@ export function ChangePasswordForm() {
                 <Input
                   id="currentPassword"
                   type="password"
+                  autoComplete="current-password"
                   required
                   placeholder="Enter current password"
                   value={currentPassword}
@@ -158,6 +159,7 @@ export function ChangePasswordForm() {
                 <Input
                   id="newPassword"
                   type="password"
+                  autoComplete="new-password"
                   required
                   placeholder="Enter new password"
                   value={newPassword}
@@ -174,6 +176,7 @@ export function ChangePasswordForm() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   required
                   placeholder="Confirm new password"
                   value={confirmPassword}

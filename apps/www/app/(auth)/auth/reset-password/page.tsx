@@ -172,6 +172,7 @@ export default function ResetPasswordPage() {
               id="password"
               name="password"
               type="password"
+              autoComplete="new-password"
               required
               placeholder="••••••••"
               value={password}
@@ -189,6 +190,7 @@ export default function ResetPasswordPage() {
               id="confirmPassword"
               name="confirmPassword"
               type="password"
+              autoComplete="new-password"
               required
               placeholder="••••••••"
               value={confirmPassword}

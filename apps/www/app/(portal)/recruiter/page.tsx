@@ -8,6 +8,7 @@ import { getSavedSearches } from './saved-search-actions'
 import { ExportButton } from './export-button'
 import { getRecommendedCandidates } from '@/lib/recommendations'
 import { RecommendedCandidates } from '@/components/recruiter/recommended-candidates'
+import { RecruiterDashboardClient } from '@/components/recruiter/recruiter-dashboard-client'
 import { getCandidatesInterestedInMyFirm } from '@/app/(portal)/candidate/firm-interests-actions'
 import { CandidateTable } from './candidate-table'
 
@@ -167,6 +168,9 @@ export default async function RecruiterDashboard({
   // Execute query with ordering
   const { data: candidates } = await query.order('gpa', { ascending: false })
 
+  // Check if recruiter has any candidates to view (for demo mode)
+  const hasCandidates = (candidates?.length ?? 0) > 0
+
   return (
     <div className="space-y-8">
       {/* Verification Pending Banner */}
@@ -220,27 +224,34 @@ export default async function RecruiterDashboard({
         </div>
       )}
 
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Candidate Pool</h1>
-          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-            {candidates?.length || 0} verified candidates available
-            {!isRecruiterVerified && ' (limited view)'}
-          </p>
-        </div>
-        {isRecruiterVerified && <ExportButton />}
-      </div>
-
-      {/* Personalized Recommendations - only for verified recruiters */}
-      {isRecruiterVerified && <RecommendedCandidates candidates={recommendedCandidates} />}
-
-      <CandidateFilters savedSearches={isRecruiterVerified ? savedSearches : []} />
-
-      {/* Candidate Table with Bulk Selection */}
-      <CandidateTable
-        candidates={candidates || []}
-        interestedCandidateIds={interestedCandidateIds}
-        isRecruiterVerified={isRecruiterVerified}
+      {/* Demo-aware content */}
+      <RecruiterDashboardClient
+        hasCandidates={hasCandidates}
+        headerComponent={
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Candidate Pool</h1>
+              <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+                {candidates?.length || 0} verified candidates available
+                {!isRecruiterVerified && ' (limited view)'}
+              </p>
+            </div>
+            {isRecruiterVerified && <ExportButton />}
+          </div>
+        }
+        recommendationsComponent={
+          isRecruiterVerified ? <RecommendedCandidates candidates={recommendedCandidates} /> : null
+        }
+        filtersComponent={
+          <CandidateFilters savedSearches={isRecruiterVerified ? savedSearches : []} />
+        }
+        candidateTableComponent={
+          <CandidateTable
+            candidates={candidates || []}
+            interestedCandidateIds={interestedCandidateIds}
+            isRecruiterVerified={isRecruiterVerified}
+          />
+        }
       />
     </div>
   )

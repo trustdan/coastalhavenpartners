@@ -358,6 +358,7 @@ function CandidateSignupForm() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               required
               placeholder="john@upenn.edu"
             />
@@ -369,6 +370,7 @@ function CandidateSignupForm() {
               id="password"
               name="password"
               type="password"
+              autoComplete="new-password"
               required
               minLength={8}
               placeholder="••••••••"

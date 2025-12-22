@@ -328,6 +328,7 @@ export default function RecruiterSignupPage() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               required
               placeholder="jane@goldmansachs.com"
             />
@@ -339,6 +340,7 @@ export default function RecruiterSignupPage() {
               id="password"
               name="password"
               type="password"
+              autoComplete="new-password"
               required
               minLength={8}
               placeholder="••••••••"

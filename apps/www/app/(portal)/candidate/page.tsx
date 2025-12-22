@@ -11,6 +11,7 @@ import { UpcomingDeadlines } from '@/components/candidate/upcoming-deadlines'
 import { FirmInterests } from '@/components/candidate/firm-interests'
 import { RecruitingFirms } from '@/components/candidate/recruiting-firms'
 import { Referrals } from '@/components/candidate/referrals'
+import { CandidateDashboardClient } from '@/components/candidate/candidate-dashboard-client'
 import { getFirmInterests } from './firm-interests-actions'
 import { getUpcomingDeadlines } from './deadline-actions'
 import { getReferralCode, getReferralStats, getReferrals } from './referral-actions'
@@ -205,20 +206,11 @@ export default async function CandidateDashboard() {
         )}
       </div>
 
-      {/* Profile Viewers - Shows which firms viewed the profile */}
-      <ProfileViewers userId={user.id} />
+      {/* Demo-able sections wrapped in client component */}
+      <DemoAwareSections userId={user.id} />
 
-      {/* Upcoming Deadlines - Job application deadlines */}
-      <UpcomingDeadlinesSection />
-
-      {/* Firm Interests - Express interest in firms */}
-      <FirmInterestsSection />
-
-      {/* Recruiting Firms - Firms actively recruiting */}
+      {/* Recruiting Firms - Always shows real data (not demo-able) */}
       <RecruitingFirmsSection />
-
-      {/* Referrals - Invite classmates */}
-      <ReferralsSection />
 
       {/* Coastal Haven Capital Application Status */}
       <div className={`rounded-xl border p-6 shadow-sm ${
@@ -413,14 +405,54 @@ export default async function CandidateDashboard() {
   )
 }
 
-async function UpcomingDeadlinesSection() {
-  const deadlines = await getUpcomingDeadlines(5)
-  return <UpcomingDeadlines deadlines={deadlines} />
-}
+/**
+ * Server component that fetches all demo-able section data
+ * and passes it to the client wrapper for demo mode logic
+ */
+async function DemoAwareSections({ userId }: { userId: string }) {
+  // Fetch all data in parallel
+  const [
+    profileViewersData,
+    deadlines,
+    interests,
+    referralCode,
+    stats,
+    referrals
+  ] = await Promise.all([
+    getProfileViewersData(userId),
+    getUpcomingDeadlines(5),
+    getFirmInterests(),
+    getReferralCode(),
+    getReferralStats(),
+    getReferrals()
+  ])
 
-async function FirmInterestsSection() {
-  const interests = await getFirmInterests()
-  return <FirmInterests initialInterests={interests} />
+  // Determine if real data exists for each section
+  const hasProfileViews = profileViewersData.totalViews > 0
+  const hasDeadlines = deadlines.length > 0
+  const hasFirmInterests = interests.length > 0
+  const hasReferrals = referrals.length > 0
+
+  return (
+    <CandidateDashboardClient
+      hasProfileViews={hasProfileViews}
+      hasDeadlines={hasDeadlines}
+      hasFirmInterests={hasFirmInterests}
+      hasReferrals={hasReferrals}
+      profileViewersComponent={<ProfileViewers userId={userId} />}
+      deadlinesComponent={<UpcomingDeadlines deadlines={deadlines} />}
+      firmInterestsComponent={<FirmInterests initialInterests={interests} />}
+      referralsComponent={
+        referralCode ? (
+          <Referrals
+            referralCode={referralCode}
+            initialStats={stats}
+            initialReferrals={referrals}
+          />
+        ) : null
+      }
+    />
+  )
 }
 
 async function RecruitingFirmsSection() {
@@ -428,14 +460,27 @@ async function RecruitingFirmsSection() {
   return <RecruitingFirms firms={firms} />
 }
 
-async function ReferralsSection() {
-  const [referralCode, stats, referrals] = await Promise.all([
-    getReferralCode(),
-    getReferralStats(),
-    getReferrals()
-  ])
+/**
+ * Fetch profile viewers data to check if user has any real profile views
+ */
+async function getProfileViewersData(userId: string) {
+  const supabaseAdmin = createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
 
-  if (!referralCode) return null
+  // Count profile views from analytics_events
+  const { count } = await supabaseAdmin
+    .from('analytics_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('candidate_user_id', userId)
+    .eq('event_type', 'profile_view')
 
-  return <Referrals referralCode={referralCode} initialStats={stats} initialReferrals={referrals} />
+  return { totalViews: count ?? 0 }
 }

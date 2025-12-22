@@ -271,6 +271,7 @@ function LoginForm() {
             id="email"
             name="email"
             type="email"
+            autoComplete="username"
             required
             placeholder="john@upenn.edu"
           />
@@ -282,6 +283,7 @@ function LoginForm() {
             id="password"
             name="password"
             type="password"
+            autoComplete="current-password"
             required
             placeholder="••••••••"
           />

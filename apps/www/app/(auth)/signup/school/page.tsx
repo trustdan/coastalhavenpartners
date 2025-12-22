@@ -304,6 +304,7 @@ export default function SchoolSignupPage() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               required
               placeholder="jane@university.edu"
             />
@@ -315,6 +316,7 @@ export default function SchoolSignupPage() {
               id="password"
               name="password"
               type="password"
+              autoComplete="new-password"
               required
               minLength={8}
               placeholder="At least 8 characters"
