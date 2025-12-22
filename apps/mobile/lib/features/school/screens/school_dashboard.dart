@@ -9,11 +9,18 @@ import '../../../widgets/magic_ui/magic_ui.dart';
 
 /// School Dashboard - Main home screen for school administrators
 /// Shows student stats, placement metrics, and upcoming events
-class SchoolDashboard extends ConsumerWidget {
+class SchoolDashboard extends ConsumerStatefulWidget {
   const SchoolDashboard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SchoolDashboard> createState() => _SchoolDashboardState();
+}
+
+class _SchoolDashboardState extends ConsumerState<SchoolDashboard> {
+  bool _showSampleData = true;
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -36,27 +43,144 @@ class SchoolDashboard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Sample Data Banner
+              if (_showSampleData) _buildSampleDataBanner(context, isDark),
+
               // Greeting
               _buildGreeting(context),
               AppSpacing.subsectionGap,
 
               // Stats Overview
-              _buildStatsOverview(context, isDark),
-              AppSpacing.sectionGap,
+              if (_showSampleData) ...[
+                _buildStatsOverview(context, isDark),
+                AppSpacing.sectionGap,
 
-              // Placement Rate Card
-              _buildPlacementRateCard(context, isDark),
-              AppSpacing.sectionGap,
+                // Placement Rate Card
+                _buildPlacementRateCard(context, isDark),
+                AppSpacing.sectionGap,
 
-              // Recent Activity
-              _buildRecentActivity(context, isDark),
-              AppSpacing.sectionGap,
+                // Recent Activity
+                _buildRecentActivity(context, isDark),
+                AppSpacing.sectionGap,
 
-              // Quick Actions
-              _buildQuickActions(context, isDark),
-              AppSpacing.sectionGap,
+                // Quick Actions
+                _buildQuickActions(context, isDark),
+                AppSpacing.sectionGap,
+              ] else
+                _buildEmptyState(context),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSampleDataBanner(BuildContext context, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 20,
+            color: AppColors.warning,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sample Data',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'This is example data to preview the dashboard.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: _clearSampleData,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.warning,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearSampleData() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Sample Data'),
+        content: const Text(
+          'Remove all sample data? This will show an empty dashboard until you have real students and activity.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _showSampleData = false;
+              });
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                const SnackBar(content: Text('Sample data cleared')),
+              );
+            },
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.5,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.school_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text('No data yet', style: AppTextStyles.h4),
+            const SizedBox(height: 8),
+            Text(
+              'Your dashboard will populate once you\nhave students and activity.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

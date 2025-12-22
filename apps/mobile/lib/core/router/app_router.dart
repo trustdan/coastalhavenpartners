@@ -49,6 +49,8 @@ import '../../features/admin/screens/admin_candidates_screen.dart';
 import '../../features/admin/screens/admin_support_screen.dart';
 import '../../features/admin/widgets/admin_shell.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/swipeable_navigation_shell.dart';
+import 'navigation_configs.dart';
 
 /// Route names as constants
 class AppRoutes {
@@ -248,6 +250,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
         // No role set - redirect to role selection
         return AppRoutes.roleSelection;
+      }
+
+      // If admin user is on role selection, redirect to admin dashboard
+      if (isLoggedIn && currentPath == AppRoutes.roleSelection && userRole == 'admin') {
+        return AppRoutes.admin;
       }
 
       return null;
@@ -610,7 +617,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Candidate navigation shell with bottom nav bar
+/// Candidate navigation shell with swipeable bottom nav bar
 class CandidateShell extends StatelessWidget {
   final Widget child;
 
@@ -618,75 +625,18 @@ class CandidateShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _calculateSelectedIndex(context),
-        onDestinationSelected: (index) => _onItemTapped(index, context),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Jobs',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.description_outlined),
-            selectedIcon: Icon(Icons.description),
-            label: 'Apply',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.analytics_outlined),
-            selectedIcon: Icon(Icons.analytics),
-            label: 'Analytics',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+    // Use SwipeableNavigationShell for swipe navigation between tabs.
+    // The 'child' from GoRouter is not used directly - SwipeableNavigationShell
+    // builds all screens internally and syncs with GoRouter via context.go().
+    return SwipeableNavigationShell(
+      routes: candidateNavConfig.routes,
+      destinations: candidateNavConfig.destinations,
+      screenBuilders: candidateNavConfig.screenBuilders,
     );
-  }
-
-  int _calculateSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith(AppRoutes.candidateJobs)) return 1;
-    if (location.startsWith(AppRoutes.candidateApplications)) return 2;
-    if (location.startsWith(AppRoutes.candidateAnalytics)) return 3;
-    if (location.startsWith(AppRoutes.candidateProfile) ||
-        location.startsWith(AppRoutes.candidateEditProfile) ||
-        location.startsWith(AppRoutes.candidateSettings)) return 4;
-    return 0;
-  }
-
-  void _onItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.candidate);
-        break;
-      case 1:
-        context.go(AppRoutes.candidateJobs);
-        break;
-      case 2:
-        context.go(AppRoutes.candidateApplications);
-        break;
-      case 3:
-        context.go(AppRoutes.candidateAnalytics);
-        break;
-      case 4:
-        context.go(AppRoutes.candidateProfile);
-        break;
-    }
   }
 }
 
-/// Recruiter navigation shell with bottom nav bar
+/// Recruiter navigation shell with swipeable bottom nav bar
 class RecruiterShell extends StatelessWidget {
   final Widget child;
 
@@ -694,68 +644,13 @@ class RecruiterShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _calculateSelectedIndex(context),
-        onDestinationSelected: (index) => _onItemTapped(index, context),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: 'Candidates',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.campaign_outlined),
-            selectedIcon: Icon(Icons.campaign),
-            label: 'Campaigns',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.analytics_outlined),
-            selectedIcon: Icon(Icons.analytics),
-            label: 'Analytics',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-      ),
+    // Use SwipeableNavigationShell for swipe navigation between tabs.
+    // The 'child' from GoRouter is not used directly - SwipeableNavigationShell
+    // builds all screens internally and syncs with GoRouter via context.go().
+    return SwipeableNavigationShell(
+      routes: recruiterNavConfig.routes,
+      destinations: recruiterNavConfig.destinations,
+      screenBuilders: recruiterNavConfig.screenBuilders,
     );
-  }
-
-  int _calculateSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith(AppRoutes.recruiterCandidates)) return 1;
-    if (location.startsWith(AppRoutes.recruiterCampaigns)) return 2;
-    if (location.startsWith(AppRoutes.recruiterAnalytics)) return 3;
-    if (location.startsWith(AppRoutes.recruiterSettings)) return 4;
-    return 0;
-  }
-
-  void _onItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.recruiter);
-        break;
-      case 1:
-        context.go(AppRoutes.recruiterCandidates);
-        break;
-      case 2:
-        context.go(AppRoutes.recruiterCampaigns);
-        break;
-      case 3:
-        context.go(AppRoutes.recruiterAnalytics);
-        break;
-      case 4:
-        context.go(AppRoutes.recruiterSettings);
-        break;
-    }
   }
 }

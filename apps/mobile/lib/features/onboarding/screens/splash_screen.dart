@@ -98,6 +98,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         case 'school_admin':
           context.go(AppRoutes.completeProfileSchool);
           break;
+        case 'admin':
+          // Admin users go directly to admin dashboard (no profile completion needed)
+          context.go(AppRoutes.admin);
+          break;
         default:
           context.go(AppRoutes.roleSelection);
       }

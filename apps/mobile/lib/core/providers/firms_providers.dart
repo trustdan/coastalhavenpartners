@@ -5,6 +5,24 @@ import '../utils/result.dart';
 import 'jobs_providers.dart' show jobRepositoryProvider;
 
 // =====================
+// Filter Category Constants
+// =====================
+
+/// List of category labels (display names)
+const firmsCategoryLabels = ['All', 'IB', 'PE', 'VC', 'HF', 'AM', 'FO'];
+
+/// List of category values (database values, null = All)
+const List<String?> firmsCategoryValues = [
+  null,
+  'Investment Banking',
+  'Private Equity',
+  'Venture Capital',
+  'Hedge Fund',
+  'Asset Management',
+  'Family Office',
+];
+
+// =====================
 // Basic Firms Providers
 // =====================
 
@@ -200,6 +218,28 @@ final firmsDirectoryParamsProvider =
     NotifierProvider<FirmsDirectoryParamsNotifier, FirmsDirectoryParams>(
       FirmsDirectoryParamsNotifier.new,
     );
+
+/// Notifier for current category index in swipe navigation
+class FirmsCategoryIndexNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void setIndex(int index) {
+    if (index >= 0 && index < firmsCategoryValues.length) {
+      state = index;
+      // Also update the params provider to sync filter state
+      ref.read(firmsDirectoryParamsProvider.notifier).setCategory(
+        firmsCategoryValues[index],
+      );
+    }
+  }
+}
+
+/// Provider for current category index in swipe navigation
+final firmsCategoryIndexProvider =
+    NotifierProvider<FirmsCategoryIndexNotifier, int>(
+  FirmsCategoryIndexNotifier.new,
+);
 
 /// Provider for firms directory with filters
 final firmsDirectoryProvider =

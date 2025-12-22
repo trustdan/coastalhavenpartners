@@ -439,6 +439,34 @@ class _CompleteProfileSchoolScreenState
           onSelected: (selection) {
             _schoolController.text = selection;
           },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                color: AppColors.surfaceDark,
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return ListTile(
+                        title: Text(
+                          option,
+                          style: TextStyle(color: AppColors.textPrimaryDark),
+                        ),
+                        onTap: () => onSelected(option),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             controller.text = _schoolController.text;
             controller.addListener(() {
@@ -449,10 +477,22 @@ class _CompleteProfileSchoolScreenState
               controller: controller,
               focusNode: focusNode,
               style: TextStyle(color: AppColors.textPrimaryDark),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'School / University *',
                 hintText: 'Start typing to search...',
-                prefixIcon: Icon(Icons.school_outlined),
+                prefixIcon: Icon(Icons.school_outlined, color: AppColors.textMutedDark),
+                filled: true,
+                fillColor: AppColors.surfaceDark,
+                labelStyle: TextStyle(color: AppColors.textSecondaryDark),
+                hintStyle: TextStyle(color: AppColors.textMutedDark),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.borderDark),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.teal, width: 2),
+                ),
               ),
             );
           },
@@ -464,9 +504,21 @@ class _CompleteProfileSchoolScreenState
           initialValue: _selectedDepartment,
           dropdownColor: AppColors.surfaceDark,
           style: TextStyle(color: AppColors.textPrimaryDark),
-          decoration: const InputDecoration(
+          iconEnabledColor: AppColors.textMutedDark,
+          decoration: InputDecoration(
             labelText: 'Department *',
-            prefixIcon: Icon(Icons.business_outlined),
+            prefixIcon: Icon(Icons.business_outlined, color: AppColors.textMutedDark),
+            filled: true,
+            fillColor: AppColors.surfaceDark,
+            labelStyle: TextStyle(color: AppColors.textSecondaryDark),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.borderDark),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.teal, width: 2),
+            ),
           ),
           items: _departments.map((dept) {
             return DropdownMenuItem(
@@ -502,9 +554,21 @@ class _CompleteProfileSchoolScreenState
           initialValue: _selectedRole,
           dropdownColor: AppColors.surfaceDark,
           style: TextStyle(color: AppColors.textPrimaryDark),
-          decoration: const InputDecoration(
+          iconEnabledColor: AppColors.textMutedDark,
+          decoration: InputDecoration(
             labelText: 'Role *',
-            prefixIcon: Icon(Icons.badge_outlined),
+            prefixIcon: Icon(Icons.badge_outlined, color: AppColors.textMutedDark),
+            filled: true,
+            fillColor: AppColors.surfaceDark,
+            labelStyle: TextStyle(color: AppColors.textSecondaryDark),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.borderDark),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.teal, width: 2),
+            ),
           ),
           items: _schoolRoles.map((role) {
             return DropdownMenuItem(
@@ -523,10 +587,22 @@ class _CompleteProfileSchoolScreenState
           controller: _titleController,
           textCapitalization: TextCapitalization.words,
           style: TextStyle(color: AppColors.textPrimaryDark),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Job Title',
             hintText: 'e.g., Associate Director of Career Services',
-            prefixIcon: Icon(Icons.work_outline),
+            prefixIcon: Icon(Icons.work_outline, color: AppColors.textMutedDark),
+            filled: true,
+            fillColor: AppColors.surfaceDark,
+            labelStyle: TextStyle(color: AppColors.textSecondaryDark),
+            hintStyle: TextStyle(color: AppColors.textMutedDark),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.borderDark),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.teal, width: 2),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -536,10 +612,22 @@ class _CompleteProfileSchoolScreenState
           controller: _officeController,
           textCapitalization: TextCapitalization.words,
           style: TextStyle(color: AppColors.textPrimaryDark),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Office Location',
             hintText: 'e.g., Career Center, Room 202',
-            prefixIcon: Icon(Icons.location_on_outlined),
+            prefixIcon: Icon(Icons.location_on_outlined, color: AppColors.textMutedDark),
+            filled: true,
+            fillColor: AppColors.surfaceDark,
+            labelStyle: TextStyle(color: AppColors.textSecondaryDark),
+            hintStyle: TextStyle(color: AppColors.textMutedDark),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.borderDark),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.teal, width: 2),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -549,10 +637,22 @@ class _CompleteProfileSchoolScreenState
           controller: _phoneController,
           keyboardType: TextInputType.phone,
           style: TextStyle(color: AppColors.textPrimaryDark),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Phone Number',
             hintText: '+1 (555) 123-4567',
-            prefixIcon: Icon(Icons.phone_outlined),
+            prefixIcon: Icon(Icons.phone_outlined, color: AppColors.textMutedDark),
+            filled: true,
+            fillColor: AppColors.surfaceDark,
+            labelStyle: TextStyle(color: AppColors.textSecondaryDark),
+            hintStyle: TextStyle(color: AppColors.textMutedDark),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.borderDark),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.teal, width: 2),
+            ),
           ),
         ),
         const SizedBox(height: 32),

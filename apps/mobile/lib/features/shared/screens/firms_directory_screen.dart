@@ -7,6 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/providers/firms_providers.dart';
+import '../../../core/widgets/swipeable_filter_list.dart';
 import '../../../data/models/models.dart';
 
 /// Firms Directory Screen - Browse firms in our network
@@ -21,12 +23,29 @@ class FirmsDirectoryScreen extends ConsumerStatefulWidget {
 class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
   final _searchController = TextEditingController();
   final _debouncer = _Debouncer(milliseconds: 500);
+  final _chipScrollController = ScrollController();
 
   @override
   void dispose() {
     _searchController.dispose();
     _debouncer.dispose();
+    _chipScrollController.dispose();
     super.dispose();
+  }
+
+  /// Auto-scroll chips to show the selected category
+  void _scrollToCategory(int index) {
+    if (!_chipScrollController.hasClients) return;
+
+    // Each chip is approximately 60 pixels wide including spacing
+    const chipWidth = 68.0;
+    final targetOffset = (index * chipWidth) - 16; // 16px for padding
+
+    _chipScrollController.animateTo(
+      targetOffset.clamp(0, _chipScrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -142,54 +161,19 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
           // Filter Chips
           SizedBox(
             height: 40,
-            child: ListView(
+            child: ListView.separated(
+              controller: _chipScrollController,
               scrollDirection: Axis.horizontal,
               padding: AppSpacing.screenPaddingHorizontal,
-              children: [
-                _buildCategoryChip(context, 'All', null, params.category),
-                const SizedBox(width: 8),
-                _buildCategoryChip(
-                  context,
-                  'IB',
-                  'Investment Banking',
-                  params.category,
-                ),
-                const SizedBox(width: 8),
-                _buildCategoryChip(
-                  context,
-                  'PE',
-                  'Private Equity',
-                  params.category,
-                ),
-                const SizedBox(width: 8),
-                _buildCategoryChip(
-                  context,
-                  'VC',
-                  'Venture Capital',
-                  params.category,
-                ),
-                const SizedBox(width: 8),
-                _buildCategoryChip(
-                  context,
-                  'HF',
-                  'Hedge Fund',
-                  params.category,
-                ),
-                const SizedBox(width: 8),
-                _buildCategoryChip(
-                  context,
-                  'AM',
-                  'Asset Management',
-                  params.category,
-                ),
-                const SizedBox(width: 8),
-                _buildCategoryChip(
-                  context,
-                  'FO',
-                  'Family Office',
-                  params.category,
-                ),
-              ],
+              itemCount: firmsCategoryLabels.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) => _buildCategoryChip(
+                context,
+                firmsCategoryLabels[index],
+                firmsCategoryValues[index],
+                params.category,
+                index,
+              ),
             ),
           ),
           AppSpacing.subsectionGap,
@@ -273,14 +257,16 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
             ),
           ),
 
-          // Firms List
+          // Firms List (wrapped with SwipeableFilterList for category swipe)
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                AppDebug.log('firms', 'pull-to-refresh');
-                ref.invalidate(firmsDirectoryPagedProvider);
-              },
-              child: firmsPagedAsync.when(
+            child: SwipeableFilterList(
+              onCategoryChanged: _scrollToCategory,
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  AppDebug.log('firms', 'pull-to-refresh');
+                  ref.invalidate(firmsDirectoryPagedProvider);
+                },
+                child: firmsPagedAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, stack) => Center(
                   child: Column(
@@ -397,6 +383,7 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
                     },
                   );
                 },
+                ),
               ),
             ),
           ),
@@ -410,6 +397,7 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
     String label,
     String? category,
     String? selectedCategory,
+    int index,
   ) {
     final isSelected = selectedCategory == category;
     return FilterChip(
@@ -429,10 +417,12 @@ class _FirmsDirectoryScreenState extends ConsumerState<FirmsDirectoryScreen> {
           data: {
             'label': label,
             'category': category,
+            'index': index,
             'selectedCategoryBefore': selectedCategory,
           },
         );
-        ref.read(firmsDirectoryParamsProvider.notifier).setCategory(category);
+        // Update both the params and the category index for swipe sync
+        ref.read(firmsCategoryIndexProvider.notifier).setIndex(index);
       },
       selectedColor: AppColors.teal.withValues(alpha: 0.2),
       checkmarkColor: AppColors.teal,

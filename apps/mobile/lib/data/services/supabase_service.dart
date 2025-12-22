@@ -41,7 +41,7 @@ class SupabaseService {
     );
 
     // Non-secret diagnostics: log the project host + environment to help
-    // debug “wrong Supabase project” issues (e.g., mobile vs Vercel mismatch).
+    // debug "wrong Supabase project" issues (e.g., mobile vs Vercel mismatch).
     try {
       final host = Uri.parse(EnvConfig.supabaseUrl).host;
       AppDebug.log(
@@ -51,6 +51,48 @@ class SupabaseService {
       );
     } catch (_) {
       // ignore
+    }
+
+    // Handle invalid session recovery gracefully
+    // The SDK may have a cached session with an invalid refresh token
+    await _validateAndClearInvalidSession();
+  }
+
+  /// Validate the current session and clear it if invalid
+  /// This handles the case where a user's refresh token is no longer valid
+  /// (e.g., after account deletion/merge, or token revocation)
+  static Future<void> _validateAndClearInvalidSession() async {
+    try {
+      final client = Supabase.instance.client;
+      final session = client.auth.currentSession;
+
+      if (session == null) return;
+
+      // Try to get user to verify the session is valid
+      final response = await client.auth.getUser();
+
+      if (response.user == null) {
+        // Session exists but user is invalid - clear it
+        debugPrint('SupabaseService: Invalid session detected, signing out');
+        await client.auth.signOut();
+      }
+    } on AuthException catch (e) {
+      // Session is invalid (e.g., refresh_token_not_found)
+      if (e.message.contains('Refresh Token') ||
+          e.message.contains('refresh_token') ||
+          e.statusCode == '400' ||
+          e.statusCode == '401') {
+        debugPrint(
+          'SupabaseService: Invalid refresh token detected, clearing session',
+        );
+        try {
+          await Supabase.instance.client.auth.signOut();
+        } catch (_) {
+          // Ignore errors during cleanup signout
+        }
+      }
+    } catch (e) {
+      debugPrint('SupabaseService: Error validating session: $e');
     }
   }
 

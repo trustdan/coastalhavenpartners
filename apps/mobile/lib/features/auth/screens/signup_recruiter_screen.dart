@@ -145,7 +145,8 @@ class _SignupRecruiterScreenState extends ConsumerState<SignupRecruiterScreen> {
         body: SafeArea(
           child: SingleChildScrollView(
             padding: AppSpacing.screenPadding,
-            child: Form(
+            child: AutofillGroup(
+              child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -206,6 +207,8 @@ class _SignupRecruiterScreenState extends ConsumerState<SignupRecruiterScreen> {
                       child: TextFormField(
                         controller: _firstNameController,
                         textCapitalization: TextCapitalization.words,
+                        autofillHints: const [AutofillHints.givenName],
+                        textInputAction: TextInputAction.next,
                         style: TextStyle(color: AppColors.textPrimaryDark),
                         decoration: const InputDecoration(
                           labelText: 'First Name',
@@ -224,6 +227,8 @@ class _SignupRecruiterScreenState extends ConsumerState<SignupRecruiterScreen> {
                       child: TextFormField(
                         controller: _lastNameController,
                         textCapitalization: TextCapitalization.words,
+                        autofillHints: const [AutofillHints.familyName],
+                        textInputAction: TextInputAction.next,
                         style: TextStyle(color: AppColors.textPrimaryDark),
                         decoration: const InputDecoration(
                           labelText: 'Last Name',
@@ -246,6 +251,8 @@ class _SignupRecruiterScreenState extends ConsumerState<SignupRecruiterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  textInputAction: TextInputAction.next,
                   style: TextStyle(color: AppColors.textPrimaryDark),
                   decoration: const InputDecoration(
                     labelText: 'Work Email',
@@ -304,6 +311,8 @@ class _SignupRecruiterScreenState extends ConsumerState<SignupRecruiterScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  autofillHints: const [AutofillHints.newPassword],
+                  textInputAction: TextInputAction.next,
                   style: TextStyle(color: AppColors.textPrimaryDark),
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -339,6 +348,8 @@ class _SignupRecruiterScreenState extends ConsumerState<SignupRecruiterScreen> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
+                  autofillHints: const [AutofillHints.newPassword],
+                  textInputAction: TextInputAction.done,
                   style: TextStyle(color: AppColors.textPrimaryDark),
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
@@ -451,7 +462,8 @@ class _SignupRecruiterScreenState extends ConsumerState<SignupRecruiterScreen> {
                 ),
 
                   const SizedBox(height: 24),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

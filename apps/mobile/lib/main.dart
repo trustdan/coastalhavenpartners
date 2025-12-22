@@ -15,6 +15,19 @@ void main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Handle uncaught Flutter errors (including auth errors)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    final exception = details.exception;
+    // Handle Supabase auth errors gracefully (e.g., invalid refresh token)
+    if (exception.toString().contains('Refresh Token') ||
+        exception.toString().contains('refresh_token_not_found')) {
+      debugPrint('Auth error caught: Invalid session, will clear on next init');
+      return; // Don't crash the app for auth errors
+    }
+    // For other errors, use default handling
+    FlutterError.presentError(details);
+  };
+
   // Set preferred orientations (portrait only for now)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

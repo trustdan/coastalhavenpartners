@@ -188,9 +188,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         body: SafeArea(
           child: SingleChildScrollView(
             padding: AppSpacing.screenPadding,
-            child: Form(
-              key: _formKey,
-              child: Column(
+            child: AutofillGroup(
+              child: Form(
+                key: _formKey,
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                 const SizedBox(height: 16),
@@ -249,6 +250,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  textInputAction: TextInputAction.next,
                   style: TextStyle(color: AppColors.textPrimaryDark),
                   decoration: const InputDecoration(
                     labelText: 'Email',
@@ -272,6 +275,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  autofillHints: const [AutofillHints.password],
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _handleLogin(),
                   style: TextStyle(color: AppColors.textPrimaryDark),
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -441,7 +447,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
 
                   const SizedBox(height: 24),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

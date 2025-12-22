@@ -262,6 +262,84 @@ flutter build appbundle              # Android App Bundle
 flutter build ios                    # iOS (requires macOS)
 ```
 
+## Platform-Specific Setup
+
+### Android (Windows)
+
+Use the PowerShell restart script for a clean rebuild:
+
+```powershell
+# Basic usage
+.\restart-app.ps1
+
+# With options
+.\restart-app.ps1 -Release              # Release mode
+.\restart-app.ps1 -Device "emulator-5554"  # Specific device
+```
+
+### iOS (macOS)
+
+#### iOS Prerequisites
+
+1. **Install Xcode** from the Mac App Store (free, ~12GB)
+2. Open Xcode once to accept the license and install additional components
+3. Install command line tools: `xcode-select --install`
+4. Install CocoaPods: `sudo gem install cocoapods`
+
+#### Running on iOS Simulator
+
+You don't need a physical iPhone - the Simulator works great for development.
+
+```bash
+# Open the iOS Simulator
+open -a Simulator
+
+# Or from Xcode: Xcode → Open Developer Tool → Simulator
+# Choose device via: File → Open Simulator → iOS → [device]
+
+# Check available devices
+flutter devices
+
+# Run on iOS
+flutter run
+```
+
+#### iOS Restart Script
+
+Use the shell script for a clean rebuild on iOS:
+
+```bash
+# Make executable (first time only)
+chmod +x restart-ios.sh
+
+# Basic usage
+./restart-ios.sh
+
+# With options
+./restart-ios.sh --release              # Release mode
+./restart-ios.sh --device "iPhone 15"   # Specific simulator
+./restart-ios.sh --deep-clean           # Full clean including CocoaPods cache
+./restart-ios.sh -c -r                  # Deep clean + release mode
+```
+
+| Option | Description |
+|--------|-------------|
+| `-r, --release` | Build in release mode |
+| `-d, --device ID` | Specify device ID |
+| `-c, --deep-clean` | Remove Pods, Podfile.lock, CocoaPods cache, and DerivedData |
+| `-h, --help` | Show help message |
+
+#### Requirements Summary
+
+| Requirement | Notes |
+|-------------|-------|
+| Xcode | Free from App Store (~12GB) |
+| Physical iPhone | **Not needed** - Simulator works great |
+| Apple Developer Account | Not needed for Simulator testing |
+| CocoaPods | `sudo gem install cocoapods` |
+
+> **Note:** You only need a physical device or paid Apple Developer account ($99/year) for: testing on real hardware, publishing to the App Store, or testing push notifications.
+
 ## Related Documentation
 
 - [Main Project CLAUDE.md](../../CLAUDE.md) - Project-wide conventions

@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/widgets/boundary_aware_tab_view.dart';
+import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart';
 import '../../../data/repositories/repositories.dart';
 
@@ -90,8 +92,12 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen>
             ],
           ),
         ),
-        data: (applications) => TabBarView(
+        data: (applications) => BoundaryAwareTabView(
           controller: _tabController,
+          // Navigate to previous bottom nav tab (Jobs) when swiping past start
+          onSwipePastStart: () => context.go(AppRoutes.candidateJobs),
+          // Navigate to next bottom nav tab (Analytics) when swiping past end
+          onSwipePastEnd: () => context.go(AppRoutes.candidateAnalytics),
           children: [
             _buildApplicationsList(isDark, applications, null),
             _buildApplicationsList(isDark, applications, [
