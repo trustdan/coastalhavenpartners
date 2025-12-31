@@ -118,16 +118,6 @@ export async function POST(request: NextRequest) {
     // Perform the merge
     const operations: string[] = []
 
-    // Delete duplicate's user_settings if exists
-    const { error: settingsError } = await supabaseAdmin
-      .from('user_settings')
-      .delete()
-      .eq('user_id', duplicate_user_id)
-
-    if (!settingsError) {
-      operations.push('Deleted user_settings')
-    }
-
     // Delete duplicate's profile if exists (should be empty/minimal)
     if (duplicateProfile) {
       const { error: profileError } = await supabaseAdmin

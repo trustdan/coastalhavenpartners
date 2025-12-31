@@ -29,7 +29,7 @@ export function MultiAutocompleteInput({
   const [isLoading, setIsLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const debounceRef = useRef<NodeJS.Timeout>(undefined)
 
   // Parse current values and get the active (last) value being typed
   const parseValues = useCallback(() => {

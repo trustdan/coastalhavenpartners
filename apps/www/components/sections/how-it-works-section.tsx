@@ -22,7 +22,7 @@ const ProcessCard = ({
   title: string
   description: string
   stepNumber: number
-  forwardedRef?: React.RefObject<HTMLDivElement>
+  forwardedRef?: React.RefObject<HTMLDivElement | null>
 }) => {
   return (
     <div className="flex flex-col items-center h-full">

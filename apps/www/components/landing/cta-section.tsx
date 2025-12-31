@@ -13,7 +13,7 @@ import {
   Rss,
   Shield,
 } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 
 const tiles = [
   {
@@ -71,7 +71,7 @@ const shuffleArray = (array: any[]) => {
   return array;
 };
 
-const Card = (card: { icon: JSX.Element; bg: JSX.Element }) => {
+const Card = (card: { icon: React.ReactNode; bg: React.ReactNode }) => {
   const id = useId();
   const controls = useAnimation();
   const ref = useRef(null);
@@ -81,7 +81,7 @@ const Card = (card: { icon: JSX.Element; bg: JSX.Element }) => {
     if (inView) {
       controls.start({
         opacity: 1,
-        transition: { delay: Math.random() * 2, ease: "easeOut", duration: 1 },
+        transition: { delay: Math.random() * 2, ease: "easeOut" as const, duration: 1 },
       });
     }
   }, [controls, inView]);

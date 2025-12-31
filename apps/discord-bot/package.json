@@ -10,15 +10,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.86.0",
-    "discord.js": "^14.16.3",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2"
+    "@supabase/supabase-js": "^2.89.0",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
   },
   "devDependencies": {
-    "@types/express": "^5.0.2",
-    "@types/node": "^20.19.25",
-    "tsx": "^4.19.4",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "engines": {

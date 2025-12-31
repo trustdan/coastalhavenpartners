@@ -71,7 +71,7 @@ export function SiteHeader() {
       opacity: 1,
       transition: {
         duration: 0.2,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       },
     },
     exit: {
@@ -79,7 +79,7 @@ export function SiteHeader() {
       transition: {
         duration: 0.2,
         delay: 0.2,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       },
     },
   };
@@ -94,7 +94,7 @@ export function SiteHeader() {
       opacity: 1,
       transition: {
         duration: 0.3,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       },
     },
   };
